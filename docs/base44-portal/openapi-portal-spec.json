@@ -233,6 +233,300 @@
             }
           }
         }
+      },
+      "CreatePatientDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "description": "YYYY-MM-DD"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "female",
+              "male",
+              "other",
+              "unknown"
+            ]
+          },
+          "ssn": {
+            "type": "string",
+            "description": "Stored encrypted; the API only ever returns the last 4 digits."
+          },
+          "mrn": {
+            "type": "string",
+            "description": "Medical record number, unique within the agency.",
+            "maxLength": 50
+          },
+          "phoneHome": {
+            "type": "string"
+          },
+          "phoneCell": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "addressLine2": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter US state code.",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "zip": {
+            "type": "string",
+            "pattern": "^\\d{5}(-\\d{4})?$"
+          },
+          "geoFenceRadiusMeters": {
+            "type": "number",
+            "description": "EVV geofence around the home, in meters.",
+            "minimum": 50,
+            "maximum": 2000
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "emergencyContactPhone": {
+            "type": "string"
+          },
+          "emergencyContactRelation": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "primaryPhysicianId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "medicareBeneficiaryId": {
+            "type": "string",
+            "description": "Medicare Beneficiary Identifier (11 characters).",
+            "pattern": "^[1-9][AC-HJKMNP-RT-Y][AC-HJKMNP-RT-Y0-9]\\d[AC-HJKMNP-RT-Y][AC-HJKMNP-RT-Y0-9]\\d[AC-HJKMNP-RT-Y]{2}\\d{2}$"
+          },
+          "medicaidId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "insuranceMemberId": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "insuranceGroupNumber": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "admissionDate": {
+            "type": "string",
+            "description": "Defaults to today."
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "dateOfBirth"
+        ]
+      },
+      "UpdatePatientDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "description": "YYYY-MM-DD"
+          },
+          "gender": {
+            "enum": [
+              "female",
+              "male",
+              "other",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "ssn": {
+            "type": "string",
+            "description": "Stored encrypted; the API only ever returns the last 4 digits."
+          },
+          "mrn": {
+            "type": "string",
+            "description": "Medical record number, unique within the agency.",
+            "maxLength": 50
+          },
+          "phoneHome": {
+            "type": "string"
+          },
+          "phoneCell": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "addressLine2": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter US state code.",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "zip": {
+            "type": "string",
+            "pattern": "^\\d{5}(-\\d{4})?$"
+          },
+          "geoFenceRadiusMeters": {
+            "type": "number",
+            "description": "EVV geofence around the home, in meters.",
+            "minimum": 50,
+            "maximum": 2000
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "emergencyContactPhone": {
+            "type": "string"
+          },
+          "emergencyContactRelation": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "primaryPhysicianId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "medicareBeneficiaryId": {
+            "type": "string",
+            "description": "Medicare Beneficiary Identifier (11 characters).",
+            "pattern": "^[1-9][AC-HJKMNP-RT-Y][AC-HJKMNP-RT-Y0-9]\\d[AC-HJKMNP-RT-Y][AC-HJKMNP-RT-Y0-9]\\d[AC-HJKMNP-RT-Y]{2}\\d{2}$"
+          },
+          "medicaidId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "insuranceMemberId": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "insuranceGroupNumber": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000
+          }
+        }
+      },
+      "DischargePatientDto": {
+        "type": "object",
+        "properties": {
+          "dischargeDate": {
+            "type": "string",
+            "description": "Defaults to today."
+          }
+        }
+      },
+      "ReadmitPatientDto": {
+        "type": "object",
+        "properties": {
+          "admissionDate": {
+            "type": "string",
+            "description": "Defaults to today."
+          }
+        }
+      },
+      "CreateDiagnosisDto": {
+        "type": "object",
+        "properties": {
+          "icd10Code": {
+            "type": "string",
+            "description": "ICD-10-CM, e.g. E11.9 (dot optional).",
+            "maxLength": 10
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "description": "Making this primary un-marks the previous primary diagnosis."
+          },
+          "onsetDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "icd10Code"
+        ]
+      },
+      "CreateAllergyDto": {
+        "type": "object",
+        "properties": {
+          "allergen": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "reaction": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "mild",
+              "moderate",
+              "severe",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "allergen"
+        ]
       }
     }
   },

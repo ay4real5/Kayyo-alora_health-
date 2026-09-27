@@ -305,3 +305,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   `/auth/me` returns `recoveryCodesRemaining`.
 - Disabling 2FA or an admin 2FA reset deletes the user's codes.
 - Mandatory 2FA per role is not built — waiting on the owner's choice (Q-008, ROADMAP P1-11c).
+
+### D-027 — Patients module (P1-12)
+2026-09-27 · Claude Code
+- **Record-level access** (`PatientsService.scope`, used by every query): always the caller's agency; with the
+  new permission `patients:read_all` (agency/super admin, supervisor, office staff, billing staff) every agency
+  patient; otherwise (field staff with only `patients:read`) just patients the caller has **at least one visit
+  with**. Out-of-scope patients are 404. Revisit when scheduling lands (P1-14): e.g. whether a caregiver keeps
+  access after their last visit, and supervisor-assigned case managers.
+- **SSN**: encrypted with `PhiContext.PatientSsn` (digits only); responses carry only `ssnLast4`, and only
+  in the detail view. Lists return summaries (no SSN, no contact details).
+- Status changes only through actions: `POST /patients` (admit → active), `/discharge`, `/readmit`. PATCH can't
+  set status. Statuses: `active`, `discharged` (add more, e.g. `on_hold`, when a workflow needs them).
+- MRN optional, unique per agency (migration). Diagnosis codes are shape-checked and normalised (`e119` →
+  `E11.9`) but not looked up in the ICD-10 code set yet (billing, P3). One primary diagnosis per patient.
+  The design's `patients.primary_diagnosis_code` column is unused — the primary comes from `patient_diagnoses`.
+- Dates are `YYYY-MM-DD`; "today" defaults use **UTC**. Switch to the agency's timezone (`agencies.timezone`)
+  when scheduling needs it (P1-14).
+- Moved out: authorizations → P3-01 (they need payers). New task P1-12b: physicians directory. Medications,
+  care plans, assessments, orders → P3-11 as planned.
