@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { PERMISSIONS_KEY } from '../../common/decorators/permissions.decorator.js';
+import { AuditService } from '../audit/audit.service.js';
 import { PermissionsService } from './permissions.service.js';
 
 /** Global guard, runs after JwtAuthGuard. Enforces @Permissions(); routes without it pass through. */
@@ -16,6 +17,7 @@ export class RbacGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly permissions: PermissionsService,
+    private readonly audit: AuditService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -30,7 +32,23 @@ export class RbacGuard implements CanActivate {
     if (!user) throw new UnauthorizedException('Missing access token');
 
     const access = await this.permissions.forUser(user);
-    if (!required.every((permission) => access.permissions.has(permission))) {
+    const missing = required.filter((permission) => !access.permissions.has(permission));
+    if (missing.length) {
+      const request = context.switchToHttp().getRequest<Request>();
+      await this.audit.record({
+        agencyId: user.agencyId,
+        userId: user.userId,
+        action: 'ACCESS_DENIED',
+        resourceType: required[0]!.split(':')[0],
+        details: {
+          method: request.method,
+          route: (request.route as { path?: string } | undefined)?.path ?? request.path,
+          missing,
+          correlationId: request.correlationId,
+        },
+        ipAddress: request.ip,
+        userAgent: request.header('user-agent'),
+      });
       throw new ForbiddenException('You do not have permission to do this');
     }
     return true;

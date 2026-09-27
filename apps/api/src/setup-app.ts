@@ -3,7 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js';
-import { correlationIdMiddleware } from './common/middleware/correlation-id.middleware.js';
+import {
+  correlationIdMiddleware,
+  noStoreMiddleware,
+} from './common/middleware/correlation-id.middleware.js';
 import type { EnvironmentVariables } from './config/env.validation.js';
 
 export const API_PREFIX = 'api/v1';
@@ -14,6 +17,7 @@ export function setupApp(app: INestApplication): INestApplication {
 
   app.setGlobalPrefix(API_PREFIX);
   app.use(correlationIdMiddleware);
+  app.use(noStoreMiddleware);
   app.use(helmet());
   app.enableCors({
     // Exact origins only (D-008). An empty list disables cross-origin browser access entirely.

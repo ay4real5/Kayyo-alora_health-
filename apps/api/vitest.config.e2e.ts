@@ -12,5 +12,9 @@ export default defineConfig({
     setupFiles: ['reflect-metadata'],
     root: './',
     include: ['**/*.e2e-spec.ts'],
+    // These hit a real (often remote) database: run files one at a time, and allow for network latency.
+    fileParallelism: false,
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
   },
 });
