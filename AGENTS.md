@@ -74,7 +74,8 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - BullMQ for async jobs (claims, notifications, reports)
 - Socket.IO for real-time (Next.js dashboard + mobile app)
 - All timestamps stored as UTC, converted to agency timezone on display
-- Tests colocated: `*.spec.ts` next to source files; e2e in `apps/api/test/e2e/`
+- Tests colocated: `*.spec.ts` next to source files (Vitest); API e2e tests in `apps/api/test/*.e2e-spec.ts`
+- ES modules: relative imports end in `.js` (see DECISIONS D-009)
 - Every query on tenant data is scoped by `agency_id` — no exceptions
 
 ### RBAC
@@ -90,15 +91,25 @@ task with a good handoff note is worth more than a finished one nobody can find.
 
 ## 7. Commands
 
-Run from the repo root unless noted. (Filled in as apps are scaffolded — keep this section accurate.)
+Run from the repo root.
 
 ```bash
-npm install                 # install all workspaces
-docker compose up -d        # PostgreSQL 16 + Redis 7 for local dev
-npm run build               # turbo build all
-npm run test                # turbo test all
-npm run lint                # turbo lint all
+npm install                              # install all workspaces
+docker compose up -d postgres redis      # PostgreSQL 16 + Redis 7 for local dev
+npm run build                            # turbo: build everything (shared builds before api)
+npm run typecheck                        # turbo: tsc --noEmit everywhere
+npm run lint                             # turbo: oxlint
+npm run test                             # turbo: unit tests (Vitest)
+npm run test:e2e -w @alora/api           # API e2e tests
+npm run start:dev -w @alora/api          # API on http://localhost:3001/api/v1 (health: /api/v1/health)
+docker compose up -d --build             # whole stack incl. API container
 ```
+
+Adding a dependency to one app: `npm install <pkg> -w @alora/api` (never `cd` into the app and run npm
+there — it would create a second lockfile).
+
+`packages/shared` compiles to `dist/`; the API imports the built output. If the API can't find a new export
+from `@alora/shared`, run `npm run build` first.
 
 ## 8. Environment notes
 

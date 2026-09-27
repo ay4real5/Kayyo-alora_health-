@@ -1,4 +1,5 @@
-# Local development infrastructure. The api and web services are added in task P1-01 / P1-18.
+# Local development stack. `docker compose up -d postgres redis` for infra only (run the API with npm),
+# or `docker compose up -d --build` to also run the API in a container. The web service is added in P1-18.
 services:
   postgres:
     image: postgres:16-alpine
@@ -26,6 +27,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "3001:3001"
+    environment:
+      APP_PORT: 3001
+      DATABASE_URL: postgresql://alora:${DB_PASSWORD:-localdev123}@postgres:5432/alora_health
+      REDIS_URL: redis://:${REDIS_PASSWORD:-localdev123}@redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   pgdata:

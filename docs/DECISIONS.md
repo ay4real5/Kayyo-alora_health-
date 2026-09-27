@@ -54,3 +54,20 @@ from agency A cannot read agency B's records.
 DESIGN.md §16.3 allows `https://*.base44.app`, which would let *any* Base44 app call the API from a browser.
 CORS allows exact origins only, from `CORS_ORIGINS`. (If the Base44 portal calls the API server-side, it
 needs no CORS entry at all.)
+
+### D-009 — Actual versions at scaffold time (P1-01)
+2026-09-27 · Claude Code
+- **NestJS 12**, **TypeScript ~6.0** (not 7). TS 7 is the new native compiler; the Nest 12 CLI requires
+  `typescript ~6.0` and test tooling doesn't support 7 yet. Revisit when Nest supports TS 7.
+- **Vitest 4** instead of Jest, **oxlint** instead of ESLint — these are the Nest 12 defaults, so we keep
+  them rather than fight the framework. This replaces "Jest + Supertest" in DESIGN.md §2 (Supertest stays).
+- **ES modules** (`"type": "module"`, `nodenext`). Relative imports must end in `.js`
+  (e.g. `import { X } from './x.service.js'`), even in `.ts` files.
+- **Prisma: use the latest stable 7.x, not 8.x.** At this date npm's `latest` tag for Prisma points to an
+  8.0 release candidate. Don't use pre-release versions in this project.
+- Removed `@nestjs/mau` (Nest's paid hosting CLI): unused, and it pulled in a vulnerable `undici`.
+
+### D-010 — API app setup lives in `setup-app.ts`
+2026-09-27 · Claude Code
+Global prefix, pipes, filters, interceptors, CORS, Swagger etc. are applied in `apps/api/src/setup-app.ts`,
+which both `main.ts` and the e2e tests call. That way e2e tests exercise the real configuration.

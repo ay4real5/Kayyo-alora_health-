@@ -1,0 +1,28 @@
+{
+  "name": "@alora/shared",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Types and constants shared by the API, web dashboard and mobile app",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.2",
+    "@types/node": "^24.0.0"
+  }
+}

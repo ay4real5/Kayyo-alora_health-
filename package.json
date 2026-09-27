@@ -1,7 +1,7 @@
 {
   "name": "alora-health",
   "private": true,
-  "description": "Alora Health — home health agency management platform (monorepo)",
+  "description": "Alora Health \u00e2\u20ac\u201d home health agency management platform (monorepo)",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -17,7 +17,7 @@
   "devDependencies": {
     "prettier": "^3.3.0",
     "turbo": "^2.0.0",
-    "typescript": "^5.5.0"
+    "typescript": "~6.0.3"
   },
   "engines": {
     "node": ">=24"
