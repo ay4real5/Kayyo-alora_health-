@@ -4,9 +4,11 @@
 // Status-like columns are plain strings, as in the design; allowed values are enforced in DTOs.
 
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "esm"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "esm"
+  // partialIndexes: unique system-role names (roles with agency_id NULL), DECISIONS D-022.
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -105,6 +107,8 @@ model Role {
   userRoles       UserRole[]
 
   @@unique([agencyId, name])
+  /// Postgres treats NULLs as distinct, so the constraint above does not stop duplicate system roles.
+  @@unique([name], map: "roles_system_name_key", where: raw("agency_id IS NULL"))
   @@index([agencyId])
   @@map("roles")
 }
