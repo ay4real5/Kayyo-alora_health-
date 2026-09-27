@@ -220,3 +220,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Not yet built**: recovery codes, and admin "reset 2FA" for a user who lost their phone. Until then an
   admin fixes it in the database. Add both with the Users module (P1-11). Per-role "2FA required" policy
   (e.g. mandatory for admins/billing) is also a P1-11/P1-08 follow-up.
+
+### D-022 — RBAC implementation (P1-08)
+2026-09-27 · Claude Code
+- **Code is the source of truth for built-in roles.** `ROLE_DEFAULT_PERMISSIONS` (`@alora/shared`) defines
+  what each of the 11 system roles may do, derived from DESIGN.md §7.2. `RbacSyncService` runs on every API
+  start: inserts missing permissions from `PERMISSION_CATALOGUE`, creates missing system roles
+  (`agency_id` NULL, `is_system`), and sets their grants to exactly the code's list (drift is repaired).
+  To change a built-in role, change the code. Agencies needing something different create **custom roles**
+  (their own `agency_id`), which the sync never touches. Permissions removed from code are left in the table.
+- System-role names are unique through a **partial unique index** (`WHERE agency_id IS NULL`), using
+  Prisma's `partialIndexes` preview feature — plain `UNIQUE(agency_id, name)` allows duplicate NULLs.
+- `@Permissions('a:b', 'c:d')` = caller needs **all** listed. Routes without it need only a login. Every
+  route touching PHI or agency data **must** declare permissions.
+- `RbacGuard` is global, registered right after `JwtAuthGuard` in AuthModule (order matters); it refuses
+  anonymous callers even on a misconfigured `@Public()` + `@Permissions` route.
+- A user's roles count only if they're system roles or custom roles of **the user's own agency**.
+- Lookups are cached per user for 30 s per API instance; call `PermissionsService.invalidate()` after role
+  changes (P1-11). Across instances, changes take up to 30 s.
+- Permissions are coarse ("may read patients at all"). Record-level rules — nurses see only assigned
+  patients, caregivers only their own visits — belong in each module's queries (P1-12 onwards).
+- Role choices worth reviewing with the owner: LPNs can't write care plans or physician orders; aides can
+  write but not sign visit notes; supervisors have no billing access; office staff can create patients.

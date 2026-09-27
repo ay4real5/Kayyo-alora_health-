@@ -99,11 +99,14 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - Tests: `test/auth.e2e-spec.ts` shows how to create users and log in; override `ThrottlerStorage` so tests
   aren't rate-limited.
 
-### RBAC
-- Permission strings are `resource:action` (e.g. `patients:read`, `billing:submit`). See DECISIONS D-004;
-  the API tables in DESIGN.md write them the other way round (`read:patients`) — translate.
-- `@Permissions('patients:read')` decorator on controller methods
-- `RbacGuard` checks user → roles → role_permissions
+### RBAC — DECISIONS D-022
+- Permission strings are `resource:action` (e.g. `patients:read`), catalogue in `@alora/shared`
+  `PERMISSION_CATALOGUE`; the API tables in DESIGN.md write them the other way round — translate.
+- Put `@Permissions('patients:read')` on every route touching PHI/agency data (needs ALL listed).
+- Built-in roles and their grants live in `ROLE_DEFAULT_PERMISSIONS` and are synced to the DB on boot —
+  change them in code, never in the database.
+- Permissions say *whether* a role may do something; filtering *which records* (assigned patients, own
+  visits, own agency) is each service's job.
 
 ### File naming
 - NestJS: `kebab-case` (`care-plans.service.ts`); DTOs: `*.dto.ts`
