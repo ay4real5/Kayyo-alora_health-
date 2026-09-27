@@ -1051,6 +1051,148 @@
         "required": [
           "status"
         ]
+      },
+      "CreateVisitDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "staffId": {
+            "type": "string",
+            "description": "Leave out to create an unassigned visit (e.g. to post as an open shift later).",
+            "format": "uuid"
+          },
+          "visitType": {
+            "type": "string",
+            "enum": [
+              "skilled_nursing",
+              "nursing_assessment",
+              "physical_therapy",
+              "pt_evaluation",
+              "occupational_therapy",
+              "ot_evaluation",
+              "speech_therapy",
+              "medical_social_work",
+              "home_health_aide",
+              "personal_care",
+              "respite"
+            ]
+          },
+          "serviceCode": {
+            "type": "string",
+            "description": "HCPCS/revenue code used for billing, e.g. G0299.",
+            "maxLength": 20
+          },
+          "scheduledDate": {
+            "type": "string",
+            "description": "Agency-local date, YYYY-MM-DD."
+          },
+          "scheduledStart": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM (24-hour)."
+          },
+          "scheduledEnd": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM, after scheduledStart (visits don't cross midnight)."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "high",
+              "urgent"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "override": {
+            "type": "boolean",
+            "description": "Book despite blocking conflicts (double-booking, approved time off, inactive staff/patient).\nRequires visits:approve; recorded in the audit trail."
+          }
+        },
+        "required": [
+          "patientId",
+          "visitType",
+          "scheduledDate",
+          "scheduledStart",
+          "scheduledEnd"
+        ]
+      },
+      "UpdateVisitDto": {
+        "type": "object",
+        "properties": {
+          "visitType": {
+            "enum": [
+              "skilled_nursing",
+              "nursing_assessment",
+              "physical_therapy",
+              "pt_evaluation",
+              "occupational_therapy",
+              "ot_evaluation",
+              "speech_therapy",
+              "medical_social_work",
+              "home_health_aide",
+              "personal_care",
+              "respite"
+            ],
+            "type": "string"
+          },
+          "serviceCode": {
+            "type": "string",
+            "description": "HCPCS/revenue code used for billing, e.g. G0299.",
+            "maxLength": 20
+          },
+          "scheduledDate": {
+            "type": "string",
+            "description": "Agency-local date, YYYY-MM-DD."
+          },
+          "scheduledStart": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM (24-hour)."
+          },
+          "scheduledEnd": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM, after scheduledStart (visits don't cross midnight)."
+          },
+          "priority": {
+            "enum": [
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "override": {
+            "type": "boolean",
+            "description": "Book despite blocking conflicts (double-booking, approved time off, inactive staff/patient).\nRequires visits:approve; recorded in the audit trail."
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reassign to another caregiver, or null to unassign.",
+            "format": "uuid"
+          }
+        }
+      },
+      "CancelVisitDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
       }
     }
   },

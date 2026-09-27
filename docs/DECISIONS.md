@@ -361,3 +361,26 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   be your own; only pending requests can change; the requester can cancel.
 - Disciplines: RN, LPN, PT, PTA, OT, COTA, SLP, MSW, HHA, CNA, PCA (`DISCIPLINES` in `@alora/shared`).
 - Date/time helpers are shared: `common/utils/dates.ts`, `common/validators/is-date-only.ts`.
+
+### D-030 — Scheduling (P1-14)
+2026-09-27 · Claude Code
+- Visit date and times are **agency-local wall-clock values** (`DATE` + `TIME`, no timezone). "Today" comes from
+  `agencies.timezone` via `todayInTimeZone` (`@alora/shared`). Visits can't cross midnight (end > start).
+- Access mirrors patients (D-027): new permission `visits:read_all` (supervisor, office, billing, admins) sees all
+  agency visits; otherwise only the caller's own. **Cancelled visits no longer give a caregiver access to the
+  patient** (patient scope now requires a non-cancelled visit).
+- **Conflict detector** (`ConflictDetectorService`, one place for all rules), used by create, update and
+  `GET /schedule/conflicts` (pre-check, writes nothing):
+  - blocking: `staff_double_booked` (overlapping scheduled/in-progress/completed visit; back-to-back is fine),
+    `staff_time_off` (approved), `staff_inactive` (inactive or terminated by that date), `patient_not_active`.
+  - warning: `staff_time_off_pending`, `outside_availability` (only if the caregiver stated any availability),
+    `discipline_mismatch` (`VISIT_TYPE_DISCIPLINES`), `staff_credentials_expired` (by the visit date),
+    `before_admission`, `in_the_past`.
+  - Blocking → `409 { code: 'SCHEDULE_CONFLICT', details: [...] }`. `override: true` books anyway but needs
+    `visits:approve` and writes an `OVERRIDE_SCHEDULE_CONFLICT` audit entry. Warnings come back in `warnings`.
+- Only `scheduled` visits can be changed or cancelled here; cancel needs a reason. `in_progress`/`completed`
+  come from EVV (P2-01); `missed` from the late/no-show job (P2-02).
+- Unassigned visits (`staffId` null) are allowed — the basis for open shifts (P2-05).
+- The exception filter now forwards `code` and `details` from `new XxxException({ message, code, details })`.
+- Not yet: authorization-limit checks (needs P3-01 authorizations), travel time between visits, recurring
+  visits (P1-15).

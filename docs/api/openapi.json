@@ -1819,6 +1819,399 @@
         ]
       }
     },
+    "/api/v1/schedule/visits": {
+      "get": {
+        "operationId": "SchedulingController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "From this date (inclusive), YYYY-MM-DD.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "To this date (inclusive), YYYY-MM-DD.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "patientId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "staffId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "scheduled",
+                "in_progress",
+                "completed",
+                "missed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "unassigned",
+            "required": false,
+            "in": "query",
+            "description": "Only visits with no caregiver assigned.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      },
+      "post": {
+        "operationId": "SchedulingController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVisitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Books a visit. Blocking conflicts return 409 SCHEDULE_CONFLICT with the list in `details`, unless\n`override: true` (needs visits:approve). Warnings come back in `warnings`.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/visits/{id}": {
+      "get": {
+        "operationId": "SchedulingController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      },
+      "patch": {
+        "operationId": "SchedulingController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVisitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Reschedule, reassign (staffId, or null to unassign) or edit a scheduled visit.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/visits/{id}/cancel": {
+      "post": {
+        "operationId": "SchedulingController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelVisitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/calendar": {
+      "get": {
+        "operationId": "SchedulingController_calendar",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "description": "Inclusive; at most 62 days after `from`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "staffId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "patientId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeCancelled",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Visits grouped by day, every day in [from, to] present (max 62 days). Cancelled visits excluded by default.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/conflicts": {
+      "get": {
+        "operationId": "SchedulingController_conflicts",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "staffId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "visitType",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "skilled_nursing",
+                "nursing_assessment",
+                "physical_therapy",
+                "pt_evaluation",
+                "occupational_therapy",
+                "ot_evaluation",
+                "speech_therapy",
+                "medical_social_work",
+                "home_health_aide",
+                "personal_care",
+                "respite"
+              ]
+            }
+          },
+          {
+            "name": "scheduledDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduledStart",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduledEnd",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "excludeVisitId",
+            "required": false,
+            "in": "query",
+            "description": "When checking a change to an existing visit, leave that visit out of the double-booking check.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Checks a proposed visit against the schedule without saving anything.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -2858,6 +3251,148 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "CreateVisitDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "staffId": {
+            "type": "string",
+            "description": "Leave out to create an unassigned visit (e.g. to post as an open shift later).",
+            "format": "uuid"
+          },
+          "visitType": {
+            "type": "string",
+            "enum": [
+              "skilled_nursing",
+              "nursing_assessment",
+              "physical_therapy",
+              "pt_evaluation",
+              "occupational_therapy",
+              "ot_evaluation",
+              "speech_therapy",
+              "medical_social_work",
+              "home_health_aide",
+              "personal_care",
+              "respite"
+            ]
+          },
+          "serviceCode": {
+            "type": "string",
+            "description": "HCPCS/revenue code used for billing, e.g. G0299.",
+            "maxLength": 20
+          },
+          "scheduledDate": {
+            "type": "string",
+            "description": "Agency-local date, YYYY-MM-DD."
+          },
+          "scheduledStart": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM (24-hour)."
+          },
+          "scheduledEnd": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM, after scheduledStart (visits don't cross midnight)."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "high",
+              "urgent"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "override": {
+            "type": "boolean",
+            "description": "Book despite blocking conflicts (double-booking, approved time off, inactive staff/patient).\nRequires visits:approve; recorded in the audit trail."
+          }
+        },
+        "required": [
+          "patientId",
+          "visitType",
+          "scheduledDate",
+          "scheduledStart",
+          "scheduledEnd"
+        ]
+      },
+      "UpdateVisitDto": {
+        "type": "object",
+        "properties": {
+          "visitType": {
+            "enum": [
+              "skilled_nursing",
+              "nursing_assessment",
+              "physical_therapy",
+              "pt_evaluation",
+              "occupational_therapy",
+              "ot_evaluation",
+              "speech_therapy",
+              "medical_social_work",
+              "home_health_aide",
+              "personal_care",
+              "respite"
+            ],
+            "type": "string"
+          },
+          "serviceCode": {
+            "type": "string",
+            "description": "HCPCS/revenue code used for billing, e.g. G0299.",
+            "maxLength": 20
+          },
+          "scheduledDate": {
+            "type": "string",
+            "description": "Agency-local date, YYYY-MM-DD."
+          },
+          "scheduledStart": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM (24-hour)."
+          },
+          "scheduledEnd": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM, after scheduledStart (visits don't cross midnight)."
+          },
+          "priority": {
+            "enum": [
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "override": {
+            "type": "boolean",
+            "description": "Book despite blocking conflicts (double-booking, approved time off, inactive staff/patient).\nRequires visits:approve; recorded in the audit trail."
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reassign to another caregiver, or null to unassign.",
+            "format": "uuid"
+          }
+        }
+      },
+      "CancelVisitDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
         ]
       }
     }
