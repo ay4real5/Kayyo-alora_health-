@@ -5,13 +5,14 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-04 done.
+On `main`: P1-01 to P1-05 done.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `PrismaService`/`DatabaseModule` (not yet imported by AppModule — P1-06 does that).
 - Common layer (P1-04): validated env config, `{success,data}` envelope + pagination, error filter
   (hides internals, maps Prisma errors), strict ValidationPipe, X-Request-Id, helmet, exact-origin CORS.
   Conventions in AGENTS.md §6 "Common layer".
+- PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
   schema/migration drift, runs DB e2e tests, builds the Docker image and health-checks it. All green.
 - Docker does not run on the owner's laptop (D-011). Locally, DB tests skip when `DATABASE_URL` is unset.
@@ -22,9 +23,10 @@ Nothing.
 
 ## Next up
 
-**P1-05** — PHI encryption util (AES-256-GCM, key version byte, key from `PHI_ENCRYPTION_KEY`), see
-DECISIONS D-006. No database needed. Then P1-06 (auth) — needs a dev database for local runs (Q-007);
-CI can cover DB tests meanwhile.
+**P1-06** — Auth module: login, refresh-token rotation (hashed), logout, lockout after 5 failures,
+password policy, `/auth/me`. First task that needs the database at runtime: import `DatabaseModule` in
+AppModule. Local runs need a dev database (Q-007); until the owner sets one up, DB-backed tests run in CI.
+Also needs new env vars (JWT secrets) added to `EnvironmentVariables` + `.env.example`.
 
 ## Blockers / waiting on human
 
@@ -35,6 +37,7 @@ CI can cover DB tests meanwhile.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-05 | PHI encryption service + key rotation, CI green, merged. |
 | 2026-09-27 | Claude Code | P1-04 | Common layer done, CI green, merged. Also overrode Prisma CLI's vulnerable deps (D-015). |
 | 2026-09-27 | Claude Code | P1-03 | Prisma schema (22 tables) + migration; CI migrates real Postgres + drift check, green; merged. |
 | 2026-09-27 | Claude Code | P1-01, P1-02 | CI green on GitHub (checks + Docker image); merged to main. Repo public for build phase. |
