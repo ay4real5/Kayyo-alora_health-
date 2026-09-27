@@ -8,6 +8,7 @@ import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { PasswordService } from './password.service.js';
 import { TokenService } from './token.service.js';
+import { TwoFactorService } from './two-factor/two-factor.service.js';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TokenService } from './token.service.js';
     AuthService,
     PasswordService,
     TokenService,
+    TwoFactorService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
   exports: [PasswordService, TokenService],

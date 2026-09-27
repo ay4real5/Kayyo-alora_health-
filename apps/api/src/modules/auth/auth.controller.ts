@@ -4,15 +4,26 @@ import type { Request } from 'express';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { AuthService } from './auth.service.js';
-import { ChangePasswordDto, LoginDto, RefreshTokenDto } from './dto/auth.dto.js';
+import {
+  ChangePasswordDto,
+  DisableTwoFactorDto,
+  LoginDto,
+  RefreshTokenDto,
+  TwoFactorCodeDto,
+  TwoFactorLoginDto,
+} from './dto/auth.dto.js';
 import type { ClientInfo } from './token.service.js';
+import { TwoFactorService } from './two-factor/two-factor.service.js';
 
 /** Stricter rate limit for credential endpoints: 10 per minute per IP. */
 const CREDENTIAL_LIMIT = { default: { limit: 10, ttl: 60_000 } };
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly twoFactor: TwoFactorService,
+  ) {}
 
   @Public()
   @Throttle(CREDENTIAL_LIMIT)
@@ -41,6 +52,35 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return this.auth.me(user);
+  }
+
+  /** Second login step for users with 2FA: exchanges the challenge token + a TOTP code for a session. */
+  @Public()
+  @Throttle(CREDENTIAL_LIMIT)
+  @Post('2fa/verify')
+  @HttpCode(HttpStatus.OK)
+  verifyTwoFactor(@Body() dto: TwoFactorLoginDto, @Req() req: Request) {
+    return this.auth.verifyTwoFactorLogin(dto.twoFactorToken, dto.code, clientInfo(req));
+  }
+
+  @Post('2fa/setup')
+  @HttpCode(HttpStatus.OK)
+  setupTwoFactor(@CurrentUser() user: AuthUser, @Req() req: Request) {
+    return this.twoFactor.setup(user, clientInfo(req));
+  }
+
+  @Throttle(CREDENTIAL_LIMIT)
+  @Post('2fa/enable')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async enableTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: TwoFactorCodeDto, @Req() req: Request) {
+    await this.twoFactor.enable(user, dto.code, clientInfo(req));
+  }
+
+  @Throttle(CREDENTIAL_LIMIT)
+  @Post('2fa/disable')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async disableTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: DisableTwoFactorDto, @Req() req: Request) {
+    await this.twoFactor.disable(user, dto.password, dto.code, clientInfo(req));
   }
 
   @Throttle(CREDENTIAL_LIMIT)

@@ -62,7 +62,11 @@ model User {
   phone               String?   @db.VarChar(20)
   isActive            Boolean   @default(true) @map("is_active")
   is2faEnabled        Boolean   @default(false) @map("is_2fa_enabled")
-  twoFaSecret         String?   @map("two_fa_secret") @db.VarChar(255) // encrypted
+  /// Base64 of the PHI-encrypted TOTP secret (PhiContext.UserTwoFaSecret). Set by /auth/2fa/setup,
+  /// only active once is_2fa_enabled is true.
+  twoFaSecret         String?   @map("two_fa_secret") @db.VarChar(255)
+  /// Last TOTP time step accepted — codes at or before it are refused (no replay).
+  twoFaLastUsedStep   Int?      @map("two_fa_last_used_step")
   lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz(6)
   passwordChangedAt   DateTime? @map("password_changed_at") @db.Timestamptz(6)
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")

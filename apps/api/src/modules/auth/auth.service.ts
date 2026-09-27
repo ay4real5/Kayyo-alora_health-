@@ -13,6 +13,7 @@ import type { AuthUser } from '../../common/decorators/current-user.decorator.js
 import { AuditService } from '../audit/audit.service.js';
 import { PasswordService } from './password.service.js';
 import { TokenService, type ClientInfo, type TokenPair } from './token.service.js';
+import { TwoFactorService } from './two-factor/two-factor.service.js';
 
 /** One message for every login failure, so callers can't tell which emails exist or are locked. */
 export const INVALID_LOGIN = 'Invalid email or password, or the account is temporarily locked';
@@ -21,6 +22,15 @@ export interface LoginResult extends TokenPair {
   /** True when the password is older than PASSWORD_MAX_AGE_DAYS; clients should prompt a change. */
   mustChangePassword: boolean;
 }
+
+/** Returned by /auth/login instead of tokens when the user has 2FA on. */
+export interface TwoFactorChallenge {
+  requires2FA: true;
+  twoFactorToken: string;
+  expiresIn: number;
+}
+
+type AuditBase = { agencyId: string; userId: string } & ClientInfo;
 
 export interface MeResult {
   id: string;
@@ -45,6 +55,7 @@ export class AuthService {
     private readonly passwords: PasswordService,
     private readonly tokens: TokenService,
     private readonly audit: AuditService,
+    private readonly twoFactor: TwoFactorService,
     config: ConfigService<EnvironmentVariables, true>,
   ) {
     this.maxAttempts = config.get('LOGIN_MAX_ATTEMPTS', { infer: true });
@@ -52,7 +63,7 @@ export class AuthService {
     this.passwordMaxAgeMs = config.get('PASSWORD_MAX_AGE_DAYS', { infer: true }) * 24 * 60 * 60_000;
   }
 
-  async login(email: string, password: string, client: ClientInfo): Promise<LoginResult> {
+  async login(email: string, password: string, client: ClientInfo): Promise<LoginResult | TwoFactorChallenge> {
     const user = await this.prisma.user.findUnique({
       where: { email: normalizeEmail(email) },
       include: { agency: { select: { isActive: true } } },
@@ -80,35 +91,86 @@ export class AuthService {
     }
 
     if (!(await this.passwords.verify(user.passwordHash, password))) {
-      const updated = await this.prisma.user.update({
-        where: { id: user.id },
-        data: { failedLoginAttempts: { increment: 1 } },
-        select: { failedLoginAttempts: true },
-      });
-      const lockNow = updated.failedLoginAttempts >= this.maxAttempts;
-      if (lockNow) {
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: { lockedUntil: new Date(Date.now() + this.lockoutMs), failedLoginAttempts: 0 },
-        });
-        await this.tokens.revokeAllForUser(user.id, 'locked');
-        await this.audit.record({ ...auditBase, action: 'ACCOUNT_LOCKED', details: { reason: 'failed_logins' } });
-      }
-      return fail('wrong_password', { locked: lockNow });
+      return fail('wrong_password', { locked: await this.registerFailure(user.id, auditBase) });
     }
 
     if (user.is2faEnabled) {
-      // Fail closed until the 2FA step exists (ROADMAP P1-07): never skip a second factor silently.
-      return fail('2fa_not_implemented');
+      // Password is right, but no session until a TOTP code is verified at /auth/2fa/verify.
+      // Failed-attempt counters are only reset once the whole login succeeds.
+      await this.audit.record({ ...auditBase, action: 'LOGIN_2FA_CHALLENGE' });
+      return {
+        requires2FA: true,
+        ...(await this.tokens.signTwoFactorChallenge({ userId: user.id, agencyId: user.agencyId })),
+      };
     }
 
+    return this.completeLogin(user, client, 'password');
+  }
+
+  /** Second login step for 2FA users. Wrong codes count towards the same lockout as wrong passwords. */
+  async verifyTwoFactorLogin(twoFactorToken: string, code: string, client: ClientInfo): Promise<LoginResult> {
+    const pending = await this.tokens.verifyTwoFactorChallenge(twoFactorToken);
+    const user = await this.prisma.user.findFirst({
+      where: { id: pending.userId, agencyId: pending.agencyId },
+      include: { agency: { select: { isActive: true } } },
+    });
+    if (!user) throw new UnauthorizedException(INVALID_LOGIN);
+
+    const auditBase = { agencyId: user.agencyId, userId: user.id, ...client };
+    const blocked =
+      !user.isActive ||
+      !user.agency.isActive ||
+      !user.is2faEnabled ||
+      (user.lockedUntil !== null && user.lockedUntil.getTime() > Date.now());
+    if (blocked) {
+      await this.audit.record({ ...auditBase, action: 'LOGIN_FAILED', details: { reason: '2fa_blocked' } });
+      throw new UnauthorizedException(INVALID_LOGIN);
+    }
+
+    if (!(await this.twoFactor.consumeCode(user, code))) {
+      const locked = await this.registerFailure(user.id, auditBase);
+      await this.audit.record({ ...auditBase, action: 'LOGIN_FAILED', details: { reason: 'wrong_2fa_code', locked } });
+      throw new UnauthorizedException('Invalid authentication code');
+    }
+
+    return this.completeLogin(user, client, 'password+totp');
+  }
+
+  /** Counts a failed attempt; locks the account (and ends its sessions) at the limit. Returns true if locked. */
+  private async registerFailure(userId: string, auditBase: AuditBase): Promise<boolean> {
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginAttempts: { increment: 1 } },
+      select: { failedLoginAttempts: true },
+    });
+    if (updated.failedLoginAttempts < this.maxAttempts) return false;
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lockedUntil: new Date(Date.now() + this.lockoutMs), failedLoginAttempts: 0 },
+    });
+    await this.tokens.revokeAllForUser(userId, 'locked');
+    await this.audit.record({ ...auditBase, action: 'ACCOUNT_LOCKED', details: { reason: 'failed_logins' } });
+    return true;
+  }
+
+  private async completeLogin(
+    user: { id: string; agencyId: string; passwordChangedAt: Date | null },
+    client: ClientInfo,
+    method: 'password' | 'password+totp',
+  ): Promise<LoginResult> {
     await this.prisma.user.update({
       where: { id: user.id },
       data: { failedLoginAttempts: 0, lockedUntil: null, lastLoginAt: new Date() },
     });
     const tokens = await this.tokens.issueForNewSession({ userId: user.id, agencyId: user.agencyId }, client);
-    await this.audit.record({ ...auditBase, action: 'LOGIN_SUCCESS' });
-
+    await this.audit.record({
+      agencyId: user.agencyId,
+      userId: user.id,
+      action: 'LOGIN_SUCCESS',
+      details: { method },
+      ...client,
+    });
     return { ...tokens, mustChangePassword: this.isPasswordExpired(user.passwordChangedAt) };
   }
 

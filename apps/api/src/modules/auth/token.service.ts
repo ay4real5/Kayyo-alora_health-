@@ -27,6 +27,7 @@ interface AccessTokenClaims {
 
 export const JWT_ISSUER = 'alora-api';
 export const JWT_AUDIENCE = 'alora';
+export const TWO_FACTOR_AUDIENCE = 'alora-2fa';
 
 const SESSION_EXPIRED = 'Session expired. Please log in again.';
 
@@ -141,6 +142,32 @@ export class TokenService {
       data: { revokedAt: new Date(), revokedReason: reason },
     });
     return result.count === 1;
+  }
+
+  /**
+   * After a correct password for a 2FA user: a 5-minute token that can only be exchanged, together with
+   * a TOTP code, at /auth/2fa/verify. Its separate audience means it is never accepted as an access token.
+   */
+  async signTwoFactorChallenge(user: AuthUser): Promise<{ twoFactorToken: string; expiresIn: number }> {
+    const expiresIn = 5 * 60;
+    const twoFactorToken = await this.jwt.signAsync(
+      { sub: user.userId, agencyId: user.agencyId } satisfies AccessTokenClaims,
+      { algorithm: 'HS256', expiresIn, issuer: JWT_ISSUER, audience: TWO_FACTOR_AUDIENCE },
+    );
+    return { twoFactorToken, expiresIn };
+  }
+
+  async verifyTwoFactorChallenge(token: string): Promise<AuthUser> {
+    try {
+      const claims = await this.jwt.verifyAsync<AccessTokenClaims>(token, {
+        algorithms: ['HS256'],
+        issuer: JWT_ISSUER,
+        audience: TWO_FACTOR_AUDIENCE,
+      });
+      return { userId: claims.sub, agencyId: claims.agencyId };
+    } catch {
+      throw new UnauthorizedException('Two-factor sign-in expired. Please log in again.');
+    }
   }
 
   async verifyAccessToken(token: string): Promise<AuthUser> {

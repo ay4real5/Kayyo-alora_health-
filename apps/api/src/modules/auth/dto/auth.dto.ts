@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsNotEmpty,
   IsString,
+  Matches,
   MaxLength,
   registerDecorator,
   type ValidationOptions,
@@ -54,4 +55,23 @@ export class ChangePasswordDto {
 
   @IsStrongPassword()
   newPassword!: string;
+}
+
+export class TwoFactorCodeDto {
+  @Matches(/^\d{6}$/, { message: 'code must be the 6-digit code from your authenticator app' })
+  code!: string;
+}
+
+export class TwoFactorLoginDto extends TwoFactorCodeDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(2000)
+  twoFactorToken!: string;
+}
+
+export class DisableTwoFactorDto extends TwoFactorCodeDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  password!: string;
 }

@@ -29,6 +29,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://alora:ci-only-password@localhost:5432/alora_test
       JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-000
+      # Throwaway key for CI test data only — never used anywhere real.
+      PHI_ENCRYPTION_KEY: hBu2w8X/qvhzK7L7aRK0fdYGPUDLkz4+wrrfmhaBBEA=
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
