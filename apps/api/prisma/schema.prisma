@@ -54,7 +54,8 @@ model Agency {
 model User {
   id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   agencyId            String    @map("agency_id") @db.Uuid
-  email               String    @db.VarChar(255)
+  /// Stored lower-cased. Globally unique so login needs only email + password (DECISIONS D-020).
+  email               String    @unique @db.VarChar(255)
   passwordHash        String    @map("password_hash") @db.VarChar(255)
   firstName           String    @map("first_name") @db.VarChar(100)
   lastName            String    @map("last_name") @db.VarChar(100)
@@ -82,7 +83,6 @@ model User {
   uploadedDocuments   Document[]        @relation("DocumentUploadedBy")
   notifications       Notification[]
 
-  @@unique([agencyId, email])
   @@index([agencyId])
   @@map("users")
 }
