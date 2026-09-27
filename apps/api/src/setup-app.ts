@@ -7,9 +7,11 @@ import {
   correlationIdMiddleware,
   noStoreMiddleware,
 } from './common/middleware/correlation-id.middleware.js';
-import type { EnvironmentVariables } from './config/env.validation.js';
+import { API_PREFIX } from './config/api.constants.js';
+import { AppEnv, type EnvironmentVariables } from './config/env.validation.js';
+import { setupSwagger } from './openapi/openapi.js';
 
-export const API_PREFIX = 'api/v1';
+export { API_PREFIX };
 
 /** App-wide setup shared by main.ts and e2e tests, so tests exercise the real configuration (D-010). */
 export function setupApp(app: INestApplication): INestApplication {
@@ -33,6 +35,12 @@ export function setupApp(app: INestApplication): INestApplication {
   );
   app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  const docsEnabled =
+    config.get('API_DOCS_ENABLED', { infer: true }) ??
+    config.get('APP_ENV', { infer: true }) !== AppEnv.Production;
+  if (docsEnabled) setupSwagger(app);
+
   app.enableShutdownHooks();
   return app;
 }

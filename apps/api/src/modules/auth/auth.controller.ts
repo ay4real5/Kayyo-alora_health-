@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
@@ -18,6 +19,7 @@ import { TwoFactorService } from './two-factor/two-factor.service.js';
 /** Stricter rate limit for credential endpoints: 10 per minute per IP. */
 const CREDENTIAL_LIMIT = { default: { limit: 10, ttl: 60_000 } };
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(

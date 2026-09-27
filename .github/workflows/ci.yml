@@ -39,6 +39,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Check committed OpenAPI files are up to date (run `npm run openapi -w @alora/api` if this fails)
+        run: |
+          npm run openapi -w @alora/api
+          git diff --exit-code -- docs/api docs/base44-portal
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test

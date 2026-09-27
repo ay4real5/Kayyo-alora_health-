@@ -1,6 +1,7 @@
 import { plainToInstance, Transform } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -59,6 +60,15 @@ export class EnvironmentVariables {
     { each: true, message: 'CORS_ORIGINS entries must be exact http(s) origins, no wildcards' },
   )
   CORS_ORIGINS: string[] = [];
+
+  /**
+   * Serve interactive API docs at /api/v1/docs. Default: on everywhere except production, so the live
+   * system doesn't publish a map of itself. The committed spec (docs/api/openapi.json) is always available.
+   */
+  @Transform(({ value }) => (value === undefined || value === '' ? undefined : value === 'true' || value === true))
+  @IsOptional()
+  @IsBoolean()
+  API_DOCS_ENABLED?: boolean;
 
   /** Signs access tokens (HS256). At least 32 characters; generate with `openssl rand -base64 48`. */
   @IsString()

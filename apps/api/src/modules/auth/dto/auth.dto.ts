@@ -1,4 +1,5 @@
 import { checkPassword } from '@alora/shared';
+import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsEmail,
@@ -53,6 +54,8 @@ export class ChangePasswordDto {
   @MaxLength(128)
   currentPassword!: string;
 
+  /** 12-128 characters with an uppercase letter, a lowercase letter, a number and a special character. */
+  @ApiProperty({ minLength: 12, maxLength: 128 })
   @IsStrongPassword()
   newPassword!: string;
 }
