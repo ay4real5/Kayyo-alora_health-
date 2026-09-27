@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-18 done — Phase 1 API complete; web dashboard foundation in place.
+On `main`: P1-01 to P1-19 done — Phase 1 API complete; dashboard has login + patient screens.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -43,6 +43,8 @@ On `main`: P1-01 to P1-18 done — Phase 1 API complete; web dashboard foundatio
   refresh cookie + in-memory access token, cross-tab-safe renewal, 15-min idle logout, permission-filtered shell,
   dashboard cards; placeholder pages for patients/staff/schedule/users/physicians. 4 Playwright browser tests pass
   locally (not in CI yet — P1-22). Auth rate limits relaxed for shared office IPs. D-034.
+- Web patients (P1-19): list/search, detail, admit/edit, discharge/readmit, diagnoses, allergies. Web "today" uses
+  the agency timezone (`useAgencyToday`); API future-date checks tolerate UTC+14. 6 Playwright tests (re-seed first). D-035.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -55,11 +57,10 @@ Nothing.
 
 ## Next up
 
-**P1-19** — Web: patients list (search, status filter, pagination) and patient detail (demographics, SSN last 4,
-diagnoses, allergies) + admit/edit/discharge/readmit forms and add/remove diagnosis/allergy, using the `/patients` API.
-Then **P1-20** staff/users/physicians pages, **P1-21** scheduling calendar, **P1-22** end-to-end pass incl. Playwright
-in CI (needs API + Postgres + seed + dashboard in the CI job).
-On the owner's laptop: run full checks with `--concurrency=2` (AGENTS §8).
+**P1-20** — Web: staff (list with discipline/ZIP filters, profile with pay only for payroll/self, credentials with
+state badges + add/verify/remove, availability editor, time off request/approve), users (list, create with roles,
+deactivate/reactivate/unlock/reset 2FA), physicians (list, add/edit with NPI check). Reuse `components/ui` and the
+patterns in the patients pages. Then **P1-21** scheduling calendar, **P1-22** end-to-end pass + Playwright in CI.
 
 ## Blockers / waiting on human
 
@@ -70,6 +71,7 @@ On the owner's laptop: run full checks with `--concurrency=2` (AGENTS §8).
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P1-19 | Patient screens + timezone bug fix; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-18 | Web dashboard foundation + browser tests; rate-limit fix; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-17 | Demo seed + test; CI green, merged. Phase 1 API complete. |
 | 2026-09-27 | Claude Code | P1-16 | In-app notifications; CI green, merged. |
