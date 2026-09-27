@@ -78,19 +78,34 @@ model User {
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency              Agency            @relation(fields: [agencyId], references: [id])
+  agency              Agency              @relation(fields: [agencyId], references: [id])
   userRoles           UserRole[]
+  recoveryCodes       TwoFaRecoveryCode[]
   refreshTokens       RefreshToken[]
   staffProfile        StaffProfile?
-  portalPatients      Patient[]         @relation("PatientPortalUser")
-  verifiedCredentials StaffCredential[] @relation("CredentialVerifiedBy")
-  approvedTimeOff     StaffTimeOff[]    @relation("TimeOffApprovedBy")
-  createdVisits       Visit[]           @relation("VisitCreatedBy")
-  uploadedDocuments   Document[]        @relation("DocumentUploadedBy")
+  portalPatients      Patient[]           @relation("PatientPortalUser")
+  verifiedCredentials StaffCredential[]   @relation("CredentialVerifiedBy")
+  approvedTimeOff     StaffTimeOff[]      @relation("TimeOffApprovedBy")
+  createdVisits       Visit[]             @relation("VisitCreatedBy")
+  uploadedDocuments   Document[]          @relation("DocumentUploadedBy")
   notifications       Notification[]
 
   @@index([agencyId])
   @@map("users")
+}
+
+/// One-time 2FA backup codes (DECISIONS D-026). Only a SHA-256 hash is stored; codes carry 80 random bits.
+model TwoFaRecoveryCode {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  codeHash  String    @map("code_hash") @db.VarChar(64)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@map("two_fa_recovery_codes")
 }
 
 /// agency_id is NULL for built-in system roles shared by all agencies (DECISIONS D-013).
