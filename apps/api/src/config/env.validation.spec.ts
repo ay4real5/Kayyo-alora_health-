@@ -1,4 +1,7 @@
+import { randomBytes } from 'node:crypto';
 import { AppEnv, validateEnv } from './env.validation.js';
+
+const newKey = () => randomBytes(32).toString('base64');
 
 describe('validateEnv', () => {
   it('applies defaults when nothing is set', () => {
@@ -27,10 +30,39 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ DATABASE_URL: 'mysql://x' })).toThrow(/DATABASE_URL/);
   });
 
-  it('requires DATABASE_URL in production', () => {
-    expect(() => validateEnv({ APP_ENV: 'production' })).toThrow(/required in production/);
-    expect(
-      validateEnv({ APP_ENV: 'production', DATABASE_URL: 'postgresql://u:p@db:5432/x' }).APP_ENV,
-    ).toBe(AppEnv.Production);
+  it('requires DATABASE_URL and PHI_ENCRYPTION_KEY in production', () => {
+    expect(() => validateEnv({ APP_ENV: 'production' })).toThrow(/DATABASE_URL: required/);
+    expect(() => validateEnv({ APP_ENV: 'production' })).toThrow(/PHI_ENCRYPTION_KEY: required/);
+    const env = validateEnv({
+      APP_ENV: 'production',
+      DATABASE_URL: 'postgresql://u:p@db:5432/x',
+      PHI_ENCRYPTION_KEY: newKey(),
+    });
+    expect(env.APP_ENV).toBe(AppEnv.Production);
+  });
+
+  it('rejects a malformed PHI key without echoing it', () => {
+    const shortKey = randomBytes(16).toString('base64');
+    expect(() => validateEnv({ PHI_ENCRYPTION_KEY: shortKey })).toThrow(/32 bytes/);
+    expect(() => validateEnv({ PHI_ENCRYPTION_KEY: shortKey })).not.toThrow(shortKey);
+  });
+
+  it('validates key rotation settings', () => {
+    expect(() =>
+      validateEnv({
+        PHI_ENCRYPTION_KEY: newKey(),
+        PHI_ENCRYPTION_KEY_VERSION: '2',
+        PHI_ENCRYPTION_PREVIOUS_KEYS: `2:${newKey()}`,
+      }),
+    ).toThrow(/defined twice/);
+    expect(() => validateEnv({ PHI_ENCRYPTION_PREVIOUS_KEYS: `1:${newKey()}` })).toThrow(
+      /but PHI_ENCRYPTION_KEY is not/,
+    );
+    const env = validateEnv({
+      PHI_ENCRYPTION_KEY: newKey(),
+      PHI_ENCRYPTION_KEY_VERSION: '3',
+      PHI_ENCRYPTION_PREVIOUS_KEYS: `1:${newKey()}, 2:${newKey()}`,
+    });
+    expect(env.PHI_ENCRYPTION_KEY_VERSION).toBe(3);
   });
 });

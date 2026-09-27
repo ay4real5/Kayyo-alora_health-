@@ -71,7 +71,7 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - DTOs with class-validator for all request validation
 - Prisma for all database access (raw SQL only for materialized views / partitioning)
 - HIPAA audit middleware logs every PHI access to `audit_logs`
-- PHI fields (SSN, etc.) encrypted with AES-256-GCM before storage
+- PHI fields (SSN, 2FA secrets, etc.) encrypted before storage with `PhiCryptoService` + a `PhiContext` label (DECISIONS D-017)
 - JWT access tokens: 15-min TTL. Refresh tokens: 7-day TTL, rotated, stored hashed
 - BullMQ for async jobs (claims, notifications, reports)
 - Socket.IO for real-time (Next.js dashboard + mobile app)

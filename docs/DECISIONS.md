@@ -134,3 +134,20 @@ Note: npm only applies new overrides on a clean install (delete `node_modules` +
 - Unknown paths *outside* `/api/v1` get Express's default HTML 404 (Nest only handles 404s under the prefix).
   Accepted: production only proxies `/api`. Unknown paths under `/api/v1` get the JSON error format.
 - Tests load `reflect-metadata` via Vitest `setupFiles`, as the real app does through Nest.
+
+### D-017 — PHI encryption implementation (P1-05)
+2026-09-27 · Claude Code
+Implements D-006 in `apps/api/src/common/crypto/`.
+- Format: `[version:1][iv:12][tag:16][ciphertext]`, AES-256-GCM, random IV per value.
+- Each value is bound to a **context label** (`PhiContext`, e.g. `patients.ssn_encrypted`) as GCM additional
+  authenticated data, so ciphertext moved to another column won't decrypt. **Never rename a PhiContext value**
+  — existing data becomes unreadable.
+- Use `PhiCryptoService.encrypt/decrypt` (injected; `CryptoModule` is global). Don't call node:crypto directly.
+- Keys: `PHI_ENCRYPTION_KEY` (current), `PHI_ENCRYPTION_KEY_VERSION`, `PHI_ENCRYPTION_PREVIOUS_KEYS`
+  ("1:<b64>,2:<b64>"). Rotation = new key + bumped version + old key moved to PREVIOUS_KEYS; a later job can
+  re-encrypt old values (find them with `keyVersionOf`). Required in production; optional in dev (the service
+  throws only when PHI is actually encrypted/decrypted without a key).
+- Encrypted columns can't be searched. If we ever need "find patient by SSN", add a separate keyed hash
+  (HMAC) column — don't decrypt-and-scan.
+- Production keys belong in a secrets manager (e.g. AWS KMS/Secrets Manager), not in a `.env` file. Decide
+  with hosting (Q-006).

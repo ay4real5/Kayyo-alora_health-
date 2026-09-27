@@ -4,12 +4,14 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  IsString,
   IsUrl,
   Matches,
   Max,
   Min,
   validateSync,
 } from 'class-validator';
+import { buildPhiKeyring } from '../common/crypto/phi-keyring.js';
 
 export enum AppEnv {
   Development = 'development',
@@ -54,6 +56,24 @@ export class EnvironmentVariables {
     { each: true, message: 'CORS_ORIGINS entries must be exact http(s) origins, no wildcards' },
   )
   CORS_ORIGINS: string[] = [];
+
+  /** 32 random bytes, base64. Format and rotation: src/common/crypto/phi-crypto.ts (DECISIONS D-006). */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsString()
+  PHI_ENCRYPTION_KEY?: string;
+
+  @Transform(({ value }) => (value === undefined || value === '' ? undefined : Number(value)))
+  @IsInt()
+  @Min(1)
+  @Max(255)
+  PHI_ENCRYPTION_KEY_VERSION: number = 1;
+
+  /** Retired keys still needed to read old values: "1:<base64>,2:<base64>". */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsString()
+  PHI_ENCRYPTION_PREVIOUS_KEYS?: string;
 }
 
 export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables {
@@ -64,6 +84,15 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
 
   if (env.APP_ENV === AppEnv.Production && !env.DATABASE_URL) {
     problems.push('DATABASE_URL: required in production');
+  }
+  if (env.APP_ENV === AppEnv.Production && !env.PHI_ENCRYPTION_KEY) {
+    problems.push('PHI_ENCRYPTION_KEY: required in production');
+  }
+  try {
+    buildPhiKeyring(env);
+  } catch (error) {
+    // buildPhiKeyring's messages never include key material.
+    problems.push(`PHI keys: ${(error as Error).message}`);
   }
   if (problems.length > 0) {
     throw new Error(`Invalid environment configuration:\n  - ${problems.join('\n  - ')}`);
