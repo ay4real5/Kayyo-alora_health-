@@ -8,6 +8,7 @@ import { normalizeIcd10 } from '@alora/shared';
 import { PhiContext, PhiCryptoService } from '../../common/crypto/phi-crypto.service.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Paginated } from '../../common/dto/pagination.dto.js';
+import { fromDate, toDate, today } from '../../common/utils/dates.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
@@ -362,17 +363,4 @@ function toDiagnosis(d: {
 
 function toAllergy(a: { id: string; allergen: string; reaction: string | null; severity: string | null }): AllergyView {
   return { id: a.id, allergen: a.allergen, reaction: a.reaction, severity: a.severity };
-}
-
-/** 'YYYY-MM-DD' ↔ a DATE column (UTC midnight). */
-function toDate(value: string | undefined): Date | undefined {
-  return value ? new Date(`${value}T00:00:00Z`) : undefined;
-}
-
-function fromDate(value: Date | null): string | null {
-  return value ? value.toISOString().slice(0, 10) : null;
-}
-
-function today(): Date {
-  return toDate(new Date().toISOString().slice(0, 10))!;
 }
