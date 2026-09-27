@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-10 done.
+On `main`: P1-01 to P1-11 done.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -16,7 +16,7 @@ On `main`: P1-01 to P1-10 done.
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
   timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
-  `AuditService`. e2e suite (58 tests, ~2 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
+  `AuditService`. e2e suite (73 tests, ~3 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
 - 2FA (P1-07): TOTP setup/enable/disable, two-step login with challenge token, replay protection.
   Recovery codes + admin reset still to do (P1-11). Details: DECISIONS D-021.
 - RBAC (P1-08): 56 permissions + 11 built-in roles synced from code on every boot; `@Permissions()` +
@@ -25,6 +25,8 @@ On `main`: P1-01 to P1-10 done.
   ACCESS_DENIED, no-store cache headers. Details: DECISIONS D-023.
 - API docs (P1-10): `/api/v1/docs` (off in prod); committed `docs/api/openapi.json` and the Base44 portal
   spec, kept fresh by CI. Details: DECISIONS D-024.
+- Users (P1-11): admin user management with no-escalation rules, deactivate/unlock/reset-2FA, activity.
+  Details: DECISIONS D-025.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -37,10 +39,10 @@ Nothing.
 
 ## Next up
 
-**P1-11** — Users module: admin list/create (admin-set starting password → mustChangePassword)/view/update,
-deactivate (revokes sessions), unlock, reset 2FA, role assignment without privilege escalation (can only
-grant roles whose permissions the caller holds; `PermissionsService.invalidate`), user activity from
-audit_logs. Plus 2FA recovery codes (10 one-time codes, hashed; usable at /auth/2fa/verify).
+**P1-11b** — 2FA recovery codes (10 one-time codes shown when 2FA is enabled or regenerated, stored hashed,
+accepted at `/auth/2fa/verify` instead of a TOTP code) + optional per-role "2FA required" policy.
+Then **P1-12** Patients module (the first PHI module: CRUD, admit/discharge/readmit, diagnoses, allergies,
+authorizations; SSN via PhiCryptoService; record-level rules for assigned staff).
 
 ## Blockers / waiting on human
 
@@ -50,6 +52,7 @@ audit_logs. Plus 2FA recovery codes (10 one-time codes, hashed; usable at /auth/
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-11 | Users module + no-escalation rules; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-10 | OpenAPI docs + committed specs with CI freshness check; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-09 | Audit interceptor + denied-access logging + no-store; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-08 | RBAC (roles/permissions sync, guard), CI green, merged. |

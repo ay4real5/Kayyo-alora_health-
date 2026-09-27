@@ -27,7 +27,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P1-08** `agent` RBAC: permissions seed, `@Permissions()` decorator, RbacGuard, agency scoping. deps: P1-06
 - [x] **P1-09** `agent` HIPAA audit interceptor → `audit_logs` (PHI redaction, no-store cache headers). deps: P1-06
 - [x] **P1-10** `agent` Swagger/OpenAPI at `/api/v1/docs` + script exporting portal-only spec to `docs/base44-portal/openapi-portal-spec.json`. deps: P1-04
-- [ ] **P1-11** `agent` Users module: admin CRUD, deactivate/reactivate, unlock, admin 2FA reset, role assignment without privilege escalation, user activity. deps: P1-08, P1-09
+- [x] **P1-11** `agent` Users module: admin CRUD, deactivate/reactivate, unlock, admin 2FA reset, role assignment without privilege escalation, user activity. deps: P1-08, P1-09
 - [ ] **P1-11b** `agent` 2FA recovery codes (one-time, hashed, usable at login) + per-role "2FA required" policy (D-021). deps: P1-11
 - [ ] **P1-12** `agent` Patients module: CRUD, admit/discharge/readmit, diagnoses, allergies, authorizations. deps: P1-08, P1-09
 - [ ] **P1-13** `agent` Staff module: CRUD, credentials, availability, time-off, expiring-credentials. deps: P1-08, P1-09
