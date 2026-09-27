@@ -19,8 +19,10 @@ exactly so the next agent can continue where you stopped.
 ## 2. While working
 
 - Work on **one task ID at a time** (e.g. `P1-04`). Branch name: `task/P1-04-short-name`.
-- Commit early and often with the task ID in the message: `P1-04: add patient CRUD endpoints`.
-  Small commits mean a session that dies mid-task loses little.
+- **Commit and push after every working step** (not just at the end of a task), with the task ID in the
+  message: `P1-04: add patient CRUD endpoints`. The owner's AI usage can run out at any moment; anything not
+  pushed is invisible to the next agent. If you've made progress, update STATUS "In progress" in the same
+  commit so the next agent knows the exact next step.
 - If you make a choice the design doc doesn't cover, or you deviate from it, add an entry to
   `docs/DECISIONS.md`. If you hit something that needs the human, add it to `docs/OPEN_QUESTIONS.md`
   and move on to something unblocked.
