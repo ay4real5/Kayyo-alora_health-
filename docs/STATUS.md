@@ -5,17 +5,22 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-05 done.
+On `main`: P1-01 to P1-06 done.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
-  `PrismaService`/`DatabaseModule` (not yet imported by AppModule — P1-06 does that).
+  `DatabaseModule` wired in; 3 migrations applied to the Neon dev DB.
 - Common layer (P1-04): validated env config, `{success,data}` envelope + pagination, error filter
   (hides internals, maps Prisma errors), strict ValidationPipe, X-Request-Id, helmet, exact-origin CORS.
   Conventions in AGENTS.md §6 "Common layer".
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
+- Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
+  timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
+  `AuditService`. 32 e2e tests pass against Neon and CI Postgres. Details: DECISIONS D-020.
+- Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
+  owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
   schema/migration drift, runs DB e2e tests, builds the Docker image and health-checks it. All green.
-- Docker does not run on the owner's laptop (D-011). Locally, DB tests skip when `DATABASE_URL` is unset.
+- Docker does not run on the owner's laptop (D-011); CI covers the image.
 
 ## In progress
 
@@ -23,20 +28,19 @@ Nothing.
 
 ## Next up
 
-**P1-06** — Auth module: login, refresh-token rotation (hashed), logout, lockout after 5 failures,
-password policy, `/auth/me`. First task that needs the database at runtime: import `DatabaseModule` in
-AppModule. Local runs need a dev database (Q-007); until the owner sets one up, DB-backed tests run in CI.
-Also needs new env vars (JWT secrets) added to `EnvironmentVariables` + `.env.example`.
+**P1-07** — 2FA (TOTP): setup (QR/otpauth URI, secret encrypted with `PhiContext.UserTwoFaSecret`), verify,
+and the login second step (`requires2FA` + short-lived temp token). Replace the fail-closed branch in
+`AuthService.login`. Then **P1-08** RBAC (permissions seed, `@Permissions()`, RbacGuard).
 
 ## Blockers / waiting on human
 
-- Q-007 development database (Docker can't run on the laptop) — needed before P1-03
 - Q-002 Base44 portal auth design — must be settled before P3-14/P3-16, not before Phase 1
 
 ## Session log
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-06 | Auth module + Neon/Upstash dev env; e2e green locally and in CI; merged. |
 | 2026-09-27 | Claude Code | P1-05 | PHI encryption service + key rotation, CI green, merged. |
 | 2026-09-27 | Claude Code | P1-04 | Common layer done, CI green, merged. Also overrode Prisma CLI's vulnerable deps (D-015). |
 | 2026-09-27 | Claude Code | P1-03 | Prisma schema (22 tables) + migration; CI migrates real Postgres + drift check, green; merged. |
