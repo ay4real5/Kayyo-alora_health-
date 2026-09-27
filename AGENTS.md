@@ -104,6 +104,9 @@ npm run lint                             # turbo: oxlint
 npm run test                             # turbo: unit tests (Vitest)
 npm run test:e2e -w @alora/api           # API e2e tests
 npm run start:dev -w @alora/api          # API on http://localhost:3001/api/v1 (health: /api/v1/health)
+npm run generate -w @alora/api           # regenerate Prisma client (turbo does this before build/test)
+npm run db:deploy -w @alora/api          # apply migrations to DATABASE_URL
+npm run db:migrate -w @alora/api -- --name <name>   # create a migration (needs a database, see D-014)
 docker compose up -d --build             # whole stack incl. API container
 ```
 

@@ -87,3 +87,30 @@ The owner made the repo public so agents can read CI results and work without Gi
 made private or moved before real use. Consequences: **never commit secrets, real PHI, or real agency/patient
 data** (already a rule), and assume anything pushed can be copied permanently. CI results are readable at
 `https://api.github.com/repos/ay4real5/Kayyo-alora_health-/actions/runs` without auth.
+
+### D-013 — Schema departures from DESIGN.md §5 (P1-03)
+2026-09-27 · Claude Code
+- **Prisma 7 setup**: generator `prisma-client` → `apps/api/src/generated/prisma` (git-ignored, rebuilt by the
+  turbo `generate` task). No DB URL in the schema; it's in `apps/api/prisma.config.ts`, which loads the root
+  `.env`. Postgres access goes through `@prisma/adapter-pg`.
+- `users.role` dropped (D-005). Roles come from `user_roles`.
+- `roles.agency_id` is **nullable**: NULL = built-in system role shared by all agencies (`is_system = true`);
+  agency-specific custom roles have an agency. Unique on (agency_id, name).
+- `patients.authorization_id` dropped — authorizations already point at the patient; a second link would drift.
+- Added `documents.deleted_at` — the API spec says "soft-delete document" but the table had no column for it.
+- Added unique (agency_id, employee_id) on `staff_profiles` — IVR clock-in identifies caregivers by employee ID.
+- `refresh_tokens.token_hash` indexed (looked up on every refresh).
+- `audit_logs` has no foreign keys on purpose (entries must outlive the rows they describe).
+- Status columns stay `VARCHAR` as in the design; valid values are enforced in DTOs, not DB enums, so
+  adding a status never needs a migration.
+- Tables not needed until later phases (care plans, assessments, EVV, billing, payroll, messaging…) are added
+  by the task that first needs them, each with its own migration.
+
+### D-014 — Migrations workflow
+2026-09-27 · Claude Code
+- Change `schema.prisma`, then create a migration. With a database: `npm run db:migrate -w @alora/api -- --name <name>`.
+  Without one (owner's laptop): write the SQL with
+  `npx prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --script`
+  (needs a shadow DB) or, for the very first migration only, `--from-empty`.
+- CI applies all migrations to a fresh Postgres and **fails if the migrations don't match `schema.prisma`**.
+- Never edit a migration that has been merged to `main`; add a new one.
