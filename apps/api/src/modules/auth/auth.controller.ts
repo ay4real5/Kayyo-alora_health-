@@ -20,8 +20,13 @@ import { clearRefreshCookie, deliverTokens, readRefreshCookie } from './refresh-
 import type { ClientInfo } from './token.service.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
-/** Stricter rate limit for credential endpoints: 10 per minute per IP. */
-const CREDENTIAL_LIMIT = { default: { limit: 10, ttl: 60_000 } };
+/**
+ * Rate limits (per IP; DECISIONS D-034). A whole office often shares one IP, so sign-in allows 30/minute — account
+ * lockout after 5 wrong passwords is what stops guessing. Refresh has only the global limit: its token is 256
+ * random bits (unguessable) and every page load uses it. Rare account-settings actions stay at 10/minute.
+ */
+const SIGN_IN_LIMIT = { default: { limit: 30, ttl: 60_000 } };
+const ACCOUNT_SETTINGS_LIMIT = { default: { limit: 10, ttl: 60_000 } };
 
 @ApiTags('auth')
 @Controller('auth')
@@ -39,7 +44,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle(CREDENTIAL_LIMIT)
+  @Throttle(SIGN_IN_LIMIT)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -48,7 +53,6 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle(CREDENTIAL_LIMIT)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() dto: RefreshTokenDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -83,7 +87,7 @@ export class AuthController {
 
   /** Second login step for users with 2FA: exchanges the challenge token + a TOTP code for a session. */
   @Public()
-  @Throttle(CREDENTIAL_LIMIT)
+  @Throttle(SIGN_IN_LIMIT)
   @Post('2fa/verify')
   @HttpCode(HttpStatus.OK)
   async verifyTwoFactor(@Body() dto: TwoFactorLoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -101,7 +105,7 @@ export class AuthController {
     return this.twoFactor.setup(user, clientInfo(req));
   }
 
-  @Throttle(CREDENTIAL_LIMIT)
+  @Throttle(ACCOUNT_SETTINGS_LIMIT)
   /** Turns 2FA on and returns 10 one-time backup codes — the only time they are shown. */
   @Post('2fa/enable')
   @HttpCode(HttpStatus.OK)
@@ -110,7 +114,7 @@ export class AuthController {
   }
 
   /** Replaces all backup codes with a new set (password + current authenticator code required). */
-  @Throttle(CREDENTIAL_LIMIT)
+  @Throttle(ACCOUNT_SETTINGS_LIMIT)
   @Post('2fa/recovery-codes')
   @HttpCode(HttpStatus.OK)
   regenerateRecoveryCodes(
@@ -121,14 +125,14 @@ export class AuthController {
     return this.twoFactor.regenerateRecoveryCodes(user, dto.password, dto.code, clientInfo(req));
   }
 
-  @Throttle(CREDENTIAL_LIMIT)
+  @Throttle(ACCOUNT_SETTINGS_LIMIT)
   @Post('2fa/disable')
   @HttpCode(HttpStatus.NO_CONTENT)
   async disableTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: DisableTwoFactorDto, @Req() req: Request) {
     await this.twoFactor.disable(user, dto.password, dto.code, clientInfo(req));
   }
 
-  @Throttle(CREDENTIAL_LIMIT)
+  @Throttle(ACCOUNT_SETTINGS_LIMIT)
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
   async changePassword(

@@ -438,3 +438,29 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Deterministic (fixed-seed PRNG) so screenshots and bug reports are reproducible. Visits are inserted directly with a
   slot plan that avoids double-booking (a test checks); recurring series use `recurrenceDates` like the real feature.
 - The seed e2e test re-seeds the dev database's demo agency on every run (~40 s against Neon).
+
+### D-034 — Web dashboard foundations (P1-18)
+2026-09-27 · Claude Code
+- **Next.js 16** (App Router, Turbopack, React 19), Tailwind 4, TanStack Query. Next 16 changed a lot — read
+  `apps/web/AGENTS.md` and the bundled docs in `node_modules/next/dist/docs/` before writing Next code (async
+  `params`/`cookies`/`headers`, `middleware` → `proxy`, no `next lint`, generated `LayoutProps`/`PageProps` types via
+  `next typegen`). UI primitives are small hand-written Tailwind components (`components/ui`), not the shadcn CLI.
+- **Session model — no BFF, the browser talks to the API directly** (so audit IPs and rate limits see the real client):
+  - access token only in memory (`lib/auth/session.ts`), never in localStorage/sessionStorage/cookies;
+  - refresh token in an **httpOnly, SameSite=Strict cookie set by the API**, scoped to `/api/v1/auth`, used only with
+    the `X-Auth-Transport: cookie` header (CSRF defence: a custom header forces a CORS preflight, and CORS allows exact
+    origins only). Mobile keeps body tokens. Cookie `Secure` everywhere except development/test.
+  - renewal a minute before expiry **only if the user was active**, single-flight, and serialised across tabs with the
+    **Web Locks API** (two tabs renewing with the same cookie would look like theft and sign the user out everywhere);
+  - **HIPAA auto-logoff**: 15 min without keyboard/mouse/touch → logout; warning banner in the last minute.
+  - Every logout is a **full page load**, wiping in-memory caches (React Query may hold PHI).
+- In production the dashboard and API must be **same-site** (e.g. `app.agency.com` + `api.agency.com`) for the
+  SameSite=Strict cookie to be sent; `CORS_ORIGINS` must list the dashboard origin exactly.
+- **Rate limits changed** after the browser tests exposed a real problem: an office behind one IP reloading pages would
+  hit 10 refreshes/min and be signed out. Now: refresh = global limit only (its token is unguessable); login and 2FA
+  verify = 30/min/IP (account lockout stops guessing); account-settings actions = 10/min/IP.
+- Security headers via `next.config.ts` (DENY framing, nosniff, no-referrer, HSTS, `Cache-Control: no-store`,
+  no `X-Powered-By`). A nonce-based CSP is part of the security pass (P4-09).
+- Browser tests: Playwright (`apps/web/e2e`, `npm run test:e2e -w @alora/web`) against a running API + dashboard with
+  the demo seed. Run locally for now; wired into CI in P1-22. Dashboard "today" uses the browser's timezone until the
+  API exposes the agency timezone.

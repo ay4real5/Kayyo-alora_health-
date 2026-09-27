@@ -55,4 +55,11 @@ Demo logins (password `Demo-Password-1!`, development only): `agency.admin@demo.
 `supervisor@demo.alora.test`, `office.staff@demo.alora.test`, `billing.staff@demo.alora.test`,
 `rn@demo.alora.test`, `hha@demo.alora.test`, `pt@demo.alora.test` and more (see the seed output).
 
+Run the API and the dashboard (two terminals):
+
+```bash
+npm run start:dev -w @alora/api   # http://localhost:3001/api/v1
+npm run dev -w @alora/web         # http://localhost:3000 — sign in with a demo login
+```
+
 More commands: [AGENTS.md §7](AGENTS.md).

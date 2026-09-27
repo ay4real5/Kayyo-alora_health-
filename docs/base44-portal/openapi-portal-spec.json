@@ -76,10 +76,7 @@
             "type": "string",
             "maxLength": 200
           }
-        },
-        "required": [
-          "refreshToken"
-        ]
+        }
       },
       "TwoFactorLoginDto": {
         "type": "object",

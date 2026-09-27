@@ -302,13 +302,19 @@ describe.skipIf(!hasDb)('Auth rate limiting (e2e)', () => {
     await app.close();
   });
 
-  it('allows 10 login attempts per minute per IP, then answers 429', async () => {
+  it('allows 30 login attempts per minute per IP, then answers 429', async () => {
     const attempt = () =>
       request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: `nobody-${randomUUID()}@example.test`, password: 'x' });
-    for (let i = 0; i < 10; i++) await attempt().expect(401);
+    for (let i = 0; i < 30; i++) await attempt().expect(401);
     const res = await attempt().expect(429);
     expect(res.body.error.code).toBe('TOO_MANY_REQUESTS');
+  });
+
+  it('does not rate-limit session renewal beyond the global limit (every page load uses it)', async () => {
+    for (let i = 0; i < 40; i++) {
+      await request(app.getHttpServer()).post('/api/v1/auth/refresh').send({ refreshToken: 'unknown' }).expect(401);
+    }
   });
 });

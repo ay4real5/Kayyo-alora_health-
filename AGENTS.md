@@ -112,6 +112,12 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - Permissions say *whether* a role may do something; filtering *which records* (assigned patients, own
   visits, own agency) is each service's job.
 
+### Web dashboard (apps/web) — DECISIONS D-034
+- Next.js 16 differs from older versions: read `apps/web/AGENTS.md` and `node_modules/next/dist/docs/` first.
+- Call the API with `useAuth().request(path)` (adds the token, renews once on 401). Never store tokens anywhere.
+- Gate UI with `useAuth().can('patients:read')` — cosmetic only; the API enforces permissions.
+- Pages under `src/app/(app)/` are signed-in only (AppShell guard).
+
 ### File naming
 - NestJS: `kebab-case` (`care-plans.service.ts`); DTOs: `*.dto.ts`
 - React: `PascalCase` components (`CalendarView.tsx`)
@@ -135,6 +141,8 @@ npm run generate -w @alora/api           # regenerate Prisma client (turbo does 
 npm run db:deploy -w @alora/api          # apply migrations to DATABASE_URL
 npm run openapi -w @alora/api            # after build: regenerate docs/api/openapi.json + portal spec (CI checks)
 npm run db:seed -w @alora/api            # after build: wipe + rebuild the FAKE demo agency, prints logins (D-033)
+npm run dev -w @alora/web                # dashboard on http://localhost:3000 (API must be running; CORS_ORIGINS)
+npm run test:e2e -w @alora/web           # Playwright browser tests (API + dashboard running, demo seed loaded)
 npm run db:migrate -w @alora/api -- --name <name>   # create a migration (needs a database, see D-014)
 docker compose up -d --build             # whole stack incl. API container
 ```
@@ -153,6 +161,8 @@ from `@alora/shared`, run `npm run build` first.
   `.../check-runs/<job id>/annotations`. Full logs need a login. **Unauthenticated calls are limited to 60 per
   hour** — poll once a minute at most, never in a tight loop.
 
+- On the owner's laptop run full checks as `npx turbo run build typecheck lint test --concurrency=2` — the default
+  parallelism (Next.js build workers + API lint/tests at once) runs out of memory and fails spuriously.
 - Owner's machine: Windows 11, **5.7 GB RAM — do not start Docker Desktop there** (DECISIONS D-011). Docker
   checks run in GitHub Actions. Scripts must work in Git Bash and PowerShell; avoid bash-only npm scripts.
 - Node version: see `.nvmrc` and DECISIONS D-001.
