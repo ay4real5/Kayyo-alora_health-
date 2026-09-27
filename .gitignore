@@ -45,3 +45,6 @@ Thumbs.db
 
 # agent-local files
 .claude/settings.local.json
+
+# prisma generated client (rebuilt by `npm run generate`)
+apps/api/src/generated/

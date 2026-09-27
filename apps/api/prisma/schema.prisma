@@ -1,0 +1,598 @@
+// Alora Health — database schema (source of truth, DECISIONS D-003).
+// Logical model: docs/DESIGN.md §5. Departures are listed in DECISIONS D-005 and D-013.
+// Table/column names stay snake_case (as in the design) via @@map/@map; Prisma fields are camelCase.
+// Status-like columns are plain strings, as in the design; allowed values are enforced in DTOs.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────── Agency & auth (§5.1) ───────────────────────────────
+
+model Agency {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                   String   @db.VarChar(255)
+  npi                    String?  @unique @db.VarChar(10)
+  taxId                  String?  @map("tax_id") @db.VarChar(20)
+  phone                  String?  @db.VarChar(20)
+  fax                    String?  @db.VarChar(20)
+  email                  String?  @db.VarChar(255)
+  addressLine1           String?  @map("address_line1") @db.VarChar(255)
+  addressLine2           String?  @map("address_line2") @db.VarChar(255)
+  city                   String?  @db.VarChar(100)
+  state                  String?  @db.VarChar(2)
+  zip                    String?  @db.VarChar(10)
+  timezone               String   @default("America/New_York") @db.VarChar(50)
+  medicareProviderNumber String?  @map("medicare_provider_number") @db.VarChar(20)
+  medicaidProviderNumber String?  @map("medicaid_provider_number") @db.VarChar(20)
+  evvStateConfig         Json?    @map("evv_state_config")
+  settings               Json     @default("{}")
+  isActive               Boolean  @default(true) @map("is_active")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users           User[]
+  roles           Role[]
+  patients        Patient[]
+  physicians      Physician[]
+  payers          Payer[]
+  staffProfiles   StaffProfile[]
+  visits          Visit[]
+  recurrenceRules RecurrenceRule[]
+  documents       Document[]
+  notifications   Notification[]
+
+  @@map("agencies")
+}
+
+model User {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  email               String    @db.VarChar(255)
+  passwordHash        String    @map("password_hash") @db.VarChar(255)
+  firstName           String    @map("first_name") @db.VarChar(100)
+  lastName            String    @map("last_name") @db.VarChar(100)
+  phone               String?   @db.VarChar(20)
+  isActive            Boolean   @default(true) @map("is_active")
+  is2faEnabled        Boolean   @default(false) @map("is_2fa_enabled")
+  twoFaSecret         String?   @map("two_fa_secret") @db.VarChar(255) // encrypted
+  lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz(6)
+  passwordChangedAt   DateTime? @map("password_changed_at") @db.Timestamptz(6)
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until") @db.Timestamptz(6)
+  pinHash             String?   @map("pin_hash") @db.VarChar(255)
+  pushToken           String?   @map("push_token")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency              Agency            @relation(fields: [agencyId], references: [id])
+  userRoles           UserRole[]
+  refreshTokens       RefreshToken[]
+  staffProfile        StaffProfile?
+  portalPatients      Patient[]         @relation("PatientPortalUser")
+  verifiedCredentials StaffCredential[] @relation("CredentialVerifiedBy")
+  approvedTimeOff     StaffTimeOff[]    @relation("TimeOffApprovedBy")
+  createdVisits       Visit[]           @relation("VisitCreatedBy")
+  uploadedDocuments   Document[]        @relation("DocumentUploadedBy")
+  notifications       Notification[]
+
+  @@unique([agencyId, email])
+  @@index([agencyId])
+  @@map("users")
+}
+
+/// agency_id is NULL for built-in system roles shared by all agencies (DECISIONS D-013).
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId    String?  @map("agency_id") @db.Uuid
+  name        String   @db.VarChar(50)
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency          Agency?          @relation(fields: [agencyId], references: [id])
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@unique([agencyId, name])
+  @@index([agencyId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  resource    String  @db.VarChar(100)
+  action      String  @db.VarChar(50)
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RefreshToken {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @map("token_hash") @db.VarChar(255)
+  deviceInfo String?   @map("device_info") @db.VarChar(255)
+  ipAddress  String?   @map("ip_address") @db.Inet
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+/// HIPAA audit log. Append-only, never deleted. Deliberately has no foreign keys so entries
+/// survive deletion/deactivation of the records they describe.
+model AuditLog {
+  id           BigInt   @id @default(autoincrement())
+  agencyId     String   @map("agency_id") @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  action       String   @db.VarChar(100)
+  resourceType String?  @map("resource_type") @db.VarChar(100)
+  resourceId   String?  @map("resource_id") @db.Uuid
+  details      Json?
+  ipAddress    String?  @map("ip_address") @db.Inet
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([agencyId, createdAt])
+  @@index([userId, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────── Patients (§5.2, core subset) ───────────────────────────────
+
+model Patient {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId                 String    @map("agency_id") @db.Uuid
+  mrn                      String?   @db.VarChar(50)
+  firstName                String    @map("first_name") @db.VarChar(100)
+  lastName                 String    @map("last_name") @db.VarChar(100)
+  dateOfBirth              DateTime  @map("date_of_birth") @db.Date
+  gender                   String?   @db.VarChar(10)
+  ssnEncrypted             Bytes?    @map("ssn_encrypted") // AES-256-GCM, DECISIONS D-006
+  phoneHome                String?   @map("phone_home") @db.VarChar(20)
+  phoneCell                String?   @map("phone_cell") @db.VarChar(20)
+  email                    String?   @db.VarChar(255)
+  addressLine1             String?   @map("address_line1") @db.VarChar(255)
+  addressLine2             String?   @map("address_line2") @db.VarChar(255)
+  city                     String?   @db.VarChar(100)
+  state                    String?   @db.VarChar(2)
+  zip                      String?   @db.VarChar(10)
+  latitude                 Decimal?  @db.Decimal(10, 8)
+  longitude                Decimal?  @db.Decimal(11, 8)
+  geoFenceRadiusMeters     Int       @default(200) @map("geo_fence_radius_meters")
+  emergencyContactName     String?   @map("emergency_contact_name") @db.VarChar(200)
+  emergencyContactPhone    String?   @map("emergency_contact_phone") @db.VarChar(20)
+  emergencyContactRelation String?   @map("emergency_contact_relation") @db.VarChar(50)
+  primaryPhysicianId       String?   @map("primary_physician_id") @db.Uuid
+  primaryDiagnosisCode     String?   @map("primary_diagnosis_code") @db.VarChar(10)
+  admissionDate            DateTime? @map("admission_date") @db.Date
+  dischargeDate            DateTime? @map("discharge_date") @db.Date
+  status                   String    @default("active") @db.VarChar(20)
+  payerPrimaryId           String?   @map("payer_primary_id") @db.Uuid
+  payerSecondaryId         String?   @map("payer_secondary_id") @db.Uuid
+  insuranceMemberId        String?   @map("insurance_member_id") @db.VarChar(50)
+  insuranceGroupNumber     String?   @map("insurance_group_number") @db.VarChar(50)
+  medicareBeneficiaryId    String?   @map("medicare_beneficiary_id") @db.VarChar(20)
+  medicaidId               String?   @map("medicaid_id") @db.VarChar(20)
+  notes                    String?
+  portalUserId             String?   @map("portal_user_id") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency           Agency             @relation(fields: [agencyId], references: [id])
+  primaryPhysician Physician?         @relation(fields: [primaryPhysicianId], references: [id])
+  payerPrimary     Payer?             @relation("PatientPayerPrimary", fields: [payerPrimaryId], references: [id])
+  payerSecondary   Payer?             @relation("PatientPayerSecondary", fields: [payerSecondaryId], references: [id])
+  portalUser       User?              @relation("PatientPortalUser", fields: [portalUserId], references: [id])
+  diagnoses        PatientDiagnosis[]
+  allergies        PatientAllergy[]
+  authorizations   Authorization[]
+  visits           Visit[]
+  recurrenceRules  RecurrenceRule[]
+  documents        Document[]
+
+  @@index([agencyId])
+  @@index([agencyId, status])
+  @@index([agencyId, lastName, firstName])
+  @@index([portalUserId])
+  @@map("patients")
+}
+
+model Physician {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String   @map("agency_id") @db.Uuid
+  npi          String?  @db.VarChar(10)
+  firstName    String   @map("first_name") @db.VarChar(100)
+  lastName     String   @map("last_name") @db.VarChar(100)
+  phone        String?  @db.VarChar(20)
+  fax          String?  @db.VarChar(20)
+  email        String?  @db.VarChar(255)
+  practiceName String?  @map("practice_name") @db.VarChar(255)
+  addressLine1 String?  @map("address_line1") @db.VarChar(255)
+  city         String?  @db.VarChar(100)
+  state        String?  @db.VarChar(2)
+  zip          String?  @db.VarChar(10)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency   Agency    @relation(fields: [agencyId], references: [id])
+  patients Patient[]
+
+  @@index([agencyId])
+  @@map("physicians")
+}
+
+model PatientDiagnosis {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId     String    @map("patient_id") @db.Uuid
+  icd10Code     String    @map("icd10_code") @db.VarChar(10)
+  description   String?
+  isPrimary     Boolean   @default(false) @map("is_primary")
+  sequenceOrder Int       @default(1) @map("sequence_order")
+  onsetDate     DateTime? @map("onset_date") @db.Date
+  resolvedDate  DateTime? @map("resolved_date") @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_diagnoses")
+}
+
+model PatientAllergy {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId String   @map("patient_id") @db.Uuid
+  allergen  String   @db.VarChar(255)
+  reaction  String?
+  severity  String?  @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_allergies")
+}
+
+// ─────────────────────────────── Payers (§5.6, needed by patients/authorizations) ───────────────────────────────
+
+model Payer {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId              String   @map("agency_id") @db.Uuid
+  name                  String   @db.VarChar(255)
+  payerType             String   @map("payer_type") @db.VarChar(30)
+  payerIdCode           String?  @map("payer_id_code") @db.VarChar(50)
+  addressLine1          String?  @map("address_line1") @db.VarChar(255)
+  city                  String?  @db.VarChar(100)
+  state                 String?  @db.VarChar(2)
+  zip                   String?  @db.VarChar(10)
+  phone                 String?  @db.VarChar(20)
+  claimsAddress         String?  @map("claims_address") @db.VarChar(255)
+  ediSubmitterId        String?  @map("edi_submitter_id") @db.VarChar(50)
+  ediReceiverId         String?  @map("edi_receiver_id") @db.VarChar(50)
+  timelyFilingDays      Int      @default(365) @map("timely_filing_days")
+  requiresAuthorization Boolean  @default(false) @map("requires_authorization")
+  isActive              Boolean  @default(true) @map("is_active")
+  settings              Json     @default("{}")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency            Agency          @relation(fields: [agencyId], references: [id])
+  primaryPatients   Patient[]       @relation("PatientPayerPrimary")
+  secondaryPatients Patient[]       @relation("PatientPayerSecondary")
+  authorizations    Authorization[]
+
+  @@index([agencyId])
+  @@map("payers")
+}
+
+// ─────────────────────────────── Staff (§5.3) ───────────────────────────────
+
+model StaffProfile {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String    @unique @map("user_id") @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  employeeId          String?   @map("employee_id") @db.VarChar(50)
+  discipline          String    @db.VarChar(20)
+  hireDate            DateTime? @map("hire_date") @db.Date
+  terminationDate     DateTime? @map("termination_date") @db.Date
+  employmentType      String    @default("full_time") @map("employment_type") @db.VarChar(20)
+  hourlyRate          Decimal?  @map("hourly_rate") @db.Decimal(10, 2)
+  perVisitRate        Decimal?  @map("per_visit_rate") @db.Decimal(10, 2)
+  overtimeRate        Decimal?  @map("overtime_rate") @db.Decimal(10, 2)
+  mileageRate         Decimal?  @map("mileage_rate") @db.Decimal(6, 4)
+  ssnEncrypted        Bytes?    @map("ssn_encrypted")
+  taxFilingStatus     String?   @map("tax_filing_status") @db.VarChar(20)
+  addressLine1        String?   @map("address_line1") @db.VarChar(255)
+  city                String?   @db.VarChar(100)
+  state               String?   @db.VarChar(2)
+  zip                 String?   @db.VarChar(10)
+  serviceAreaZipCodes String[]  @map("service_area_zip_codes")
+  maxPatients         Int?      @map("max_patients")
+  skills              String[]
+  languages           String[]
+  notes               String?
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agency          Agency              @relation(fields: [agencyId], references: [id])
+  credentials     StaffCredential[]
+  availability    StaffAvailability[]
+  timeOff         StaffTimeOff[]
+  visits          Visit[]
+  recurrenceRules RecurrenceRule[]
+  documents       Document[]
+
+  @@unique([agencyId, employeeId])
+  @@index([agencyId])
+  @@index([agencyId, discipline])
+  @@map("staff_profiles")
+}
+
+model StaffCredential {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffProfileId   String    @map("staff_profile_id") @db.Uuid
+  credentialType   String    @map("credential_type") @db.VarChar(100)
+  credentialName   String    @map("credential_name") @db.VarChar(255)
+  credentialNumber String?   @map("credential_number") @db.VarChar(100)
+  issuingAuthority String?   @map("issuing_authority") @db.VarChar(255)
+  issueDate        DateTime? @map("issue_date") @db.Date
+  expiryDate       DateTime? @map("expiry_date") @db.Date
+  status           String    @default("active") @db.VarChar(20)
+  documentId       String?   @map("document_id") @db.Uuid
+  alertDaysBefore  Int       @default(30) @map("alert_days_before")
+  verifiedById     String?   @map("verified_by") @db.Uuid
+  verifiedAt       DateTime? @map("verified_at") @db.Timestamptz(6)
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  document     Document?    @relation(fields: [documentId], references: [id])
+  verifiedBy   User?        @relation("CredentialVerifiedBy", fields: [verifiedById], references: [id])
+
+  @@index([staffProfileId])
+  @@index([expiryDate])
+  @@map("staff_credentials")
+}
+
+model StaffAvailability {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffProfileId String    @map("staff_profile_id") @db.Uuid
+  dayOfWeek      Int       @map("day_of_week") @db.SmallInt // 0 = Sunday
+  startTime      DateTime  @map("start_time") @db.Time(6)
+  endTime        DateTime  @map("end_time") @db.Time(6)
+  isAvailable    Boolean   @default(true) @map("is_available")
+  effectiveDate  DateTime? @map("effective_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([staffProfileId])
+  @@map("staff_availability")
+}
+
+model StaffTimeOff {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  startDate      DateTime @map("start_date") @db.Date
+  endDate        DateTime @map("end_date") @db.Date
+  type           String   @db.VarChar(20)
+  status         String   @default("pending") @db.VarChar(20)
+  approvedById   String?  @map("approved_by") @db.Uuid
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  approvedBy   User?        @relation("TimeOffApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([staffProfileId])
+  @@map("staff_time_off")
+}
+
+// ─────────────────────────────── Scheduling (§5.4, core subset) ───────────────────────────────
+
+model Visit {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId         String    @map("agency_id") @db.Uuid
+  patientId        String    @map("patient_id") @db.Uuid
+  staffId          String?   @map("staff_id") @db.Uuid
+  authorizationId  String?   @map("authorization_id") @db.Uuid
+  visitType        String    @map("visit_type") @db.VarChar(50)
+  serviceCode      String?   @map("service_code") @db.VarChar(20)
+  status           String    @default("scheduled") @db.VarChar(20)
+  scheduledDate    DateTime  @map("scheduled_date") @db.Date
+  scheduledStart   DateTime  @map("scheduled_start") @db.Time(6)
+  scheduledEnd     DateTime  @map("scheduled_end") @db.Time(6)
+  actualStart      DateTime? @map("actual_start") @db.Timestamptz(6)
+  actualEnd        DateTime? @map("actual_end") @db.Timestamptz(6)
+  isRecurring      Boolean   @default(false) @map("is_recurring")
+  recurrenceRuleId String?   @map("recurrence_rule_id") @db.Uuid
+  notes            String?
+  cancelReason     String?   @map("cancel_reason")
+  missedReason     String?   @map("missed_reason")
+  priority         String    @default("normal") @db.VarChar(10)
+  createdById      String?   @map("created_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency         Agency          @relation(fields: [agencyId], references: [id])
+  patient        Patient         @relation(fields: [patientId], references: [id])
+  staff          StaffProfile?   @relation(fields: [staffId], references: [id])
+  authorization  Authorization?  @relation(fields: [authorizationId], references: [id])
+  recurrenceRule RecurrenceRule? @relation(fields: [recurrenceRuleId], references: [id])
+  createdBy      User?           @relation("VisitCreatedBy", fields: [createdById], references: [id])
+  documents      Document[]
+
+  @@index([agencyId, scheduledDate])
+  @@index([patientId, scheduledDate])
+  @@index([staffId, scheduledDate])
+  @@index([agencyId, status, scheduledDate])
+  @@index([recurrenceRuleId])
+  @@map("visits")
+}
+
+model RecurrenceRule {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String    @map("agency_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  staffId        String?   @map("staff_id") @db.Uuid
+  visitType      String    @map("visit_type") @db.VarChar(50)
+  serviceCode    String?   @map("service_code") @db.VarChar(20)
+  frequency      String    @db.VarChar(20)
+  daysOfWeek     Int[]     @map("days_of_week") @db.SmallInt
+  startTime      DateTime  @map("start_time") @db.Time(6)
+  endTime        DateTime  @map("end_time") @db.Time(6)
+  startDate      DateTime  @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  maxOccurrences Int?      @map("max_occurrences")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency  Agency        @relation(fields: [agencyId], references: [id])
+  patient Patient       @relation(fields: [patientId], references: [id])
+  staff   StaffProfile? @relation(fields: [staffId], references: [id])
+  visits  Visit[]
+
+  @@index([agencyId])
+  @@index([patientId])
+  @@map("recurrence_rules")
+}
+
+model Authorization {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId           String   @map("patient_id") @db.Uuid
+  payerId             String   @map("payer_id") @db.Uuid
+  authorizationNumber String?  @map("authorization_number") @db.VarChar(50)
+  serviceCode         String?  @map("service_code") @db.VarChar(20)
+  startDate           DateTime @map("start_date") @db.Date
+  endDate             DateTime @map("end_date") @db.Date
+  authorizedVisits    Int?     @map("authorized_visits")
+  usedVisits          Int      @default(0) @map("used_visits")
+  authorizedHours     Decimal? @map("authorized_hours") @db.Decimal(8, 2)
+  usedHours           Decimal  @default(0) @map("used_hours") @db.Decimal(8, 2)
+  status              String   @default("active") @db.VarChar(20)
+  notes               String?
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  payer   Payer   @relation(fields: [payerId], references: [id])
+  visits  Visit[]
+
+  @@index([patientId])
+  @@index([payerId])
+  @@index([endDate])
+  @@map("authorizations")
+}
+
+// ─────────────────────────────── Documents & notifications (§5.8, core subset) ───────────────────────────────
+
+model Document {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId      String    @map("agency_id") @db.Uuid
+  patientId     String?   @map("patient_id") @db.Uuid
+  staffId       String?   @map("staff_id") @db.Uuid
+  visitId       String?   @map("visit_id") @db.Uuid
+  uploadedById  String    @map("uploaded_by") @db.Uuid
+  documentType  String    @map("document_type") @db.VarChar(50)
+  title         String    @db.VarChar(255)
+  description   String?
+  fileName      String    @map("file_name") @db.VarChar(255)
+  fileSize      Int?      @map("file_size")
+  mimeType      String?   @map("mime_type") @db.VarChar(100)
+  s3Key         String    @map("s3_key") @db.VarChar(500)
+  s3VersionId   String?   @map("s3_version_id") @db.VarChar(100)
+  isSigned      Boolean   @default(false) @map("is_signed")
+  signatureData Json?     @map("signature_data")
+  isFaxed       Boolean   @default(false) @map("is_faxed")
+  faxedTo       String?   @map("faxed_to") @db.VarChar(20)
+  faxedAt       DateTime? @map("faxed_at") @db.Timestamptz(6)
+  tags          String[]
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency      Agency            @relation(fields: [agencyId], references: [id])
+  patient     Patient?          @relation(fields: [patientId], references: [id])
+  staff       StaffProfile?     @relation(fields: [staffId], references: [id])
+  visit       Visit?            @relation(fields: [visitId], references: [id])
+  uploadedBy  User              @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+  credentials StaffCredential[]
+
+  @@index([patientId])
+  @@index([agencyId, documentType])
+  @@index([staffId])
+  @@index([visitId])
+  @@map("documents")
+}
+
+model Notification {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String    @map("agency_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  type           String    @db.VarChar(50)
+  title          String    @db.VarChar(255)
+  body           String?
+  data           Json?
+  channels       String[]
+  isRead         Boolean   @default(false) @map("is_read")
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  sentViaPush    Boolean   @default(false) @map("sent_via_push")
+  sentViaSms     Boolean   @default(false) @map("sent_via_sms")
+  sentViaEmail   Boolean   @default(false) @map("sent_via_email")
+  deliveryStatus Json?     @map("delivery_status")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency Agency @relation(fields: [agencyId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@index([agencyId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
