@@ -1,4 +1,3 @@
-import { checkPassword } from '@alora/shared';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -7,26 +6,8 @@ import {
   IsString,
   Matches,
   MaxLength,
-  registerDecorator,
-  type ValidationOptions,
 } from 'class-validator';
-
-/** Applies the shared password policy (12+ chars, upper, lower, number, special). */
-function IsStrongPassword(options?: ValidationOptions): PropertyDecorator {
-  return (target, propertyName) => {
-    registerDecorator({
-      name: 'isStrongPassword',
-      target: target.constructor,
-      propertyName: propertyName as string,
-      options,
-      validator: {
-        validate: (value: unknown) => typeof value === 'string' && checkPassword(value).valid,
-        defaultMessage: (args) =>
-          `${args?.property ?? 'password'} ${checkPassword(String(args?.value ?? '')).problems.join(', ')}`,
-      },
-    });
-  };
-}
+import { IsStrongPassword } from '../../../common/validators/is-strong-password.js';
 
 export class LoginDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))

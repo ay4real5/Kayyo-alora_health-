@@ -46,6 +46,28 @@ export class PermissionsService {
     return access;
   }
 
+  /**
+   * Access granted by a set of roles (only built-in roles and the agency's own custom roles count).
+   * Unlike forUser, ignores whether the user is active — for judging deactivated accounts. Not cached.
+   */
+  async forRoles(roleIds: string[], agencyId: string): Promise<UserAccess> {
+    const roles = await this.prisma.role.findMany({
+      where: {
+        id: { in: roleIds },
+        OR: [{ agencyId: null, isSystem: true }, { agencyId }],
+      },
+      include: { rolePermissions: { include: { permission: true } } },
+    });
+    return {
+      roles: roles.map((role) => role.name).sort(),
+      permissions: new Set(
+        roles.flatMap((role) =>
+          role.rolePermissions.map(({ permission }) => `${permission.resource}:${permission.action}`),
+        ),
+      ),
+    };
+  }
+
   invalidate(user?: AuthUser): void {
     if (user) this.cache.delete(`${user.agencyId}:${user.userId}`);
     else this.cache.clear();

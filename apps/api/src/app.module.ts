@@ -8,6 +8,7 @@ import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { RbacModule } from './modules/rbac/rbac.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RbacModule } from './modules/rbac/rbac.module.js';
     AuditModule,
     RbacModule,
     AuthModule,
+    UsersModule,
     HealthModule,
   ],
   providers: [
