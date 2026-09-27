@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../src/database/prisma.service.js';
 
 // Runs against a real, migrated Postgres. CI provides one; locally it is skipped when DATABASE_URL is unset.
@@ -9,7 +10,7 @@ describe.skipIf(!hasDb)('database schema (e2e)', () => {
   let agencyId: string;
 
   beforeAll(async () => {
-    prisma = new PrismaService();
+    prisma = new PrismaService(new ConfigService({ DATABASE_URL: process.env.DATABASE_URL }));
     const agency = await prisma.agency.create({ data: { name: `Test Agency ${randomUUID()}` } });
     agencyId = agency.id;
   });

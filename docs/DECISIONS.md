@@ -122,3 +122,15 @@ high-severity advisories. Root `package.json` `overrides` forces `mysql2 ^3.23.1
 Verified: `prisma validate/generate/migrate diff` and CI migrations still work. `npm ls` reports them as
 "invalid" — expected with overrides. **Remove the overrides when Prisma ships a release with fixed pins.**
 Note: npm only applies new overrides on a clean install (delete `node_modules` + `package-lock.json`).
+
+### D-016 — Common layer details (P1-04)
+2026-09-27 · Claude Code
+- Env validation uses class-validator (as the design's DTOs do), not a second library like zod.
+- `DATABASE_URL` is optional outside production so the API (and non-DB tests) can start without a
+  database; `PrismaService` throws a clear error if it's used without one. Required when `APP_ENV=production`.
+- ValidationPipe: `whitelist` + `forbidNonWhitelisted` + `transform`. Unknown fields are a 400, not silently dropped.
+- The design's `common/pipes/validation.pipe.ts` isn't needed — Nest's built-in ValidationPipe is configured in
+  `setup-app.ts`.
+- Unknown paths *outside* `/api/v1` get Express's default HTML 404 (Nest only handles 404s under the prefix).
+  Accepted: production only proxies `/api`. Unknown paths under `/api/v1` get the JSON error format.
+- Tests load `reflect-metadata` via Vitest `setupFiles`, as the real app does through Nest.

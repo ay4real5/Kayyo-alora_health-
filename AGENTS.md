@@ -80,6 +80,17 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - ES modules: relative imports end in `.js` (see DECISIONS D-009)
 - Every query on tenant data is scoped by `agency_id` — no exceptions
 
+### Common layer (apps/api/src/common, config) — use these, don't reinvent them
+- Env vars: add each one to `EnvironmentVariables` in `src/config/env.validation.ts` (validated at startup)
+  and to `.env.example`. Inject `ConfigService<EnvironmentVariables, true>` and call
+  `config.get('NAME', { infer: true })`. Don't read `process.env` directly. Don't inject via a type alias
+  (Nest DI needs the real class).
+- Controllers return plain data; `ResponseEnvelopeInterceptor` wraps it. For lists, accept
+  `@Query() query: PaginationQueryDto` and return `Paginated.of(items, total, query)`.
+- Throw Nest `HttpException`s (`NotFoundException` etc.); `AllExceptionsFilter` formats them. Prisma
+  unique/not-found/FK errors are mapped automatically. Never put PHI in exception messages.
+- Every request has `req.correlationId` (also the `X-Request-Id` response header) — include it in logs.
+
 ### RBAC
 - Permission strings are `resource:action` (e.g. `patients:read`, `billing:submit`). See DECISIONS D-004;
   the API tables in DESIGN.md write them the other way round (`read:patients`) — translate.

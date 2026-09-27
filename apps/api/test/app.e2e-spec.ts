@@ -19,10 +19,16 @@ describe('API (e2e)', () => {
 
   it('GET /api/v1/health returns ok', async () => {
     const res = await request(app.getHttpServer()).get('/api/v1/health').expect(200);
-    expect(res.body.status).toBe('ok');
+    expect(res.body).toMatchObject({ success: true, data: { status: 'ok' } });
+  });
+
+  it('unknown routes under /api/v1 get the JSON error format', async () => {
+    const res = await request(app.getHttpServer()).get('/api/v1/does-not-exist').expect(404);
+    expect(res.body).toMatchObject({ success: false, error: { code: 'NOT_FOUND' } });
   });
 
   it('routes outside /api/v1 are not served', async () => {
+    // Express's default 404 (Nest only installs its handler under the prefix); only /api is proxied in prod.
     await request(app.getHttpServer()).get('/health').expect(404);
   });
 });
