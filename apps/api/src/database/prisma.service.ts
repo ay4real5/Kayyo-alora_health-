@@ -12,7 +12,16 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     if (!connectionString) {
       throw new Error('DATABASE_URL is not set — the database module needs it');
     }
-    super({ adapter: new PrismaPg({ connectionString }) });
+    super({
+      adapter: new PrismaPg({
+        connectionString,
+        // Serverless Postgres (e.g. Neon) closes idle connections when it scales to zero; recycle ours first
+        // so a request never picks up a connection the server already dropped.
+        idleTimeoutMillis: 60_000,
+        // Fail fast (and visibly) instead of hanging when the database is unreachable.
+        connectionTimeoutMillis: 10_000,
+      }),
+    });
   }
 
   async onModuleDestroy(): Promise<void> {

@@ -13,10 +13,9 @@ import {
   MaxLength,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
+import { PHONE, trimmed } from '../../../common/validators/fields.js';
 import { IsStrongPassword } from '../../../common/validators/is-strong-password.js';
 
-const trimmed = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
-const PHONE = /^\+?[0-9 ()-]{7,20}$/;
 
 export class CreateUserDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))

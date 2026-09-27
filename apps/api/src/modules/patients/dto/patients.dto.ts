@@ -17,10 +17,8 @@ import {
   type ValidationOptions,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
+import { PHONE, trimmed, upperTrimmed, US_STATE, US_ZIP } from '../../../common/validators/fields.js';
 
-const trimmed = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
-const upper = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toUpperCase() : value);
-const PHONE = /^\+?[0-9 ()-]{7,20}$/;
 
 /** A real calendar date written YYYY-MM-DD, optionally not in the future. */
 function IsDateOnly(options: { notInFuture?: boolean } = {}, validation?: ValidationOptions): PropertyDecorator {
@@ -115,12 +113,12 @@ export class CreatePatientDto {
 
   /** Two-letter US state code. */
   @IsOptional()
-  @Transform(upper)
-  @Matches(/^[A-Z]{2}$/, { message: 'state must be a two-letter state code' })
+  @Transform(upperTrimmed)
+  @Matches(US_STATE, { message: 'state must be a two-letter state code' })
   state?: string;
 
   @IsOptional()
-  @Matches(/^\d{5}(-\d{4})?$/, { message: 'zip must be 12345 or 12345-6789' })
+  @Matches(US_ZIP, { message: 'zip must be 12345 or 12345-6789' })
   zip?: string;
 
   /** EVV geofence around the home, in meters. */
@@ -153,7 +151,7 @@ export class CreatePatientDto {
 
   /** Medicare Beneficiary Identifier (11 characters). */
   @IsOptional()
-  @Transform(upper)
+  @Transform(upperTrimmed)
   @Matches(/^[1-9][AC-HJKMNP-RT-Y][AC-HJKMNP-RT-Y0-9]\d[AC-HJKMNP-RT-Y][AC-HJKMNP-RT-Y0-9]\d[AC-HJKMNP-RT-Y]{2}\d{2}$/, {
     message: 'medicareBeneficiaryId must be a valid 11-character MBI',
   })
