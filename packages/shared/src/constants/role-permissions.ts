@@ -30,6 +30,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   supervisor: [
     'patients:create',
     'patients:read',
+    'patients:read_all',
     'patients:update',
     'care_plans:create',
     'care_plans:update',
@@ -88,6 +89,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   /** Billing: full billing and claims, patient demographics, no clinical notes. */
   billing_staff: [
     'patients:read',
+    'patients:read_all',
     'visits:read',
     'evv:read',
     'billing:create',
@@ -103,6 +105,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   office_staff: [
     'patients:create',
     'patients:read',
+    'patients:read_all',
     'patients:update',
     'staff:create',
     'staff:read',

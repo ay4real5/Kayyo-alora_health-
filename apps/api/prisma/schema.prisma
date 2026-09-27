@@ -257,6 +257,8 @@ model Patient {
   recurrenceRules  RecurrenceRule[]
   documents        Document[]
 
+  /// Medical record numbers are unique within an agency (NULLs allowed — MRN is optional).
+  @@unique([agencyId, mrn])
   @@index([agencyId])
   @@index([agencyId, status])
   @@index([agencyId, lastName, firstName])

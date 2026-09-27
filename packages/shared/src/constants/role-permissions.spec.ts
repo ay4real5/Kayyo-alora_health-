@@ -21,6 +21,8 @@ describe('ROLE_DEFAULT_PERMISSIONS', () => {
     expect(can('registered_nurse', 'care_plans:update')).toBe(true);
     expect(can('home_health_aide', 'visit_notes:sign')).toBe(false);
     expect(can('supervisor', 'billing:read')).toBe(false);
+    expect(can('registered_nurse', 'patients:read_all')).toBe(false); // field staff: assigned patients only
+    expect(can('office_staff', 'patients:read_all')).toBe(true);
     expect(ROLE_DEFAULT_PERMISSIONS.portal_user).toEqual([]);
     expect(ROLE_DEFAULT_PERMISSIONS.agency_admin).toEqual(PERMISSIONS);
   });

@@ -5,7 +5,8 @@
 export const PERMISSION_CATALOGUE = {
   users: ['create', 'read', 'update', 'delete'],
   settings: ['read', 'update'],
-  patients: ['create', 'read', 'update'],
+  /** read = patients the caller is assigned to; read_all = every patient in the agency (D-027). */
+  patients: ['create', 'read', 'read_all', 'update'],
   care_plans: ['create', 'update'],
   assessments: ['create', 'update', 'approve'],
   orders: ['create', 'update'],

@@ -30,7 +30,8 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P1-11** `agent` Users module: admin CRUD, deactivate/reactivate, unlock, admin 2FA reset, role assignment without privilege escalation, user activity. deps: P1-08, P1-09
 - [x] **P1-11b** `agent` 2FA recovery codes (one-time, hashed, usable at login). deps: P1-11
 - [ ] **P1-11c** `agent` Enforce mandatory 2FA for the roles the owner picks (Q-008). deps: Q-008
-- [ ] **P1-12** `agent` Patients module: CRUD, admit/discharge/readmit, diagnoses, allergies, authorizations. deps: P1-08, P1-09
+- [ ] **P1-12** `agent` Patients module: list/search, admit, get, update, discharge/readmit, diagnoses, allergies; encrypted SSN; record-level access (field staff see only their patients). deps: P1-08, P1-09
+- [ ] **P1-12b** `agent` Physicians directory (CRUD, NPI validation) — referenced by patients, orders, care plans. deps: P1-12
 - [ ] **P1-13** `agent` Staff module: CRUD, credentials, availability, time-off, expiring-credentials. deps: P1-08, P1-09
 - [ ] **P1-14** `agent` Scheduling: visits CRUD, cancel, calendar endpoint, conflict detector. deps: P1-12, P1-13
 - [ ] **P1-15** `agent` Recurring visit rules + occurrence generation. deps: P1-14
@@ -60,7 +61,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 
 ## Phase 3 — Billing, claims, clinical, portal
 
-- [ ] **P3-01** `agent` Payers, service codes, payer rates. deps: P1-12
+- [ ] **P3-01** `agent` Payers, service codes, payer rates; patient authorizations (moved from P1-12, needs payers). deps: P1-12
 - [ ] **P3-02** `agent` Pre-billing QA engine. deps: P3-01, P2-01
 - [ ] **P3-03** `agent` Claim creation from verified visits + claim lines. deps: P3-02
 - [ ] **P3-04** `agent` X12 utils + EDI 837P generator with golden-file tests. deps: P3-03
