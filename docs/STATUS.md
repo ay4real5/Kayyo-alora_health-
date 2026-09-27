@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-13 done.
+On `main`: P1-01 to P1-14 done.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -16,7 +16,7 @@ On `main`: P1-01 to P1-13 done.
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
   timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
-  `AuditService`. e2e suite (102 tests, ~5 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
+  `AuditService`. e2e suite (114 tests, ~6 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
 - 2FA (P1-07, P1-11b): TOTP setup/enable/disable, two-step login with challenge token, replay protection,
   10 one-time recovery codes. Mandatory 2FA per role waits on Q-008. Details: DECISIONS D-021, D-026.
 - RBAC (P1-08): 56 permissions + 11 built-in roles synced from code on every boot; `@Permissions()` +
@@ -32,6 +32,8 @@ On `main`: P1-01 to P1-13 done.
 - Physicians directory (P1-12b): CRUD without delete, NPI check digit, unique NPI per agency. D-028.
 - Staff (P1-13): profiles (pay/SSN only for payroll + self), credentials with computed expiry state and an
   expiring list, weekly availability, time off with approval; "self" rules for caregivers. D-029.
+- Scheduling (P1-14): visits book/list/get/reschedule/reassign/cancel, calendar, conflict detector (blocking vs
+  warning, audited override), agency-timezone "today"; caregivers see only their own visits. D-030.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -44,11 +46,10 @@ Nothing.
 
 ## Next up
 
-**P1-14** — Scheduling: visits CRUD (patient + optional staff + date/start/end + visit type/service code),
-cancel with reason, calendar endpoint (day/week/month range), conflict detector (staff double-booking, staff
-time off, outside availability, inactive staff/patient, discharged patient). Use the agency timezone for
-"today" (D-027 note). Visits are what give field staff access to patients (D-027) — consider narrowing that
-to non-cancelled visits.
+**P1-15** — Recurring visits: `recurrence_rules` CRUD (weekly on chosen days, start/end date or max
+occurrences), generate the individual visits for a rolling window (e.g. the next 8 weeks) through the conflict
+detector — skip conflicting dates and report them instead of failing the whole series; editing/cancelling a rule
+affects only future scheduled occurrences. Then P1-16 (in-app notifications), P1-17 (seed data).
 
 ## Blockers / waiting on human
 
@@ -59,6 +60,7 @@ to non-cancelled visits.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-14 | Scheduling + conflict detection; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-13 | Staff module (profiles, credentials, availability, time off); CI green, merged. |
 | 2026-09-27 | Claude Code | P1-12b | Physicians directory; DB pool/transaction limits for Neon flakiness; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-12 | Patients module (first PHI module); CI green, merged. |

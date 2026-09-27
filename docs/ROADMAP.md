@@ -33,7 +33,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P1-12** `agent` Patients module: list/search, admit, get, update, discharge/readmit, diagnoses, allergies; encrypted SSN; record-level access (field staff see only their patients). deps: P1-08, P1-09
 - [x] **P1-12b** `agent` Physicians directory (CRUD, NPI validation) — referenced by patients, orders, care plans. deps: P1-12
 - [x] **P1-13** `agent` Staff module: CRUD, credentials, availability, time-off, expiring-credentials. deps: P1-08, P1-09
-- [ ] **P1-14** `agent` Scheduling: visits CRUD, cancel, calendar endpoint, conflict detector. deps: P1-12, P1-13
+- [x] **P1-14** `agent` Scheduling: visits CRUD, cancel, calendar endpoint, conflict detector. deps: P1-12, P1-13
 - [ ] **P1-15** `agent` Recurring visit rules + occurrence generation. deps: P1-14
 - [ ] **P1-16** `agent` In-app notifications (DB + endpoints). deps: P1-08
 - [ ] **P1-17** `agent` Seed script with fake agency, users per role, patients, staff, visits. deps: P1-12, P1-13, P1-14
