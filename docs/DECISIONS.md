@@ -169,3 +169,35 @@ Some development credentials were shared in the owner's AI chat during setup (Ne
 token, a Vercel token). The owner chose to continue and rotate later. **Go-live checklist item:** reset the
 Neon `neondb_owner` password, reset the Upstash password, revoke Vercel tokens, and generate new
 JWT/PHI keys — production uses fresh secrets from a secrets manager, never the dev ones. Tracked as ROADMAP P4-12.
+
+### D-020 — Authentication design (P1-06)
+2026-09-27 · Claude Code
+- **Passwords: Argon2id** (`@node-rs/argon2`, OWASP defaults m=19 MiB, t=2, p=1), not bcrypt — bcrypt
+  silently ignores bytes past 72. PHC strings record parameters, so they can be raised later.
+- **Emails are globally unique**, stored lower-cased (migration `users_email_global_unique`). The design's
+  login is `{ email, password }` with no agency field, which only works if an email maps to one account.
+  Revisit if one person must work for two agencies (Q-003).
+- **Access tokens**: HS256 JWT, 15 min, claims `sub` + `agencyId`, issuer `alora-api`, audience `alora`.
+  Stateless: after logout/deactivation an access token stays valid until it expires (≤15 min). Accepted.
+- **Refresh tokens**: 32 random bytes (not JWTs), stored as SHA-256 only. Rotated on every use; the new
+  token keeps the session's absolute expiry (7 days). `revoked_reason` records why each was revoked; only
+  presenting a **rotated** token counts as theft → all of that user's sessions are revoked and audited.
+  So `JWT_REFRESH_SECRET` from the design is gone.
+- **Idle timeout** (HIPAA auto-logoff): a refresh token unused for `SESSION_IDLE_TIMEOUT_MINUTES` (30) is
+  refused. Must exceed the access TTL, or active users would be logged out; enforced at startup. Clients
+  should also enforce a 15-min idle UI lock (DESIGN.md §7.3).
+- **Lockout**: 5 wrong passwords → 30-min lock, all sessions revoked, `ACCOUNT_LOCKED` audited.
+  **One error message for every login failure** (unknown email, wrong password, locked, inactive) and a dummy
+  hash check for unknown emails, so responses don't reveal which accounts exist.
+- **2FA fails closed**: a user with `is_2fa_enabled` cannot log in until P1-07 implements the second step.
+- **Password age**: past `PASSWORD_MAX_AGE_DAYS` (90; 0 = off) login still works but returns
+  `mustChangePassword: true`; the web/mobile apps must force the change. (NIST 800-63B discourages forced
+  rotation; kept because the design asks for it — configurable.)
+- **Guards**: `JwtAuthGuard` is global — every route needs a token unless marked `@Public()`.
+  `ThrottlerGuard` global at 300 req/min/IP; `/auth/login`, `/refresh`, `/change-password` at 10/min/IP.
+  The throttle store is in-memory (per instance) — move to Redis before running more than one API instance.
+  Behind a load balancer, set Express `trust proxy` so the real client IP is used (P4-10).
+- Logout is `@Public()` and takes the refresh token, so a client with an expired access token can still end
+  its session. Forgot/reset-password waits for the email channel (P3-19).
+- Web: the design stores the refresh token in an httpOnly cookie. The API returns it in the body; the
+  Next.js server layer (P1-18) sets the cookie.

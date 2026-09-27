@@ -30,12 +30,23 @@ export const JWT_AUDIENCE = 'alora';
 
 const SESSION_EXPIRED = 'Session expired. Please log in again.';
 
+export type RevokeReason =
+  | 'rotated'
+  | 'logout'
+  | 'reuse_detected'
+  | 'password_changed'
+  | 'locked'
+  | 'idle'
+  | 'expired'
+  | 'inactive';
+
 /**
  * Access tokens: short-lived HS256 JWTs (stateless).
  * Refresh tokens: 32 random bytes, stored only as a SHA-256 hash (DECISIONS D-020):
  *   - rotated on every use; the new token keeps the session's absolute expiry
  *   - refused when unused for longer than SESSION_IDLE_TIMEOUT_MINUTES (HIPAA auto-logoff)
- *   - presenting an already-rotated token signals theft → every session of that user is revoked
+ *   - presenting a token that was already *rotated* signals theft → every session of that user is revoked
+ *     (tokens revoked for other reasons — logout, idle, … — are simply refused)
  */
 @Injectable()
 export class TokenService {
@@ -70,7 +81,8 @@ export class TokenService {
 
     const { user } = stored;
     if (stored.revokedAt) {
-      await this.revokeAllForUser(user.id);
+      if (stored.revokedReason !== 'rotated') throw new UnauthorizedException(SESSION_EXPIRED);
+      await this.revokeAllForUser(user.id, 'reuse_detected');
       await this.audit.record({
         agencyId: user.agencyId,
         userId: user.id,
@@ -82,23 +94,24 @@ export class TokenService {
     }
 
     const now = Date.now();
-    const idle = now - stored.createdAt.getTime() > this.idleTimeoutMs;
-    const blocked = !user.isActive || (user.lockedUntil !== null && user.lockedUntil.getTime() > now);
-    if (stored.expiresAt.getTime() <= now || idle || blocked) {
-      await this.prisma.refreshToken.updateMany({
-        where: { id: stored.id, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+    const refusal: RevokeReason | undefined =
+      stored.expiresAt.getTime() <= now
+        ? 'expired'
+        : now - stored.createdAt.getTime() > this.idleTimeoutMs
+          ? 'idle'
+          : !user.isActive
+            ? 'inactive'
+            : user.lockedUntil !== null && user.lockedUntil.getTime() > now
+              ? 'locked'
+              : undefined;
+    if (refusal) {
+      await this.revokeOne(stored.id, refusal);
       throw new UnauthorizedException(SESSION_EXPIRED);
     }
 
     // Revoke-then-issue. If two requests race with the same token, only one wins the update;
-    // the loser is treated like reuse (the token was already consumed).
-    const consumed = await this.prisma.refreshToken.updateMany({
-      where: { id: stored.id, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
-    if (consumed.count !== 1) throw new UnauthorizedException(SESSION_EXPIRED);
+    // the loser is refused (the token was already consumed).
+    if (!(await this.revokeOne(stored.id, 'rotated'))) throw new UnauthorizedException(SESSION_EXPIRED);
 
     return this.issue({ userId: user.id, agencyId: user.agencyId }, stored.expiresAt, client);
   }
@@ -110,18 +123,24 @@ export class TokenService {
       include: { user: { select: { agencyId: true } } },
     });
     if (!stored) return undefined;
-    await this.prisma.refreshToken.updateMany({
-      where: { id: stored.id, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+    await this.revokeOne(stored.id, 'logout');
     return { userId: stored.userId, agencyId: stored.user.agencyId };
   }
 
-  async revokeAllForUser(userId: string): Promise<void> {
+  async revokeAllForUser(userId: string, reason: RevokeReason): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
+      data: { revokedAt: new Date(), revokedReason: reason },
     });
+  }
+
+  /** Returns false if the token was already revoked (so exactly one caller wins a race). */
+  private async revokeOne(id: string, reason: RevokeReason): Promise<boolean> {
+    const result = await this.prisma.refreshToken.updateMany({
+      where: { id, revokedAt: null },
+      data: { revokedAt: new Date(), revokedReason: reason },
+    });
+    return result.count === 1;
   }
 
   async verifyAccessToken(token: string): Promise<AuthUser> {

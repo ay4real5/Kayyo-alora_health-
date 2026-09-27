@@ -32,8 +32,8 @@ describe.skipIf(!hasDb)('database schema (e2e)', () => {
     expect(patient.createdAt).toBeInstanceOf(Date);
   });
 
-  it('enforces unique email per agency', async () => {
-    const data = { agencyId, email: 'dup@example.test', passwordHash: 'x', firstName: 'A', lastName: 'B' };
+  it('enforces unique email addresses', async () => {
+    const data = { agencyId, email: `dup-${randomUUID()}@example.test`, passwordHash: 'x', firstName: 'A', lastName: 'B' };
     await prisma.user.create({ data });
     await expect(prisma.user.create({ data })).rejects.toThrow();
   });

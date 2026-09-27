@@ -91,6 +91,14 @@ task with a good handoff note is worth more than a finished one nobody can find.
   unique/not-found/FK errors are mapped automatically. Never put PHI in exception messages.
 - Every request has `req.correlationId` (also the `X-Request-Id` response header) — include it in logs.
 
+### Auth (apps/api/src/modules/auth) — DECISIONS D-020
+- Every route requires `Authorization: Bearer <access token>` by default. Mark genuinely public routes with
+  `@Public()` (from `common/decorators`). Get the caller with `@CurrentUser() user: AuthUser`
+  (`{ userId, agencyId }`) and **always scope queries by `user.agencyId`**.
+- Record security/PHI events with the global `AuditService.record({...})` — IDs and reasons only, never PHI.
+- Tests: `test/auth.e2e-spec.ts` shows how to create users and log in; override `ThrottlerStorage` so tests
+  aren't rate-limited.
+
 ### RBAC
 - Permission strings are `resource:action` (e.g. `patients:read`, `billing:submit`). See DECISIONS D-004;
   the API tables in DESIGN.md write them the other way round (`read:patients`) — translate.

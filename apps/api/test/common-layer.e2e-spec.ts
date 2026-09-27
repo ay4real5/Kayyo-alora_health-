@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
+import { Public } from '../src/common/decorators/public.decorator.js';
 import { Paginated, PaginationQueryDto } from '../src/common/dto/pagination.dto.js';
 import { Prisma } from '../src/generated/prisma/client.js';
 import { setupApp } from '../src/setup-app.js';
@@ -17,7 +18,8 @@ class CreateThingDto {
   email!: string;
 }
 
-/** Test-only endpoints that exercise each behaviour of the common layer. */
+/** Test-only endpoints that exercise each behaviour of the common layer. Auth is tested separately. */
+@Public()
 @Controller('probe')
 class ProbeController {
   @Get('list')

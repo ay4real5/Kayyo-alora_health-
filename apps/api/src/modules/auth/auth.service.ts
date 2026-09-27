@@ -91,7 +91,7 @@ export class AuthService {
           where: { id: user.id },
           data: { lockedUntil: new Date(Date.now() + this.lockoutMs), failedLoginAttempts: 0 },
         });
-        await this.tokens.revokeAllForUser(user.id);
+        await this.tokens.revokeAllForUser(user.id, 'locked');
         await this.audit.record({ ...auditBase, action: 'ACCOUNT_LOCKED', details: { reason: 'failed_logins' } });
       }
       return fail('wrong_password', { locked: lockNow });
@@ -172,7 +172,7 @@ export class AuthService {
       where: { id: user.id },
       data: { passwordHash: await this.passwords.hash(newPassword), passwordChangedAt: new Date() },
     });
-    await this.tokens.revokeAllForUser(user.id);
+    await this.tokens.revokeAllForUser(user.id, 'password_changed');
     await this.audit.record({ agencyId: user.agencyId, userId: user.id, action: 'PASSWORD_CHANGED', ...client });
     return this.tokens.issueForNewSession(auth, client);
   }
