@@ -201,3 +201,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   its session. Forgot/reset-password waits for the email channel (P3-19).
 - Web: the design stores the refresh token in an httpOnly cookie. The API returns it in the body; the
   Next.js server layer (P1-18) sets the cookie.
+
+### D-021 — Two-factor authentication (P1-07)
+2026-09-27 · Claude Code
+- **TOTP (RFC 6238)**: SHA-1, 30 s, 6 digits, ±1 step drift — what every authenticator app supports.
+  Implemented on `node:crypto` in `modules/auth/two-factor/totp.ts`, proven against the RFC's test vectors.
+- Flow: `POST /auth/2fa/setup` → `{ otpauthUri, secret }` (the client renders the URI as a QR code; the API
+  doesn't generate images). `POST /auth/2fa/enable {code}` turns it on. `POST /auth/2fa/disable
+  {password, code}` needs both, so a hijacked session alone can't remove 2FA.
+- Login for 2FA users: `/auth/login` returns `{ requires2FA: true, twoFactorToken, expiresIn: 300 }` instead of
+  tokens. `twoFactorToken` is a JWT with audience `alora-2fa`, so it is never accepted as an access token.
+  `POST /auth/2fa/verify {twoFactorToken, code}` returns the normal session.
+- **Replay protection**: `users.two_fa_last_used_step` — a code whose time step is ≤ the last accepted one is
+  refused, enforced by an atomic conditional update.
+- Wrong codes count toward the same 5-attempt lockout as wrong passwords.
+- Secret storage: base32 secret encrypted with `PhiContext.UserTwoFaSecret`, stored base64 in
+  `users.two_fa_secret`. Requires `PHI_ENCRYPTION_KEY`.
+- **Not yet built**: recovery codes, and admin "reset 2FA" for a user who lost their phone. Until then an
+  admin fixes it in the database. Add both with the Users module (P1-11). Per-role "2FA required" policy
+  (e.g. mandatory for admins/billing) is also a P1-11/P1-08 follow-up.

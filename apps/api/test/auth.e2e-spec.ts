@@ -121,11 +121,6 @@ describe.skipIf(!hasDb)('Auth (e2e)', () => {
       expect(res.body.error.message).toBe(INVALID_LOGIN);
     });
 
-    it('fails closed for 2FA users until the 2FA step exists (P1-07)', async () => {
-      const { email } = await createUser({ is2faEnabled: true });
-      await login(email).expect(401);
-    });
-
     it('flags an old or never-set password', async () => {
       const { email } = await createUser({ passwordChangedAt: null });
       expect((await login(email).expect(200)).body.data.mustChangePassword).toBe(true);
