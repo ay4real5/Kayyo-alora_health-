@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-12 done.
+On `main`: P1-01 to P1-12b done.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -16,7 +16,7 @@ On `main`: P1-01 to P1-12 done.
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
   timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
-  `AuditService`. e2e suite (90 tests, ~4 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
+  `AuditService`. e2e suite (93 tests, ~4 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
 - 2FA (P1-07, P1-11b): TOTP setup/enable/disable, two-step login with challenge token, replay protection,
   10 one-time recovery codes. Mandatory 2FA per role waits on Q-008. Details: DECISIONS D-021, D-026.
 - RBAC (P1-08): 56 permissions + 11 built-in roles synced from code on every boot; `@Permissions()` +
@@ -29,6 +29,7 @@ On `main`: P1-01 to P1-12 done.
   Details: DECISIONS D-025.
 - Patients (P1-12): admit/list/search/get/update/discharge/readmit, diagnoses, allergies; encrypted SSN
   (last 4 only); field staff see only patients they have visits with. Details: DECISIONS D-027.
+- Physicians directory (P1-12b): CRUD without delete, NPI check digit, unique NPI per agency. D-028.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -41,10 +42,10 @@ Nothing.
 
 ## Next up
 
-**P1-12b** — Physicians directory (small): CRUD scoped to agency, NPI format + Luhn check digit, used by
-`patients.primaryPhysicianId`. Then **P1-13** Staff module: staff profiles (discipline, rates, skills,
-service ZIPs, SSN encrypted with `PhiContext.StaffSsn`), credentials with expiry, weekly availability,
-time-off requests, `/staff/expiring-credentials`.
+**P1-13** — Staff module: staff profiles linked 1:1 to users (discipline, employment type, pay rates,
+skills, languages, service ZIPs, SSN encrypted with `PhiContext.StaffSsn` → last 4 only), credentials with
+expiry + `/staff/expiring-credentials`, weekly availability (bulk PUT), time-off requests + approval.
+Pay rates are sensitive: only show them to roles with payroll access.
 
 ## Blockers / waiting on human
 
@@ -55,6 +56,7 @@ time-off requests, `/staff/expiring-credentials`.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-12b | Physicians directory; DB pool/transaction limits for Neon flakiness; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-12 | Patients module (first PHI module); CI green, merged. |
 | 2026-09-27 | Claude Code | P1-11b | 2FA recovery codes; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-11 | Users module + no-escalation rules; CI green, merged. |

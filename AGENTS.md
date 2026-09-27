@@ -32,6 +32,8 @@ exactly so the next agent can continue where you stopped.
 ## 3. End-of-session protocol (do this before you stop, even if the task is unfinished)
 
 1. Make sure the code builds and tests you touched pass. If not, say so in STATUS — do not hide it.
+   Never commit on top of a failing test run without saying so in the commit message. If a DB-backed e2e
+   test fails intermittently, rerun it with `logger: ['error']` to capture the real cause before "fixing" it.
 2. Update [docs/STATUS.md](docs/STATUS.md):
    - "Current state", "In progress" (task ID, branch, what's done, what's left, exact next step), "Next up".
    - Add one line to the top of the "Session log" (date, agent, task, outcome).
