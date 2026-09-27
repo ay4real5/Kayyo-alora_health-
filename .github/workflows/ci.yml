@@ -15,6 +15,19 @@ jobs:
     name: Build, typecheck, lint, test
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: alora_test
+          POSTGRES_USER: alora
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U alora -d alora_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://alora:ci-only-password@localhost:5432/alora_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,6 +39,11 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test
+      - name: Apply migrations
+        run: npm run db:deploy -w @alora/api
+      - name: Check migrations match schema.prisma (fails if someone forgot a migration)
+        working-directory: apps/api
+        run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
       - run: npm run test:e2e -w @alora/api
 
   docker:
