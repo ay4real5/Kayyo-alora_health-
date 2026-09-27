@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-08 done.
+On `main`: P1-01 to P1-09 done.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -16,11 +16,13 @@ On `main`: P1-01 to P1-08 done.
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
   timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
-  `AuditService`. e2e suite (47 tests) passes against Neon and CI Postgres. Details: DECISIONS D-020.
+  `AuditService`. e2e suite (56 tests, ~2 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
 - 2FA (P1-07): TOTP setup/enable/disable, two-step login with challenge token, replay protection.
   Recovery codes + admin reset still to do (P1-11). Details: DECISIONS D-021.
 - RBAC (P1-08): 56 permissions + 11 built-in roles synced from code on every boot; `@Permissions()` +
   global `RbacGuard`; own-agency role scoping; 30 s cache. Details: DECISIONS D-022.
+- Audit (P1-09): automatic audit_logs row for every permissioned request (success/failure, no PHI),
+  ACCESS_DENIED, no-store cache headers. Details: DECISIONS D-023.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -33,10 +35,10 @@ Nothing.
 
 ## Next up
 
-**P1-09** — HIPAA audit interceptor: log every PHI read/write to `audit_logs` automatically (who, what
-resource/id, action, IP, correlation id; PHI redacted), plus `Cache-Control: no-store` on PHI responses.
-Build on the existing `AuditService` (modules/audit). Then P1-10 (Swagger + portal spec export),
-P1-11 (users module incl. admin 2FA reset / recovery codes).
+**P1-10** — Swagger/OpenAPI at `/api/v1/docs` (@nestjs/swagger; bearer auth scheme; DTO schemas) plus a
+script exporting the portal-only subset to `docs/base44-portal/openapi-portal-spec.json`. Then **P1-11**
+Users module (admin CRUD, deactivate, activity, role assignment + `PermissionsService.invalidate`, admin
+2FA reset, recovery codes, per-role 2FA requirement).
 
 ## Blockers / waiting on human
 
@@ -46,6 +48,7 @@ P1-11 (users module incl. admin 2FA reset / recovery codes).
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-09 | Audit interceptor + denied-access logging + no-store; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-08 | RBAC (roles/permissions sync, guard), CI green, merged. |
 | 2026-09-27 | Claude Code | P1-07 | 2FA (TOTP), CI green, merged. |
 | 2026-09-27 | Claude Code | P1-06 | Auth module + Neon/Upstash dev env; e2e green locally and in CI; merged. |
