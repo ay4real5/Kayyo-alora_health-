@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-16 done.
+On `main`: P1-01 to P1-17 done — the Phase 1 API is complete.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -16,7 +16,7 @@ On `main`: P1-01 to P1-16 done.
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
   timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
-  `AuditService`. e2e suite (126 tests, ~7 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
+  `AuditService`. e2e suite (130 tests, ~8 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
 - 2FA (P1-07, P1-11b): TOTP setup/enable/disable, two-step login with challenge token, replay protection,
   10 one-time recovery codes. Mandatory 2FA per role waits on Q-008. Details: DECISIONS D-021, D-026.
 - RBAC (P1-08): 56 permissions + 11 built-in roles synced from code on every boot; `@Permissions()` +
@@ -37,6 +37,8 @@ On `main`: P1-01 to P1-16 done.
 - Recurring visits (P1-15): weekly/biweekly series, 28-day rolling window (manual `generate` until the P2-02 job),
   conflicting dates skipped + reported, edits rebuild future occurrences only. D-031.
 - Notifications (P1-16): in-app inbox + `notify()` wired to visit and time-off events; PHI-free texts. D-032.
+- Demo data (P1-17): `npm run db:seed -w @alora/api` rebuilds a FAKE demo agency; logins in README (D-033).
+  The Neon dev DB currently holds it.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -49,11 +51,11 @@ Nothing.
 
 ## Next up
 
-**P1-17** — Seed script (`npx prisma db seed` / `npm run db:seed -w @alora/api`): one demo agency with a user per
-built-in role (known dev password, printed), ~15 staff with credentials/availability, ~30 patients with diagnoses,
-visits over the next two weeks + a few recurring series. Obviously fake data only. Must refuse to run when
-APP_ENV=production. Idempotent (re-running resets the demo agency). Then **P1-18** web dashboard scaffold.
-Note for tests: cleanup must delete notifications before users (FK).
+**P1-18** — Scaffold `apps/web` (Next.js App Router, TypeScript, Tailwind, shadcn/ui, TanStack Query):
+login (+ 2FA step, mustChangePassword prompt), auth via a server-side route that keeps the refresh token in an
+httpOnly cookie (D-020), API client with automatic refresh, 15-minute idle lock (HIPAA), app shell with sidebar
+filtered by `/auth/me` permissions. Add a `web` service to docker-compose and CI (build + lint + typecheck).
+Then P1-19 patients pages, P1-20 staff pages, P1-21 scheduling calendar.
 
 ## Blockers / waiting on human
 
@@ -64,6 +66,7 @@ Note for tests: cleanup must delete notifications before users (FK).
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-17 | Demo seed + test; CI green, merged. Phase 1 API complete. |
 | 2026-09-27 | Claude Code | P1-16 | In-app notifications; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-15 | Recurring visits; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-14 | Scheduling + conflict detection; CI green, merged. |
