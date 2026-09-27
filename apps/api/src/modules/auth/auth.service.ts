@@ -40,6 +40,8 @@ export interface MeResult {
   firstName: string;
   lastName: string;
   is2faEnabled: boolean;
+  /** Unused backup codes, when 2FA is on — clients should warn when this gets low. */
+  recoveryCodesRemaining: number | null;
   roles: string[];
   permissions: string[];
 }
@@ -110,7 +112,14 @@ export class AuthService {
   }
 
   /** Second login step for 2FA users. Wrong codes count towards the same lockout as wrong passwords. */
-  async verifyTwoFactorLogin(twoFactorToken: string, code: string, client: ClientInfo): Promise<LoginResult> {
+  async verifyTwoFactorLogin(
+    twoFactorToken: string,
+    proof: { code?: string; recoveryCode?: string },
+    client: ClientInfo,
+  ): Promise<LoginResult> {
+    if (Boolean(proof.code) === Boolean(proof.recoveryCode)) {
+      throw new BadRequestException('Send either an authenticator code or a recovery code');
+    }
     const pending = await this.tokens.verifyTwoFactorChallenge(twoFactorToken);
     const user = await this.prisma.user.findFirst({
       where: { id: pending.userId, agencyId: pending.agencyId },
@@ -129,13 +138,22 @@ export class AuthService {
       throw new UnauthorizedException(INVALID_LOGIN);
     }
 
-    if (!(await this.twoFactor.consumeCode(user, code))) {
+    const usingRecovery = Boolean(proof.recoveryCode);
+    const ok = usingRecovery
+      ? await this.twoFactor.consumeRecoveryCode(user.id, proof.recoveryCode!)
+      : await this.twoFactor.consumeCode(user, proof.code!);
+    if (!ok) {
       const locked = await this.registerFailure(user.id, auditBase);
-      await this.audit.record({ ...auditBase, action: 'LOGIN_FAILED', details: { reason: 'wrong_2fa_code', locked } });
+      const reason = usingRecovery ? 'wrong_recovery_code' : 'wrong_2fa_code';
+      await this.audit.record({ ...auditBase, action: 'LOGIN_FAILED', details: { reason, locked } });
       throw new UnauthorizedException('Invalid authentication code');
     }
 
-    return this.completeLogin(user, client, 'password+totp');
+    if (usingRecovery) {
+      const remaining = await this.twoFactor.remainingRecoveryCodes(user.id);
+      await this.audit.record({ ...auditBase, action: 'TWO_FA_RECOVERY_CODE_USED', details: { remaining } });
+    }
+    return this.completeLogin(user, client, usingRecovery ? 'password+recovery_code' : 'password+totp');
   }
 
   /** Counts a failed attempt; locks the account (and ends its sessions) at the limit. Returns true if locked. */
@@ -159,7 +177,7 @@ export class AuthService {
   private async completeLogin(
     user: { id: string; agencyId: string; passwordChangedAt: Date | null },
     client: ClientInfo,
-    method: 'password' | 'password+totp',
+    method: 'password' | 'password+totp' | 'password+recovery_code',
   ): Promise<LoginResult> {
     await this.prisma.user.update({
       where: { id: user.id },
@@ -200,6 +218,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       is2faEnabled: user.is2faEnabled,
+      recoveryCodesRemaining: user.is2faEnabled ? await this.twoFactor.remainingRecoveryCodes(user.id) : null,
       roles: access.roles,
       permissions: [...access.permissions].sort(),
     };

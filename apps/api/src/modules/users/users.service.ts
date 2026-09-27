@@ -173,13 +173,15 @@ export class UsersService {
   async resetTwoFactor(caller: AuthUser, id: string): Promise<UserView> {
     const target = await this.find(caller, id);
     await this.assertCanManage(caller, target);
-    return toView(
-      await this.prisma.user.update({
+    const [, user] = await this.prisma.$transaction([
+      this.prisma.twoFaRecoveryCode.deleteMany({ where: { userId: id } }),
+      this.prisma.user.update({
         where: { id },
         data: { is2faEnabled: false, twoFaSecret: null, twoFaLastUsedStep: null },
         select: USER_SELECT,
       }),
-    );
+    ]);
+    return toView(user);
   }
 
   /** The user's own actions from the audit trail, newest first. */

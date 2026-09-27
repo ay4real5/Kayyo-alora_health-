@@ -11,10 +11,21 @@ import { PrismaService } from '../../../database/prisma.service.js';
 import { AuditService } from '../../audit/audit.service.js';
 import { PasswordService } from '../password.service.js';
 import type { ClientInfo } from '../token.service.js';
+import {
+  RECOVERY_CODE_COUNT,
+  generateRecoveryCode,
+  hashRecoveryCode,
+  normalizeRecoveryCode,
+} from './recovery-codes.js';
 import { base32Decode, base32Encode, generateSecret, otpauthUri, verifyTotp } from './totp.js';
 
 /** Shown as the account name in authenticator apps. Rename when the product name is final (Q-004). */
 export const TOTP_ISSUER = 'Alora Health';
+
+export interface RecoveryCodes {
+  /** Shown once. Each works one time at login in place of an authenticator code. */
+  recoveryCodes: string[];
+}
 
 export interface TwoFactorSetup {
   /** Render as a QR code for the authenticator app to scan. */
@@ -57,31 +68,84 @@ export class TwoFactorService {
     return { otpauthUri: otpauthUri(TOTP_ISSUER, user.email, secret), secret: base32Encode(secret) };
   }
 
-  /** Step 2: the first valid code switches 2FA on. */
-  async enable(auth: AuthUser, code: string, client: ClientInfo): Promise<void> {
+  /** Step 2: the first valid code switches 2FA on. Returns backup codes — shown once, never again. */
+  async enable(auth: AuthUser, code: string, client: ClientInfo): Promise<RecoveryCodes> {
     const user = await this.findUser(auth);
     if (user.is2faEnabled) throw new ConflictException('Two-factor authentication is already enabled');
     if (!user.twoFaSecret) throw new BadRequestException('Start two-factor setup first');
     if (!(await this.consumeCode(user, code))) throw new BadRequestException('Invalid authentication code');
 
     await this.prisma.user.update({ where: { id: user.id }, data: { is2faEnabled: true } });
+    const recoveryCodes = await this.replaceRecoveryCodes(user.id);
     await this.audit.record({ agencyId: auth.agencyId, userId: user.id, action: 'TWO_FA_ENABLED', ...client });
+    return { recoveryCodes };
   }
 
   /** Needs both the password and a current code, so a stolen session alone can't remove 2FA. */
   async disable(auth: AuthUser, password: string, code: string, client: ClientInfo): Promise<void> {
+    const user = await this.requirePasswordAndCode(auth, password, code);
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { is2faEnabled: false, twoFaSecret: null, twoFaLastUsedStep: null },
+      }),
+      this.prisma.twoFaRecoveryCode.deleteMany({ where: { userId: user.id } }),
+    ]);
+    await this.audit.record({ agencyId: auth.agencyId, userId: user.id, action: 'TWO_FA_DISABLED', ...client });
+  }
+
+  /** New set of backup codes; all previous ones stop working. Needs the password and a current code. */
+  async regenerateRecoveryCodes(
+    auth: AuthUser,
+    password: string,
+    code: string,
+    client: ClientInfo,
+  ): Promise<RecoveryCodes> {
+    const user = await this.requirePasswordAndCode(auth, password, code);
+    const recoveryCodes = await this.replaceRecoveryCodes(user.id);
+    await this.audit.record({
+      agencyId: auth.agencyId,
+      userId: user.id,
+      action: 'TWO_FA_RECOVERY_CODES_REGENERATED',
+      ...client,
+    });
+    return { recoveryCodes };
+  }
+
+  /** Uses up one backup code (atomically — each works exactly once). */
+  async consumeRecoveryCode(userId: string, input: string): Promise<boolean> {
+    const normalized = normalizeRecoveryCode(input);
+    if (!normalized) return false;
+    const used = await this.prisma.twoFaRecoveryCode.updateMany({
+      where: { userId, codeHash: hashRecoveryCode(normalized), usedAt: null },
+      data: { usedAt: new Date() },
+    });
+    return used.count === 1;
+  }
+
+  remainingRecoveryCodes(userId: string): Promise<number> {
+    return this.prisma.twoFaRecoveryCode.count({ where: { userId, usedAt: null } });
+  }
+
+  private async replaceRecoveryCodes(userId: string): Promise<string[]> {
+    const codes = Array.from({ length: RECOVERY_CODE_COUNT }, generateRecoveryCode);
+    await this.prisma.$transaction([
+      this.prisma.twoFaRecoveryCode.deleteMany({ where: { userId } }),
+      this.prisma.twoFaRecoveryCode.createMany({
+        data: codes.map((code) => ({ userId, codeHash: hashRecoveryCode(normalizeRecoveryCode(code)!) })),
+      }),
+    ]);
+    return codes;
+  }
+
+  private async requirePasswordAndCode(auth: AuthUser, password: string, code: string) {
     const user = await this.findUser(auth);
     if (!user.is2faEnabled) throw new BadRequestException('Two-factor authentication is not enabled');
     const passwordOk = await this.passwords.verify(user.passwordHash, password);
     if (!passwordOk || !(await this.consumeCode(user, code))) {
       throw new ForbiddenException('Password or authentication code is incorrect');
     }
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { is2faEnabled: false, twoFaSecret: null, twoFaLastUsedStep: null },
-    });
-    await this.audit.record({ agencyId: auth.agencyId, userId: user.id, action: 'TWO_FA_DISABLED', ...client });
+    return user;
   }
 
   /**

@@ -10,6 +10,7 @@ import {
   DisableTwoFactorDto,
   LoginDto,
   RefreshTokenDto,
+  RegenerateRecoveryCodesDto,
   TwoFactorCodeDto,
   TwoFactorLoginDto,
 } from './dto/auth.dto.js';
@@ -62,7 +63,11 @@ export class AuthController {
   @Post('2fa/verify')
   @HttpCode(HttpStatus.OK)
   verifyTwoFactor(@Body() dto: TwoFactorLoginDto, @Req() req: Request) {
-    return this.auth.verifyTwoFactorLogin(dto.twoFactorToken, dto.code, clientInfo(req));
+    return this.auth.verifyTwoFactorLogin(
+      dto.twoFactorToken,
+      { code: dto.code, recoveryCode: dto.recoveryCode },
+      clientInfo(req),
+    );
   }
 
   @Post('2fa/setup')
@@ -72,10 +77,23 @@ export class AuthController {
   }
 
   @Throttle(CREDENTIAL_LIMIT)
+  /** Turns 2FA on and returns 10 one-time backup codes — the only time they are shown. */
   @Post('2fa/enable')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async enableTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: TwoFactorCodeDto, @Req() req: Request) {
-    await this.twoFactor.enable(user, dto.code, clientInfo(req));
+  @HttpCode(HttpStatus.OK)
+  enableTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: TwoFactorCodeDto, @Req() req: Request) {
+    return this.twoFactor.enable(user, dto.code, clientInfo(req));
+  }
+
+  /** Replaces all backup codes with a new set (password + current authenticator code required). */
+  @Throttle(CREDENTIAL_LIMIT)
+  @Post('2fa/recovery-codes')
+  @HttpCode(HttpStatus.OK)
+  regenerateRecoveryCodes(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: RegenerateRecoveryCodesDto,
+    @Req() req: Request,
+  ) {
+    return this.twoFactor.regenerateRecoveryCodes(user, dto.password, dto.code, clientInfo(req));
   }
 
   @Throttle(CREDENTIAL_LIMIT)

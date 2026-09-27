@@ -91,11 +91,14 @@
           "code": {
             "type": "string",
             "pattern": "^\\d{6}$"
+          },
+          "recoveryCode": {
+            "type": "string",
+            "maxLength": 40
           }
         },
         "required": [
-          "twoFactorToken",
-          "code"
+          "twoFactorToken"
         ]
       },
       "TwoFactorCodeDto": {
@@ -108,6 +111,23 @@
         },
         "required": [
           "code"
+        ]
+      },
+      "RegenerateRecoveryCodesDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "code",
+          "password"
         ]
       },
       "DisableTwoFactorDto": {

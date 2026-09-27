@@ -292,3 +292,16 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   (D-020), creating a user whose email exists in another agency returns 409 — a small cross-agency
   existence leak, accepted for now.
 - `GET /users/:id/activity` needs `users:read` **and** `audit_logs:read`.
+
+### D-026 — 2FA recovery codes (P1-11b)
+2026-09-27 · Claude Code
+- 10 codes per user, `XXXX-XXXX-XXXX-XXXX` (16 base32 chars = 80 random bits). Returned **once** by
+  `POST /auth/2fa/enable` (now 200 with `{ recoveryCodes }`, was 204) and by
+  `POST /auth/2fa/recovery-codes {password, code}`, which replaces the whole set.
+- Stored as SHA-256 in `two_fa_recovery_codes`. With 80 bits of entropy a slow hash isn't needed, and a fast
+  one allows direct lookup. Input is case/space/dash-insensitive.
+- Login: `POST /auth/2fa/verify` takes `code` **or** `recoveryCode` (exactly one). Each code works once (atomic
+  conditional update); wrong codes count toward lockout; use is audited with the number remaining.
+  `/auth/me` returns `recoveryCodesRemaining`.
+- Disabling 2FA or an admin 2FA reset deletes the user's codes.
+- Mandatory 2FA per role is not built — waiting on the owner's choice (Q-008, ROADMAP P1-11c).

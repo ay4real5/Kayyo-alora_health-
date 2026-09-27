@@ -34,6 +34,13 @@ billing rules, and which payers to set up first. Needed before P4-04, useful ear
 Where does production run (AWS, Azure, GCP, other)? Must be HIPAA-eligible with a signed BAA. Needed
 before P4-10/P4-11.
 
+### Q-008 — Which roles must use two-factor authentication?
+2FA works and is optional per user (D-021, D-026). HIPAA doesn't name specific roles, but mandatory 2FA is
+common for admins, billing and anyone with broad PHI access. Options: (a) agency admins + super admins +
+billing staff, (b) everyone except caregivers on the mobile app (who use a PIN/biometric device lock instead),
+(c) everyone. Once decided, enforcement is: login succeeds but returns `mustEnable2fa`, and the API refuses
+everything except 2FA setup until it's done.
+
 ## Resolved
 
 ### Q-007 — Development database

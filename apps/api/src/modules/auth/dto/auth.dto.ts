@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
   MaxLength,
@@ -46,11 +47,28 @@ export class TwoFactorCodeDto {
   code!: string;
 }
 
-export class TwoFactorLoginDto extends TwoFactorCodeDto {
+/** Send `code` (from the authenticator app) or `recoveryCode` (a one-time backup code) — exactly one. */
+export class TwoFactorLoginDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(2000)
   twoFactorToken!: string;
+
+  @IsOptional()
+  @Matches(/^\d{6}$/, { message: 'code must be the 6-digit code from your authenticator app' })
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  recoveryCode?: string;
+}
+
+export class RegenerateRecoveryCodesDto extends TwoFactorCodeDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  password!: string;
 }
 
 export class DisableTwoFactorDto extends TwoFactorCodeDto {

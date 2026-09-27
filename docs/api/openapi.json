@@ -181,10 +181,49 @@
           }
         },
         "responses": {
-          "204": {
-            "description": ""
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/2fa/recovery-codes": {
+      "post": {
+        "operationId": "AuthController_regenerateRecoveryCodes",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateRecoveryCodesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Replaces all backup codes with a new set (password + current authenticator code required).",
         "tags": [
           "auth"
         ]
@@ -642,11 +681,14 @@
           "code": {
             "type": "string",
             "pattern": "^\\d{6}$"
+          },
+          "recoveryCode": {
+            "type": "string",
+            "maxLength": 40
           }
         },
         "required": [
-          "twoFactorToken",
-          "code"
+          "twoFactorToken"
         ]
       },
       "TwoFactorCodeDto": {
@@ -659,6 +701,23 @@
         },
         "required": [
           "code"
+        ]
+      },
+      "RegenerateRecoveryCodesDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "code",
+          "password"
         ]
       },
       "DisableTwoFactorDto": {

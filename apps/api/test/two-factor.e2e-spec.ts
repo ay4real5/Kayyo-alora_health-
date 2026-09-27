@@ -64,9 +64,11 @@ describe.skipIf(!hasDb)('Two-factor authentication (e2e)', () => {
     });
     const auth = { Authorization: `Bearer ${(await login(email)).body.data.accessToken}` };
     const { secret } = (await http().post('/api/v1/auth/2fa/setup').set(auth).expect(200)).body.data;
-    await http().post('/api/v1/auth/2fa/enable').set(auth).send({ code: codeFor(secret) }).expect(204);
+    const { recoveryCodes } = (
+      await http().post('/api/v1/auth/2fa/enable').set(auth).send({ code: codeFor(secret) }).expect(200)
+    ).body.data;
     await allowCodeReuse(id);
-    return { id, email, secret: secret as string, auth };
+    return { id, email, secret: secret as string, auth, recoveryCodes: recoveryCodes as string[] };
   }
 
   it('sets up 2FA: secret stored encrypted, not active until a valid code is entered', async () => {
@@ -92,8 +94,13 @@ describe.skipIf(!hasDb)('Two-factor authentication (e2e)', () => {
     expect(stored.twoFaSecret).not.toContain(setup.secret);
 
     await http().post('/api/v1/auth/2fa/enable').set(auth).send({ code: '000000' }).expect(400);
-    await http().post('/api/v1/auth/2fa/enable').set(auth).send({ code: codeFor(setup.secret) }).expect(204);
+    const enabled = await http().post('/api/v1/auth/2fa/enable').set(auth).send({ code: codeFor(setup.secret) }).expect(200);
+    expect(enabled.body.data.recoveryCodes).toHaveLength(10);
     expect((await prisma.user.findUniqueOrThrow({ where: { id } })).is2faEnabled).toBe(true);
+    // Only hashes are stored.
+    const stored2 = await prisma.twoFaRecoveryCode.findMany({ where: { userId: id } });
+    expect(stored2).toHaveLength(10);
+    expect(JSON.stringify(stored2)).not.toContain(enabled.body.data.recoveryCodes[0].replaceAll('-', ''));
 
     await http().post('/api/v1/auth/2fa/setup').set(auth).expect(409); // can't silently replace an active secret
   });
@@ -150,5 +157,60 @@ describe.skipIf(!hasDb)('Two-factor authentication (e2e)', () => {
 
     const user = await prisma.user.findUniqueOrThrow({ where: { id } });
     expect(user).toMatchObject({ is2faEnabled: false, twoFaSecret: null });
+    expect(await prisma.twoFaRecoveryCode.count({ where: { userId: id } })).toBe(0);
+  });
+
+  describe('recovery codes', () => {
+    it('lets a user without their phone log in, once per code', async () => {
+      const { email, id, recoveryCodes } = await userWith2fa();
+      const code = recoveryCodes[0]!;
+
+      const first = (await login(email)).body.data.twoFactorToken;
+      const session = await http()
+        .post('/api/v1/auth/2fa/verify')
+        .send({ twoFactorToken: first, recoveryCode: code.toLowerCase() }) // however it's typed
+        .expect(200);
+      expect(session.body.data.accessToken).toBeDefined();
+
+      const again = (await login(email)).body.data.twoFactorToken;
+      await http().post('/api/v1/auth/2fa/verify').send({ twoFactorToken: again, recoveryCode: code }).expect(401);
+
+      const me = await http()
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${session.body.data.accessToken}`)
+        .expect(200);
+      expect(me.body.data.recoveryCodesRemaining).toBe(9);
+      expect(await prisma.auditLog.count({ where: { userId: id, action: 'TWO_FA_RECOVERY_CODE_USED' } })).toBe(1);
+    });
+
+    it("rejects another user's code, and requires exactly one of code / recoveryCode", async () => {
+      const alice = await userWith2fa();
+      const bob = await userWith2fa();
+      const token = (await login(bob.email)).body.data.twoFactorToken;
+      await http().post('/api/v1/auth/2fa/verify').send({ twoFactorToken: token, recoveryCode: alice.recoveryCodes[0] }).expect(401);
+
+      await http().post('/api/v1/auth/2fa/verify').send({ twoFactorToken: token }).expect(400);
+      await http()
+        .post('/api/v1/auth/2fa/verify')
+        .send({ twoFactorToken: token, code: codeFor(bob.secret), recoveryCode: bob.recoveryCodes[0] })
+        .expect(400);
+    });
+
+    it('regenerating needs password + code and invalidates the old set', async () => {
+      const { email, secret, id, auth, recoveryCodes } = await userWith2fa();
+      await http().post('/api/v1/auth/2fa/recovery-codes').set(auth).send({ password: 'Wrong-Password-1!', code: codeFor(secret) }).expect(403);
+      await allowCodeReuse(id);
+
+      const fresh = (
+        await http().post('/api/v1/auth/2fa/recovery-codes').set(auth).send({ password: PASSWORD, code: codeFor(secret) }).expect(200)
+      ).body.data.recoveryCodes as string[];
+      expect(fresh).toHaveLength(10);
+      expect(fresh).not.toContain(recoveryCodes[0]);
+
+      const token = (await login(email)).body.data.twoFactorToken;
+      await http().post('/api/v1/auth/2fa/verify').send({ twoFactorToken: token, recoveryCode: recoveryCodes[0] }).expect(401);
+      const token2 = (await login(email)).body.data.twoFactorToken;
+      await http().post('/api/v1/auth/2fa/verify').send({ twoFactorToken: token2, recoveryCode: fresh[0] }).expect(200);
+    });
   });
 });
