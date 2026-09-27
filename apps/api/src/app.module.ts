@@ -10,6 +10,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { PatientsModule } from './modules/patients/patients.module.js';
 import { PhysiciansModule } from './modules/physicians/physicians.module.js';
 import { RbacModule } from './modules/rbac/rbac.module.js';
+import { SchedulingModule } from './modules/scheduling/scheduling.module.js';
 import { StaffModule } from './modules/staff/staff.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 
@@ -27,6 +28,7 @@ import { UsersModule } from './modules/users/users.module.js';
     PatientsModule,
     PhysiciansModule,
     StaffModule,
+    SchedulingModule,
     HealthModule,
   ],
   providers: [

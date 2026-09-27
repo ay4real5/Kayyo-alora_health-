@@ -241,7 +241,11 @@ export class PatientsService {
   private async scope(caller: AuthUser): Promise<Prisma.PatientWhereInput> {
     const access = await this.permissions.forUser(caller);
     if (access.permissions.has('patients:read_all')) return { agencyId: caller.agencyId };
-    return { agencyId: caller.agencyId, visits: { some: { staff: { userId: caller.userId } } } };
+    // A cancelled visit doesn't give a caregiver access to the patient (D-030).
+    return {
+      agencyId: caller.agencyId,
+      visits: { some: { staff: { userId: caller.userId }, status: { not: 'cancelled' } } },
+    };
   }
 
   private async find(caller: AuthUser, id: string): Promise<PatientWithChildren> {

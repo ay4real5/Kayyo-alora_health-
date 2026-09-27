@@ -71,10 +71,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (status === HttpStatus.BAD_REQUEST && Array.isArray(message)) {
         return { status, code: 'VALIDATION_ERROR', message: 'Validation failed', details: message };
       }
+      // Services may attach structured details, e.g. `new ConflictException({ message, code, details })`.
+      const extra =
+        status < 500 && typeof response === 'object' && response !== null
+          ? (response as { code?: unknown; details?: unknown })
+          : {};
       return {
         status,
-        code: CODE_BY_STATUS[status] ?? (status >= 500 ? 'INTERNAL_ERROR' : 'ERROR'),
+        code:
+          typeof extra.code === 'string'
+            ? extra.code
+            : (CODE_BY_STATUS[status] ?? (status >= 500 ? 'INTERNAL_ERROR' : 'ERROR')),
         message: status >= 500 ? 'Internal server error' : String(message),
+        ...(extra.details !== undefined ? { details: extra.details } : {}),
       };
     }
 

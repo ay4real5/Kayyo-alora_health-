@@ -13,7 +13,8 @@ export const PERMISSION_CATALOGUE = {
   orders: ['create', 'update'],
   staff: ['create', 'read', 'update', 'delete'],
   time_off: ['approve'],
-  visits: ['create', 'read', 'update', 'assign', 'approve'],
+  /** read = the caller's own visits; read_all = every visit in the agency (D-030). approve = override conflicts. */
+  visits: ['create', 'read', 'read_all', 'update', 'assign', 'approve'],
   visit_notes: ['create', 'update', 'sign'],
   vitals: ['create'],
   evv: ['read', 'update', 'approve', 'export'],
