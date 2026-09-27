@@ -1,7 +1,7 @@
 {
   "name": "alora-health",
   "private": true,
-  "description": "Alora Health \u00e2\u20ac\u201d home health agency management platform (monorepo)",
+  "description": "Alora Health â€” home health agency management platform (monorepo)",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -22,5 +22,9 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "npm@11.16.0"
+  "packageManager": "npm@11.16.0",
+  "allowScripts": {
+    "@prisma/engines@7.10.0": true,
+    "prisma@7.10.0": true
+  }
 }
