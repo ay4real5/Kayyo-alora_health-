@@ -1,0 +1,47 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+.next/
+out/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# expo / react native
+.expo/
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# env & secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+
+# local data (never commit PHI)
+*.sqlite
+*.db
+tmp/
+uploads/
+
+# logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# agent-local files
+.claude/settings.local.json

@@ -1,0 +1,93 @@
+# Roadmap — task list
+
+The checkbox version of [DESIGN.md §15](DESIGN.md#15-phased-build-roadmap). Each task is sized for roughly one
+agent session. Tick `[x]` only when the code is merged (or on a pushed branch with passing tests, noted in STATUS).
+
+Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in Base44 by the owner.
+`deps:` lists tasks that must be done first.
+
+---
+
+## Phase 0 — Repo & handoff setup
+
+- [x] **P0-01** `agent` Handoff system: AGENTS.md, CLAUDE.md, docs/STATUS, ROADMAP, DECISIONS, OPEN_QUESTIONS, DESIGN
+- [x] **P0-02** `agent` Root monorepo config: package.json workspaces, turbo.json, tsconfig.base, .editorconfig, .gitignore, .env.example, docker-compose (Postgres + Redis)
+- [ ] **P0-03** `human` Decide repo visibility (currently **public**) — see OPEN_QUESTIONS Q-001
+- [ ] **P0-04** `human` Answer the Phase 1-blocking items in OPEN_QUESTIONS (Q-002 Base44 auth, Q-005 target state)
+
+## Phase 1 — Foundation & core operations
+
+- [ ] **P1-01** `agent` Scaffold `packages/shared` (types, constants: roles, permissions) and `apps/api` (NestJS, current stable). Add `api` service to docker-compose. deps: P0-02
+- [ ] **P1-02** `agent` CI: GitHub Actions — install, lint, typecheck, test, build on PR. deps: P1-01
+- [ ] **P1-03** `agent` Prisma schema for core tables (agencies, users, roles, permissions, role_permissions, user_roles, refresh_tokens, audit_logs, patients, physicians, patient_diagnoses, payers, staff_profiles, staff_credentials, staff_availability, staff_time_off, visits, recurrence_rules, authorizations, documents, notifications). First migration. deps: P1-01
+- [ ] **P1-04** `agent` Common layer: response transform interceptor, exception filter, validation pipe, correlation-id, config module with env validation. deps: P1-01
+- [ ] **P1-05** `agent` PHI encryption util (AES-256-GCM, key from env) + tests. deps: P1-01
+- [ ] **P1-06** `agent` Auth module: login, refresh (rotation, hashed), logout, lockout after 5 fails, password policy, `/auth/me`. deps: P1-03, P1-04
+- [ ] **P1-07** `agent` 2FA (TOTP) setup + verify flow. deps: P1-06
+- [ ] **P1-08** `agent` RBAC: permissions seed, `@Permissions()` decorator, RbacGuard, agency scoping. deps: P1-06
+- [ ] **P1-09** `agent` HIPAA audit interceptor → `audit_logs` (PHI redaction, no-store cache headers). deps: P1-06
+- [ ] **P1-10** `agent` Swagger/OpenAPI at `/api/v1/docs` + script exporting portal-only spec to `docs/base44-portal/openapi-portal-spec.json`. deps: P1-04
+- [ ] **P1-11** `agent` Users module (admin CRUD, deactivate, activity). deps: P1-08, P1-09
+- [ ] **P1-12** `agent` Patients module: CRUD, admit/discharge/readmit, diagnoses, allergies, authorizations. deps: P1-08, P1-09
+- [ ] **P1-13** `agent` Staff module: CRUD, credentials, availability, time-off, expiring-credentials. deps: P1-08, P1-09
+- [ ] **P1-14** `agent` Scheduling: visits CRUD, cancel, calendar endpoint, conflict detector. deps: P1-12, P1-13
+- [ ] **P1-15** `agent` Recurring visit rules + occurrence generation. deps: P1-14
+- [ ] **P1-16** `agent` In-app notifications (DB + endpoints). deps: P1-08
+- [ ] **P1-17** `agent` Seed script with fake agency, users per role, patients, staff, visits. deps: P1-12, P1-13, P1-14
+- [ ] **P1-18** `agent` Scaffold `apps/web` (Next.js, Tailwind, shadcn/ui, React Query, Zustand), api-client with refresh, login page, idle-timeout, sidebar layout. deps: P1-06
+- [ ] **P1-19** `agent` Web: patients list/detail pages. deps: P1-18, P1-12
+- [ ] **P1-20** `agent` Web: staff list/detail/credentials pages. deps: P1-18, P1-13
+- [ ] **P1-21** `agent` Web: scheduling calendar + visit form. deps: P1-18, P1-14
+- [ ] **P1-22** `agent` e2e test pass for Phase 1 flows; update README quick start. deps: all P1
+
+## Phase 2 — EVV & mobile
+
+- [ ] **P2-01** `agent` EVV module: GPS clock-in/out, geofence (haversine), exceptions, verify. deps: P1-14
+- [ ] **P2-02** `agent` Socket.IO gateway with JWT handshake + rooms; `/live-monitor` events; late/no-show cron. deps: P2-01
+- [ ] **P2-03** `agent` Web: live monitor page (map + feed). deps: P2-02, P1-18
+- [ ] **P2-04** `agent` Visit documentation API: notes (sign), vitals, tasks. deps: P1-14
+- [ ] **P2-05** `agent` Open shifts (create, broadcast, claim, assign) + shift swaps. deps: P1-14, P1-16
+- [ ] **P2-06** `agent` Scaffold `apps/mobile` (Expo, Expo Router): login, PIN, secure token storage. deps: P1-06
+- [ ] **P2-07** `agent` Mobile: today's schedule, visit detail, clock-in/out with location. deps: P2-06, P2-01
+- [ ] **P2-08** `agent` Mobile: tasks, vitals, notes, signature pad. deps: P2-07, P2-04
+- [ ] **P2-09** `agent` Mobile: offline queue (expo-sqlite) + background sync + offline banner. deps: P2-08
+- [ ] **P2-10** `agent` Mobile: background location during active visit. deps: P2-07
+- [ ] **P2-11** `human` Create Twilio + Firebase accounts, sign Twilio BAA, put keys in `.env`
+- [ ] **P2-12** `agent` Notification queue (BullMQ) + push (FCM) + SMS (Twilio) channels, PHI-free templates. deps: P1-16, P2-11
+- [ ] **P2-13** `agent` Telephony/IVR EVV (TwiML flows, signature-verified webhooks). deps: P2-01, P2-11
+
+## Phase 3 — Billing, claims, clinical, portal
+
+- [ ] **P3-01** `agent` Payers, service codes, payer rates. deps: P1-12
+- [ ] **P3-02** `agent` Pre-billing QA engine. deps: P3-01, P2-01
+- [ ] **P3-03** `agent` Claim creation from verified visits + claim lines. deps: P3-02
+- [ ] **P3-04** `agent` X12 utils + EDI 837P generator with golden-file tests. deps: P3-03
+- [ ] **P3-05** `agent` EDI 837I generator. deps: P3-04
+- [ ] **P3-06** `agent` EDI 835 parser + payment posting/reconciliation. deps: P3-04
+- [ ] **P3-07** `agent` EDI 270/271 eligibility. deps: P3-04
+- [ ] **P3-08** `human` Clearinghouse account (Availity/Waystar), SFTP creds, BAA
+- [ ] **P3-09** `agent` Clearinghouse SFTP submit/poll via claims-queue. deps: P3-04, P3-08
+- [ ] **P3-10** `agent` Private-pay invoices + PDF (Puppeteer). deps: P3-01
+- [ ] **P3-11** `agent` Care plans (CMS-485), assessments (JSONB forms), medications, physician orders. deps: P1-12
+- [ ] **P3-12** `agent` Documents: S3 upload/download (pre-signed), versions, e-sign. deps: P1-12
+- [ ] **P3-13** `agent` Secure messaging API + `/messages` socket namespace. deps: P2-02
+- [ ] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13
+- [ ] **P3-15** `agent` Write `docs/base44-portal/` (screen prompts, integration notes, regenerated spec). deps: P3-14
+- [ ] **P3-16** `base44` Build the 7 portal screens in Base44 using `docs/base44-portal/`. deps: P3-15, Q-002 resolved
+- [ ] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03
+- [ ] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12
+- [ ] **P3-19** `agent` Email channel (SendGrid). deps: P2-12
+
+## Phase 4 — Analytics, compliance, hardening
+
+- [ ] **P4-01** `agent` Reports module + materialized views + refresh job
+- [ ] **P4-02** `agent` Web: dashboards (Recharts) + report export (CSV/PDF)
+- [ ] **P4-03** `agent` Payroll: pay periods, stubs, calculation, export; mileage
+- [ ] **P4-04** `agent` EVV state aggregator adapter interface + first aggregator. deps: Q-005
+- [ ] **P4-05** `agent` Compliance: dashboard, incidents, credential-expiry cron, audit-log query
+- [ ] **P4-06** `agent` Claims denial/appeal workflow + aging report
+- [ ] **P4-07** `agent` Notification preferences UI/API
+- [ ] **P4-08** `agent` Audit-log monthly partitioning + retention
+- [ ] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes
+- [ ] **P4-10** `agent` Production Dockerfiles, docker-compose.prod, nginx, deploy workflows
+- [ ] **P4-11** `human` Hosting choice (HIPAA-eligible, BAA), production secrets, domain
