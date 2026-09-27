@@ -209,6 +209,49 @@ describe.skipIf(!hasDb)('Auth (e2e)', () => {
     });
   });
 
+  describe('browser cookie mode (X-Auth-Transport: cookie)', () => {
+    const COOKIE_MODE = { 'X-Auth-Transport': 'cookie' };
+    const refreshCookie = (res: request.Response) =>
+      ([] as string[]).concat(res.headers['set-cookie'] ?? []).find((c) => c.startsWith('alora_rt='));
+
+    it('keeps the refresh token in an httpOnly cookie, never in the body', async () => {
+      const { email } = await createUser();
+      const res = await http().post('/api/v1/auth/login').set(COOKIE_MODE).send({ email, password: PASSWORD }).expect(200);
+      expect(res.body.data.accessToken).toBeDefined();
+      expect(res.body.data).not.toHaveProperty('refreshToken');
+
+      const cookie = refreshCookie(res)!;
+      expect(cookie).toMatch(/HttpOnly/);
+      expect(cookie).toMatch(/SameSite=Strict/);
+      expect(cookie).toMatch(/Path=\/api\/v1\/auth/);
+    });
+
+    it('refreshes from the cookie alone, rotating it; logout clears it', async () => {
+      const { email } = await createUser();
+      const login = await http().post('/api/v1/auth/login').set(COOKIE_MODE).send({ email, password: PASSWORD });
+      const first = refreshCookie(login)!.split(';')[0]!;
+
+      const refreshed = await http().post('/api/v1/auth/refresh').set(COOKIE_MODE).set('Cookie', first).send({}).expect(200);
+      expect(refreshed.body.data.accessToken).toBeDefined();
+      const second = refreshCookie(refreshed)!.split(';')[0]!;
+      expect(second).not.toBe(first);
+
+      // The old cookie is spent (reuse → everything revoked, as with body tokens).
+      await http().post('/api/v1/auth/refresh').set(COOKIE_MODE).set('Cookie', first).send({}).expect(401);
+    });
+
+    it('ignores the cookie unless the custom header is sent (CSRF protection)', async () => {
+      const { email } = await createUser();
+      const login = await http().post('/api/v1/auth/login').set(COOKIE_MODE).send({ email, password: PASSWORD });
+      const cookie = refreshCookie(login)!.split(';')[0]!;
+
+      await http().post('/api/v1/auth/refresh').set('Cookie', cookie).send({}).expect(401);
+      const out = await http().post('/api/v1/auth/logout').set(COOKIE_MODE).set('Cookie', cookie).send({}).expect(204);
+      expect(refreshCookie(out)).toMatch(/alora_rt=;/); // cleared
+      await http().post('/api/v1/auth/refresh').set(COOKIE_MODE).set('Cookie', cookie).send({}).expect(401);
+    });
+  });
+
   describe('logout', () => {
     it('ends only that session and is idempotent', async () => {
       const { email } = await createUser();

@@ -23,11 +23,13 @@ export class LoginDto {
   password!: string;
 }
 
+/** Browsers in cookie mode (X-Auth-Transport: cookie) send no body token; the cookie is used instead. */
 export class RefreshTokenDto {
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(200)
-  refreshToken!: string;
+  refreshToken?: string;
 }
 
 export class ChangePasswordDto {

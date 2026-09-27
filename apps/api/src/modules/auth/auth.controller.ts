@@ -1,7 +1,9 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
+import { AppEnv, type EnvironmentVariables } from '../../config/env.validation.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { AuthService } from './auth.service.js';
@@ -14,6 +16,7 @@ import {
   TwoFactorCodeDto,
   TwoFactorLoginDto,
 } from './dto/auth.dto.js';
+import { clearRefreshCookie, deliverTokens, readRefreshCookie } from './refresh-cookie.js';
 import type { ClientInfo } from './token.service.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
@@ -23,33 +26,54 @@ const CREDENTIAL_LIMIT = { default: { limit: 10, ttl: 60_000 } };
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  /** Secure cookies everywhere except local development/test over plain http. */
+  private readonly secureCookies: boolean;
+
   constructor(
     private readonly auth: AuthService,
     private readonly twoFactor: TwoFactorService,
-  ) {}
+    config: ConfigService<EnvironmentVariables, true>,
+  ) {
+    const env = config.get('APP_ENV', { infer: true });
+    this.secureCookies = env !== AppEnv.Development && env !== AppEnv.Test;
+  }
 
   @Public()
   @Throttle(CREDENTIAL_LIMIT)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() dto: LoginDto, @Req() req: Request) {
-    return this.auth.login(dto.email, dto.password, clientInfo(req));
+  async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const result = await this.auth.login(dto.email, dto.password, clientInfo(req));
+    return 'requires2FA' in result ? result : deliverTokens(req, res, result, this.secureCookies);
   }
 
   @Public()
   @Throttle(CREDENTIAL_LIMIT)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refresh(@Body() dto: RefreshTokenDto, @Req() req: Request) {
-    return this.auth.refresh(dto.refreshToken, clientInfo(req));
+  async refresh(@Body() dto: RefreshTokenDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const token = dto.refreshToken ?? readRefreshCookie(req);
+    if (!token) throw new UnauthorizedException('Session expired. Please log in again.');
+    try {
+      return deliverTokens(req, res, await this.auth.refresh(token, clientInfo(req)), this.secureCookies);
+    } catch (error) {
+      if (!dto.refreshToken) clearRefreshCookie(res, this.secureCookies);
+      throw error;
+    }
   }
 
   /** Public so a client whose access token already expired can still end its session. */
   @Public()
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(@Body() dto: RefreshTokenDto, @Req() req: Request): Promise<void> {
-    await this.auth.logout(dto.refreshToken, clientInfo(req));
+  async logout(
+    @Body() dto: RefreshTokenDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const token = dto.refreshToken ?? readRefreshCookie(req);
+    if (token) await this.auth.logout(token, clientInfo(req));
+    clearRefreshCookie(res, this.secureCookies);
   }
 
   @Get('me')
@@ -62,12 +86,13 @@ export class AuthController {
   @Throttle(CREDENTIAL_LIMIT)
   @Post('2fa/verify')
   @HttpCode(HttpStatus.OK)
-  verifyTwoFactor(@Body() dto: TwoFactorLoginDto, @Req() req: Request) {
-    return this.auth.verifyTwoFactorLogin(
+  async verifyTwoFactor(@Body() dto: TwoFactorLoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const result = await this.auth.verifyTwoFactorLogin(
       dto.twoFactorToken,
       { code: dto.code, recoveryCode: dto.recoveryCode },
       clientInfo(req),
     );
+    return deliverTokens(req, res, result, this.secureCookies);
   }
 
   @Post('2fa/setup')
@@ -106,8 +131,14 @@ export class AuthController {
   @Throttle(CREDENTIAL_LIMIT)
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
-  changePassword(@CurrentUser() user: AuthUser, @Body() dto: ChangePasswordDto, @Req() req: Request) {
-    return this.auth.changePassword(user, dto.currentPassword, dto.newPassword, clientInfo(req));
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const tokens = await this.auth.changePassword(user, dto.currentPassword, dto.newPassword, clientInfo(req));
+    return deliverTokens(req, res, tokens, this.secureCookies);
   }
 }
 
