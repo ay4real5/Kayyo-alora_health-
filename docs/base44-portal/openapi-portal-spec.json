@@ -1193,6 +1193,147 @@
         "required": [
           "reason"
         ]
+      },
+      "CreateRecurringDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "staffId": {
+            "type": "string",
+            "description": "Leave out for an unassigned series.",
+            "format": "uuid"
+          },
+          "visitType": {
+            "type": "string",
+            "enum": [
+              "skilled_nursing",
+              "nursing_assessment",
+              "physical_therapy",
+              "pt_evaluation",
+              "occupational_therapy",
+              "ot_evaluation",
+              "speech_therapy",
+              "medical_social_work",
+              "home_health_aide",
+              "personal_care",
+              "respite"
+            ]
+          },
+          "serviceCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "frequency": {
+            "type": "string",
+            "description": "weekly, or biweekly (every other week, counted from the week of startDate).",
+            "enum": [
+              "weekly",
+              "biweekly"
+            ]
+          },
+          "daysOfWeek": {
+            "description": "0 = Sunday … 6 = Saturday",
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 7,
+            "type": "array",
+            "items": {
+              "type": "number",
+              "maximum": 6,
+              "minimum": 0
+            }
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Last possible date (inclusive). Give this or maxOccurrences, or neither for an open-ended series."
+          },
+          "maxOccurrences": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "patientId",
+          "visitType",
+          "frequency",
+          "daysOfWeek",
+          "startTime",
+          "endTime",
+          "startDate"
+        ]
+      },
+      "UpdateRecurringDto": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "visitType": {
+            "type": "string",
+            "enum": [
+              "skilled_nursing",
+              "nursing_assessment",
+              "physical_therapy",
+              "pt_evaluation",
+              "occupational_therapy",
+              "ot_evaluation",
+              "speech_therapy",
+              "medical_social_work",
+              "home_health_aide",
+              "personal_care",
+              "respite"
+            ]
+          },
+          "serviceCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "daysOfWeek": {
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 7,
+            "type": "array",
+            "items": {
+              "type": "number",
+              "maximum": 6,
+              "minimum": 0
+            }
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "GenerateRecurringDto": {
+        "type": "object",
+        "properties": {
+          "until": {
+            "type": "string",
+            "description": "Create occurrences up to this date (default: 4 weeks from today, max 1 year)."
+          }
+        }
       }
     }
   },

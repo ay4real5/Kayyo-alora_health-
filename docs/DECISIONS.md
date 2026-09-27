@@ -384,3 +384,24 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - The exception filter now forwards `code` and `details` from `new XxxException({ message, code, details })`.
 - Not yet: authorization-limit checks (needs P3-01 authorizations), travel time between visits, recurring
   visits (P1-15).
+
+### D-031 — Recurring visits (P1-15)
+2026-09-27 · Claude Code
+- A `recurrence_rules` row is the pattern (weekly or biweekly on chosen weekdays, fixed times, start date, optional
+  end date or max occurrences). Its occurrences are ordinary `visits` (`is_recurring`, `recurrence_rule_id`).
+- Dates come from `recurrenceDates` (`@alora/shared`): deterministic, "biweekly" = every other week counted from the
+  Sunday-based week of `startDate`, `maxOccurrences` counts from the start date (including skipped dates).
+- **Rolling window**: occurrences are created from today (agency timezone) up to 28 days ahead. Nothing extends the
+  window automatically yet — `POST /schedule/recurring/:id/generate {until?}` does it on demand; a nightly BullMQ job
+  must call the same logic (**add to P2-02**). Max 1 year ahead.
+- Every occurrence goes through the conflict detector. **Blocking conflicts skip that date** (reported in
+  `generation.skipped`); the rest are booked; warnings are reported per date. Series can't override conflicts —
+  book a skipped date individually (with `override` if appropriate).
+- Unique `(recurrence_rule_id, scheduled_date)` (migration): generation is idempotent, and a date where one
+  occurrence was cancelled is never silently re-booked.
+- `PATCH` (staff, visit type, service code, weekdays, times, end date) deletes **future `scheduled`** occurrences and
+  regenerates; past, in-progress, completed and cancelled occurrences are untouched. `startDate`, `frequency`
+  and `maxOccurrences` can't change — end the series and create a new one.
+- `DELETE` ends the series: rule inactive, future scheduled occurrences cancelled ("Recurring schedule ended").
+- Editing one occurrence through `/schedule/visits/:id` is allowed; a later rule `PATCH` will replace it if it is
+  still a future scheduled occurrence.
