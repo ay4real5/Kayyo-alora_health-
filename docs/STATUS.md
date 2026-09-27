@@ -5,19 +5,22 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-07 done.
+On `main`: P1-01 to P1-08 done.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
-  `DatabaseModule` wired in; 3 migrations applied to the Neon dev DB.
+  `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
+  unmigrated database (boot-time RBAC sync).
 - Common layer (P1-04): validated env config, `{success,data}` envelope + pagination, error filter
   (hides internals, maps Prisma errors), strict ValidationPipe, X-Request-Id, helmet, exact-origin CORS.
   Conventions in AGENTS.md §6 "Common layer".
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
   timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
-  `AuditService`. e2e suite (37 tests) passes against Neon and CI Postgres. Details: DECISIONS D-020.
+  `AuditService`. e2e suite (47 tests) passes against Neon and CI Postgres. Details: DECISIONS D-020.
 - 2FA (P1-07): TOTP setup/enable/disable, two-step login with challenge token, replay protection.
   Recovery codes + admin reset still to do (P1-11). Details: DECISIONS D-021.
+- RBAC (P1-08): 56 permissions + 11 built-in roles synced from code on every boot; `@Permissions()` +
+  global `RbacGuard`; own-agency role scoping; 30 s cache. Details: DECISIONS D-022.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -30,10 +33,10 @@ Nothing.
 
 ## Next up
 
-**P1-08** — RBAC: seed the permission catalogue (`@alora/shared` PERMISSION_CATALOGUE) and the 11 system
-roles with default permissions (DESIGN.md §7.2), `@Permissions('patients:read')` decorator, global
-`RbacGuard` (user → user_roles → role_permissions), agency scoping helpers. `/auth/me` already returns
-roles/permissions. Then P1-09 (audit interceptor for PHI access), P1-10 (Swagger).
+**P1-09** — HIPAA audit interceptor: log every PHI read/write to `audit_logs` automatically (who, what
+resource/id, action, IP, correlation id; PHI redacted), plus `Cache-Control: no-store` on PHI responses.
+Build on the existing `AuditService` (modules/audit). Then P1-10 (Swagger + portal spec export),
+P1-11 (users module incl. admin 2FA reset / recovery codes).
 
 ## Blockers / waiting on human
 
@@ -43,6 +46,7 @@ roles/permissions. Then P1-09 (audit interceptor for PHI access), P1-10 (Swagger
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-08 | RBAC (roles/permissions sync, guard), CI green, merged. |
 | 2026-09-27 | Claude Code | P1-07 | 2FA (TOTP), CI green, merged. |
 | 2026-09-27 | Claude Code | P1-06 | Auth module + Neon/Upstash dev env; e2e green locally and in CI; merged. |
 | 2026-09-27 | Claude Code | P1-05 | PHI encryption service + key rotation, CI green, merged. |
