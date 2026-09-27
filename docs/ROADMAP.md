@@ -23,7 +23,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P1-04** `agent` Common layer: response transform interceptor, exception filter, validation pipe, correlation-id, config module with env validation. deps: P1-01
 - [x] **P1-05** `agent` PHI encryption util (AES-256-GCM, key from env) + tests. deps: P1-01
 - [x] **P1-06** `agent` Auth module: login, refresh (rotation, hashed), logout, lockout after 5 fails, password policy, `/auth/me`. deps: P1-03, P1-04
-- [ ] **P1-07** `agent` 2FA (TOTP) setup + verify flow. deps: P1-06
+- [x] **P1-07** `agent` 2FA (TOTP) setup + verify flow. deps: P1-06
 - [ ] **P1-08** `agent` RBAC: permissions seed, `@Permissions()` decorator, RbacGuard, agency scoping. deps: P1-06
 - [ ] **P1-09** `agent` HIPAA audit interceptor → `audit_logs` (PHI redaction, no-store cache headers). deps: P1-06
 - [ ] **P1-10** `agent` Swagger/OpenAPI at `/api/v1/docs` + script exporting portal-only spec to `docs/base44-portal/openapi-portal-spec.json`. deps: P1-04

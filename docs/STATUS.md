@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-06 done.
+On `main`: P1-01 to P1-07 done.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 3 migrations applied to the Neon dev DB.
@@ -15,7 +15,9 @@ On `main`: P1-01 to P1-06 done.
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
   timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
-  `AuditService`. 32 e2e tests pass against Neon and CI Postgres. Details: DECISIONS D-020.
+  `AuditService`. e2e suite (37 tests) passes against Neon and CI Postgres. Details: DECISIONS D-020.
+- 2FA (P1-07): TOTP setup/enable/disable, two-step login with challenge token, replay protection.
+  Recovery codes + admin reset still to do (P1-11). Details: DECISIONS D-021.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -28,9 +30,10 @@ Nothing.
 
 ## Next up
 
-**P1-07** — 2FA (TOTP): setup (QR/otpauth URI, secret encrypted with `PhiContext.UserTwoFaSecret`), verify,
-and the login second step (`requires2FA` + short-lived temp token). Replace the fail-closed branch in
-`AuthService.login`. Then **P1-08** RBAC (permissions seed, `@Permissions()`, RbacGuard).
+**P1-08** — RBAC: seed the permission catalogue (`@alora/shared` PERMISSION_CATALOGUE) and the 11 system
+roles with default permissions (DESIGN.md §7.2), `@Permissions('patients:read')` decorator, global
+`RbacGuard` (user → user_roles → role_permissions), agency scoping helpers. `/auth/me` already returns
+roles/permissions. Then P1-09 (audit interceptor for PHI access), P1-10 (Swagger).
 
 ## Blockers / waiting on human
 
@@ -40,6 +43,7 @@ and the login second step (`requires2FA` + short-lived temp token). Replace the 
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P1-07 | 2FA (TOTP), CI green, merged. |
 | 2026-09-27 | Claude Code | P1-06 | Auth module + Neon/Upstash dev env; e2e green locally and in CI; merged. |
 | 2026-09-27 | Claude Code | P1-05 | PHI encryption service + key rotation, CI green, merged. |
 | 2026-09-27 | Claude Code | P1-04 | Common layer done, CI green, merged. Also overrode Prisma CLI's vulnerable deps (D-015). |
