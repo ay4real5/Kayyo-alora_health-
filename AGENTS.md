@@ -108,12 +108,13 @@ Run from the repo root.
 
 ```bash
 npm install                              # install all workspaces
-docker compose up -d postgres redis      # PostgreSQL 16 + Redis 7 for local dev
+# Dev DB/Redis: Neon + Upstash via the root .env (D-018). Docker alternative (not on owner's laptop):
+docker compose up -d postgres redis      # PostgreSQL 17 + Redis 7
 npm run build                            # turbo: build everything (shared builds before api)
 npm run typecheck                        # turbo: tsc --noEmit everywhere
 npm run lint                             # turbo: oxlint
 npm run test                             # turbo: unit tests (Vitest)
-npm run test:e2e -w @alora/api           # API e2e tests
+npm run test:e2e -w @alora/api           # API e2e tests (DB tests use DATABASE_URL from .env; skip if unset)
 npm run start:dev -w @alora/api          # API on http://localhost:3001/api/v1 (health: /api/v1/health)
 npm run generate -w @alora/api           # regenerate Prisma client (turbo does this before build/test)
 npm run db:deploy -w @alora/api          # apply migrations to DATABASE_URL

@@ -91,3 +91,4 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes
 - [ ] **P4-10** `agent` Production Dockerfiles, docker-compose.prod, nginx, deploy workflows
 - [ ] **P4-11** `human` Hosting choice (HIPAA-eligible, BAA), production secrets, domain
+- [ ] **P4-12** `human` Rotate/revoke every dev credential shared during development (DECISIONS D-019); make repo private

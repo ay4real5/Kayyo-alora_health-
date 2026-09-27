@@ -2,7 +2,7 @@
 # or `docker compose up -d --build` to also run the API in a container. The web service is added in P1-18.
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     ports:
       - "5432:5432"
     environment:

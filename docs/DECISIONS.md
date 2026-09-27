@@ -151,3 +151,21 @@ Implements D-006 in `apps/api/src/common/crypto/`.
   (HMAC) column — don't decrypt-and-scan.
 - Production keys belong in a secrets manager (e.g. AWS KMS/Secrets Manager), not in a `.env` file. Decide
   with hosting (Q-006).
+
+### D-018 — Development environment: Neon + Upstash (dev only, fake data only)
+2026-09-27 · Owner + Claude Code
+- Postgres: Neon project `neon-camel-clock` (Vercel-managed account), branch `main`, **database `alora`**
+  (the project's other database `neondb` belongs to something else — never touch it). Use the **direct**
+  host (no `-pooler`) with `sslmode=verify-full`; Prisma migrations need a direct connection.
+- Redis: Upstash database `precious-stag-128343`, TLS (`rediss://`).
+- Neon runs **Postgres 17**, so CI and docker-compose use 17 too (DESIGN.md said 16).
+- Connection strings live only in the git-ignored root `.env`. Agents on another machine (e.g. Devin) must
+  get them from the owner — never commit them.
+- **Only fake data** goes into these services; they are not HIPAA-covered.
+
+### D-019 — Before go-live: rotate every development credential
+2026-09-27 · Owner
+Some development credentials were shared in the owner's AI chat during setup (Neon role password, Upstash
+token, a Vercel token). The owner chose to continue and rotate later. **Go-live checklist item:** reset the
+Neon `neondb_owner` password, reset the Upstash password, revoke Vercel tokens, and generate new
+JWT/PHI keys — production uses fresh secrets from a secrets manager, never the dev ones. Tracked as ROADMAP P4-12.

@@ -34,15 +34,10 @@ billing rules, and which payers to set up first. Needed before P4-04, useful ear
 Where does production run (AWS, Azure, GCP, other)? Must be HIPAA-eligible with a signed BAA. Needed
 before P4-10/P4-11.
 
-### Q-007 — Development database (needed for P1-03)  ⚠ blocks P1-03 on the laptop
-Docker can't run on the laptop (D-011), so development needs a Postgres + Redis somewhere else. Options:
-1. **Free cloud databases** (recommended): Neon (Postgres) + Upstash (Redis). Owner signs up, pastes two
-   connection strings into `.env`. Fake data only.
-2. **GitHub Codespaces**: a cloud dev machine with Docker, opened in the browser/VS Code. Free quota is
-   limited (roughly 30–60 hours/month).
-3. Tests that need a database also run in CI with Postgres containers, regardless of the choice.
-
 ## Resolved
+
+### Q-007 — Development database
+Resolved 2026-09-27: Neon (database `alora` in the owner's existing Neon project) + Upstash Redis. See DECISIONS D-018.
 
 ### Q-001 — Repo is public
 Resolved 2026-09-27: made private, then made public again for the build phase — see DECISIONS D-012.
