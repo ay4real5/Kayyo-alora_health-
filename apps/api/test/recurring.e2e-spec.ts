@@ -43,6 +43,7 @@ describe.skipIf(!hasDb)('Recurring visits (e2e)', () => {
     await prisma.visit.deleteMany({ where: { agencyId } });
     await prisma.recurrenceRule.deleteMany({ where: { agencyId } });
     await prisma.patient.deleteMany({ where: { agencyId } });
+    await prisma.notification.deleteMany({ where: { agencyId } });
     await prisma.auditLog.deleteMany({ where: { agencyId } });
     await prisma.user.deleteMany({ where: { agencyId } });
     await prisma.agency.delete({ where: { id: agencyId } });

@@ -42,7 +42,8 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
 
   afterAll(async () => {
     for (const id of [agencyId, otherAgencyId]) {
-      await prisma.auditLog.deleteMany({ where: { agencyId: id } });
+      await prisma.notification.deleteMany({ where: { agencyId: id } });
+    await prisma.auditLog.deleteMany({ where: { agencyId: id } });
       await prisma.user.deleteMany({ where: { agencyId: id } }); // staff profiles + children cascade
       await prisma.agency.delete({ where: { id } });
     }

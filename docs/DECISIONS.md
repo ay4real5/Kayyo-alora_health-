@@ -405,3 +405,20 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - `DELETE` ends the series: rule inactive, future scheduled occurrences cancelled ("Recurring schedule ended").
 - Editing one occurrence through `/schedule/visits/:id` is allowed; a later rule `PATCH` will replace it if it is
   still a future scheduled occurrence.
+
+### D-032 — In-app notifications (P1-16)
+2026-09-27 · Claude Code
+- `NotificationsService.notify({ agencyId, userIds, type, title, body, data, actorUserId })` (global module) writes
+  `notifications` rows. It never throws — a failed notification must not fail the action that caused it — and never
+  notifies the actor about their own action.
+- **No PHI in title/body** (DESIGN.md §13.3): dates, times and counts only ("You have a visit on 2026-10-05 at
+  09:00. Open the app for details."). `data` carries IDs for deep links only. A test checks the patient's name never
+  appears.
+- Wired in now: visit assigned / reassigned (old caregiver told `shift_unassigned`, new `shift_assigned`) /
+  rescheduled (`shift_updated`, only when date or time changes) / cancelled; recurring series created or changed
+  (one notification per series, not per visit); time off approved/denied.
+- Inbox: `GET /notifications?unreadOnly=`, `GET /notifications/unread-count`, `PATCH /notifications/:id/read`,
+  `POST /notifications/mark-all-read`. Every logged-in user has one; others' notifications are 404. Not audited
+  (no PHI).
+- Channels: only `in_app` so far. Push/SMS (P2-12), email (P3-19), live socket delivery (P2-02) and per-user
+  preferences (P4-07) build on the same rows.
