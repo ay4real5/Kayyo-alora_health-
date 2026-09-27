@@ -35,7 +35,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P1-13** `agent` Staff module: CRUD, credentials, availability, time-off, expiring-credentials. deps: P1-08, P1-09
 - [x] **P1-14** `agent` Scheduling: visits CRUD, cancel, calendar endpoint, conflict detector. deps: P1-12, P1-13
 - [x] **P1-15** `agent` Recurring visit rules + occurrence generation. deps: P1-14
-- [ ] **P1-16** `agent` In-app notifications (DB + endpoints). deps: P1-08
+- [x] **P1-16** `agent` In-app notifications (DB + endpoints). deps: P1-08
 - [ ] **P1-17** `agent` Seed script with fake agency, users per role, patients, staff, visits. deps: P1-12, P1-13, P1-14
 - [ ] **P1-18** `agent` Scaffold `apps/web` (Next.js, Tailwind, shadcn/ui, React Query, Zustand), api-client with refresh, login page, idle-timeout, sidebar layout. deps: P1-06
 - [ ] **P1-19** `agent` Web: patients list/detail pages. deps: P1-18, P1-12
