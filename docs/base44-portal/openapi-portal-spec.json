@@ -145,6 +145,74 @@
           "newPassword",
           "currentPassword"
         ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "Starting password, 12-128 characters with upper, lower, number and special character. The user must\nchange it at first login (mustChangePassword).",
+            "minLength": 12,
+            "maxLength": 128
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string"
+          },
+          "roleIds": {
+            "description": "Role ids: built-in roles, or this agency's custom roles.",
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "password",
+          "email",
+          "firstName",
+          "lastName",
+          "roleIds"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string"
+          },
+          "roleIds": {
+            "description": "Replaces the user's roles entirely.",
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
       }
     }
   },

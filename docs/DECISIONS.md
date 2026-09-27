@@ -276,3 +276,19 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Response bodies aren't described yet (services return plain types). Portal endpoints (P3-14) must declare
   `@ApiOkResponse` DTOs so Base44 gets full response schemas.
 - `@scarf/scarf` (download-analytics telemetry pulled in by swagger-ui) has its install script **denied**.
+
+### D-025 — Users module rules (P1-11)
+2026-09-27 · Claude Code
+- Admin-created users get an admin-chosen starting password (policy-checked) with `password_changed_at`
+  NULL, so their first login returns `mustChangePassword: true`. Email invitations wait for P3-19 (email).
+- **No privilege escalation**: a caller can only grant roles whose permissions they already hold, and can
+  only deactivate / reactivate / unlock / re-role / reset 2FA for users whose access they fully cover.
+  Only a `super_admin` can grant `super_admin` or manage one. Access of the target is computed from their
+  assigned roles (`PermissionsService.forRoles`), so it works for deactivated accounts too.
+- Nobody can change their own roles or deactivate themselves.
+- `DELETE /users/:id` **deactivates**; users are never deleted (audit history must stay attributable).
+  Deactivation revokes every refresh token immediately; existing access tokens expire within 15 minutes.
+- Other agencies' users return 404 (indistinguishable from non-existent). Because emails are globally unique
+  (D-020), creating a user whose email exists in another agency returns 409 — a small cross-agency
+  existence leak, accepted for now.
+- `GET /users/:id/activity` needs `users:read` **and** `audit_logs:read`.
