@@ -9,6 +9,7 @@ import {
   Matches,
   Max,
   Min,
+  MinLength,
   validateSync,
 } from 'class-validator';
 import { buildPhiKeyring } from '../common/crypto/phi-keyring.js';
@@ -21,6 +22,8 @@ export enum AppEnv {
 }
 
 const blankToUndefined = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
+const toNumber = ({ value }: { value: unknown }) =>
+  value === undefined || value === '' ? undefined : Number(value);
 
 /**
  * Every environment variable the API reads. Validated once at startup: the app refuses to boot with a
@@ -57,6 +60,50 @@ export class EnvironmentVariables {
   )
   CORS_ORIGINS: string[] = [];
 
+  /** Signs access tokens (HS256). At least 32 characters; generate with `openssl rand -base64 48`. */
+  @IsString()
+  @MinLength(32, { message: 'JWT_SECRET must be at least 32 characters' })
+  JWT_SECRET!: string;
+
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  @Max(60)
+  ACCESS_TOKEN_TTL_MINUTES: number = 15;
+
+  /** Absolute session lifetime: after this, the user must log in again even if active. */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  REFRESH_TOKEN_TTL_DAYS: number = 7;
+
+  /** A session unused for this long can no longer be refreshed (HIPAA auto-logoff, DECISIONS D-020). */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(5)
+  @Max(240)
+  SESSION_IDLE_TIMEOUT_MINUTES: number = 30;
+
+  @Transform(toNumber)
+  @IsInt()
+  @Min(3)
+  @Max(20)
+  LOGIN_MAX_ATTEMPTS: number = 5;
+
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  @Max(1440)
+  LOGIN_LOCKOUT_MINUTES: number = 30;
+
+  /** 0 disables. When exceeded, login still succeeds but returns mustChangePassword: true. */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(0)
+  @Max(3650)
+  PASSWORD_MAX_AGE_DAYS: number = 90;
+
   /** 32 random bytes, base64. Format and rotation: src/common/crypto/phi-crypto.ts (DECISIONS D-006). */
   @Transform(blankToUndefined)
   @IsOptional()
@@ -84,6 +131,10 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
 
   if (env.APP_ENV === AppEnv.Production && !env.DATABASE_URL) {
     problems.push('DATABASE_URL: required in production');
+  }
+  if (env.SESSION_IDLE_TIMEOUT_MINUTES <= env.ACCESS_TOKEN_TTL_MINUTES) {
+    // Clients refresh when the access token expires; a shorter idle window would log active users out.
+    problems.push('SESSION_IDLE_TIMEOUT_MINUTES: must be greater than ACCESS_TOKEN_TTL_MINUTES');
   }
   if (env.APP_ENV === AppEnv.Production && !env.PHI_ENCRYPTION_KEY) {
     problems.push('PHI_ENCRYPTION_KEY: required in production');

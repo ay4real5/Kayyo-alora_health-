@@ -1,7 +1,10 @@
 import { randomBytes } from 'node:crypto';
-import { AppEnv, validateEnv } from './env.validation.js';
+import { AppEnv, validateEnv as rawValidateEnv } from './env.validation.js';
 
 const newKey = () => randomBytes(32).toString('base64');
+const JWT_SECRET = 'test-secret-that-is-at-least-32-characters-long';
+/** Every test starts from the one always-required variable. */
+const validateEnv = (raw: Record<string, unknown>) => rawValidateEnv({ JWT_SECRET, ...raw });
 
 describe('validateEnv', () => {
   it('applies defaults when nothing is set', () => {
@@ -64,5 +67,20 @@ describe('validateEnv', () => {
       PHI_ENCRYPTION_PREVIOUS_KEYS: `1:${newKey()}, 2:${newKey()}`,
     });
     expect(env.PHI_ENCRYPTION_KEY_VERSION).toBe(3);
+  });
+
+  it('requires a strong JWT_SECRET', () => {
+    expect(() => rawValidateEnv({})).toThrow(/JWT_SECRET/);
+    expect(() => validateEnv({ JWT_SECRET: 'too-short' })).toThrow(/at least 32 characters/);
+  });
+
+  it('applies auth defaults and keeps the idle timeout longer than the access token', () => {
+    const env = validateEnv({});
+    expect(env.ACCESS_TOKEN_TTL_MINUTES).toBe(15);
+    expect(env.SESSION_IDLE_TIMEOUT_MINUTES).toBe(30);
+    expect(env.LOGIN_MAX_ATTEMPTS).toBe(5);
+    expect(() =>
+      validateEnv({ ACCESS_TOKEN_TTL_MINUTES: '15', SESSION_IDLE_TIMEOUT_MINUTES: '15' }),
+    ).toThrow(/must be greater than ACCESS_TOKEN_TTL_MINUTES/);
   });
 });
