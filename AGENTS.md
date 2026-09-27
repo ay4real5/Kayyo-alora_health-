@@ -95,7 +95,9 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - Every route requires `Authorization: Bearer <access token>` by default. Mark genuinely public routes with
   `@Public()` (from `common/decorators`). Get the caller with `@CurrentUser() user: AuthUser`
   (`{ userId, agencyId }`) and **always scope queries by `user.agencyId`**.
-- Record security/PHI events with the global `AuditService.record({...})` — IDs and reasons only, never PHI.
+- PHI access is audited **automatically** for every route with `@Permissions` (D-023). Use
+  `@Audit({ action: 'DISCHARGE_PATIENT' })` to name business actions; record other security events with
+  `AuditService.record({...})` — IDs and reasons only, never PHI.
 - Tests: `test/auth.e2e-spec.ts` shows how to create users and log in; override `ThrottlerStorage` so tests
   aren't rate-limited.
 

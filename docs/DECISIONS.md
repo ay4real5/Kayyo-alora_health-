@@ -242,3 +242,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   patients, caregivers only their own visits — belong in each module's queries (P1-12 onwards).
 - Role choices worth reviewing with the owner: LPNs can't write care plans or physician orders; aides can
   write but not sign visit notes; supervisors have no billing access; office staff can create patients.
+
+### D-023 — HIPAA audit trail (P1-09)
+2026-09-27 · Claude Code
+- **Automatic**: the global `AuditInterceptor` writes one `audit_logs` row for every request by a logged-in
+  user to a route with `@Permissions` (or `@Audit`) — on success **and** on failure (e.g. 404). Default action
+  `VIEW_/CREATE_/UPDATE_/DELETE_<RESOURCE>` from the HTTP method and the first permission's resource; the
+  record id comes from the `:id` route param, or from the response `id` on creates.
+- `@Audit({ action, resourceType, idParam })` names things precisely (e.g. `DISCHARGE_PATIENT`).
+  `@SkipAudit()` only for routes returning no PHI.
+- **Never stored**: request bodies, query-string values, response bodies. Stored: route *pattern*, method,
+  outcome, status, duration, query-parameter *names*, list result count, correlation id, IP, user agent.
+- `RbacGuard` records `ACCESS_DENIED` with the missing permissions. Auth events (login, lockout, 2FA,
+  password change, token theft) are recorded by the auth module (D-020/D-021).
+- The audit write is awaited before the response is sent. If it fails, the error is logged loudly but the
+  request still succeeds — availability over strictness; revisit if compliance requires fail-closed.
+- Every API response carries `Cache-Control: no-store` (+ `Pragma: no-cache`) — no response may be cached.
+- Not yet: querying the trail (`/compliance/audit-logs`, P4-05), monthly partitioning + 6-year retention
+  (P4-08), and a DB-level guard against UPDATE/DELETE on `audit_logs` (add with P4-08).
+- E2E test files now run sequentially with 30 s timeouts — they hit a remote database.

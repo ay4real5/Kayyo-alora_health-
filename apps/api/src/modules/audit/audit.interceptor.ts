@@ -101,12 +101,27 @@ function routePattern(request: Request): string {
   return route ? `${request.baseUrl}${route}` : request.path;
 }
 
+/**
+ * This interceptor runs outside ResponseEnvelopeInterceptor, so it usually sees `{ success, data, meta }`;
+ * accept the raw handler result too, in case interceptor order ever changes.
+ */
+function payloadOf(body: unknown): unknown {
+  if (body instanceof Paginated) return body.items;
+  if (body && typeof body === 'object' && (body as { success?: unknown }).success === true && 'data' in body) {
+    return (body as { data: unknown }).data;
+  }
+  return body;
+}
+
 function countOf(body: unknown): number | undefined {
-  if (body instanceof Paginated) return body.items.length;
-  return Array.isArray(body) ? body.length : undefined;
+  const payload = payloadOf(body);
+  return Array.isArray(payload) ? payload.length : undefined;
 }
 
 function idOf(body: unknown): string | undefined {
-  if (body && typeof body === 'object' && 'id' in body) return validUuid((body as { id: unknown }).id);
+  const payload = payloadOf(body);
+  if (payload && typeof payload === 'object' && 'id' in payload) {
+    return validUuid((payload as { id: unknown }).id);
+  }
   return undefined;
 }
