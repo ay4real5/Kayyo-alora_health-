@@ -134,6 +134,7 @@ npm run start:dev -w @alora/api          # API on http://localhost:3001/api/v1 (
 npm run generate -w @alora/api           # regenerate Prisma client (turbo does this before build/test)
 npm run db:deploy -w @alora/api          # apply migrations to DATABASE_URL
 npm run openapi -w @alora/api            # after build: regenerate docs/api/openapi.json + portal spec (CI checks)
+npm run db:seed -w @alora/api            # after build: wipe + rebuild the FAKE demo agency, prints logins (D-033)
 npm run db:migrate -w @alora/api -- --name <name>   # create a migration (needs a database, see D-014)
 docker compose up -d --build             # whole stack incl. API container
 ```

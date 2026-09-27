@@ -43,4 +43,16 @@ npm install
 docker compose up -d     # PostgreSQL + Redis
 ```
 
-App-specific commands are added to AGENTS.md §7 as each app is scaffolded.
+Fill the database with a FAKE demo agency (safe to re-run; refuses to run in production):
+
+```bash
+npm run build
+npm run db:deploy -w @alora/api   # apply migrations
+npm run db:seed -w @alora/api     # prints the demo logins
+```
+
+Demo logins (password `Demo-Password-1!`, development only): `agency.admin@demo.alora.test`,
+`supervisor@demo.alora.test`, `office.staff@demo.alora.test`, `billing.staff@demo.alora.test`,
+`rn@demo.alora.test`, `hha@demo.alora.test`, `pt@demo.alora.test` and more (see the seed output).
+
+More commands: [AGENTS.md §7](AGENTS.md).

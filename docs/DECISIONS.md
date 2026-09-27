@@ -422,3 +422,19 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   (no PHI).
 - Channels: only `in_app` so far. Push/SMS (P2-12), email (P3-19), live socket delivery (P2-02) and per-user
   preferences (P4-07) build on the same rows.
+
+### D-033 — Demo seed data (P1-17)
+2026-09-27 · Claude Code
+- `npm run db:seed -w @alora/api` (after build) wipes and rebuilds **one** demo agency (fixed id
+  `00000000-0000-4000-8000-00000000d3a0`, "Demo Home Health (FAKE DATA)", timezone America/Chicago). Other agencies
+  are never touched. **Refuses to run when `APP_ENV=production`.**
+- Contents: a login per built-in role except portal_user (`<role>@demo.alora.test`, field roles as
+  `rn@`, `lpn@`, `pt@`, `ot@`, `slp@`, `msw@`, `hha@`), 15 caregivers with credentials (one expired, some expiring)
+  and weekday availability, 5 physicians (check-digit-valid invented NPIs), 30 patients (27 active) with diagnoses and
+  allergies, ~2 weeks of weekday visits with no double-booking, 4 recurring aide series, 3 unassigned visits.
+- All data is invented; demo SSNs start with 9 (never issued), phones are 555 numbers, emails use `.test`.
+- Shared password `Demo-Password-1!` (override with `DEMO_PASSWORD`). Development only — the demo agency must never
+  exist in production (it can't be seeded there).
+- Deterministic (fixed-seed PRNG) so screenshots and bug reports are reproducible. Visits are inserted directly with a
+  slot plan that avoids double-booking (a test checks); recurring series use `recurrenceDates` like the real feature.
+- The seed e2e test re-seeds the dev database's demo agency on every run (~40 s against Neon).
