@@ -60,13 +60,16 @@ jobs:
           JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-000
         run: |
           docker compose up -d --no-build --wait postgres redis
-          docker run -d --name api --network host             -e DATABASE_URL=postgresql://alora:localdev123@localhost:5432/alora_health             -e JWT_SECRET             alora-api:ci
+          docker run -d --name api --network host \
+            -e DATABASE_URL=postgresql://alora:localdev123@localhost:5432/alora_health \
+            -e JWT_SECRET \
+            alora-api:ci
           for i in $(seq 1 30); do
             if curl -fsS http://localhost:3001/api/v1/health; then echo; exit 0; fi
             sleep 2
           done
-          echo "API did not become healthy"; docker logs api
-          # Surface the tail of the log as an annotation (readable without signing in to GitHub).
-          echo "::error title=API container log::$(docker logs api 2>&1 | tail -15 | sed ':a;N;$!ba;s/
-/%0A/g')"
+          echo "API did not become healthy"
+          docker logs api
+          # Also surface the log tail as an annotation, which is readable without signing in to GitHub.
+          echo "::error title=API container log::$(docker logs api 2>&1 | tail -15 | tr '\n' '|')"
           exit 1
