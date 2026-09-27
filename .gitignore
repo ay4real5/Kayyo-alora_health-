@@ -48,3 +48,6 @@ Thumbs.db
 
 # prisma generated client (rebuilt by `npm run generate`)
 apps/api/src/generated/
+
+# Next.js generated type file (regenerated on dev/build/typegen)
+apps/web/next-env.d.ts
