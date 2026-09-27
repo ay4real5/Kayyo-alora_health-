@@ -7,6 +7,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { RbacModule } from './modules/rbac/rbac.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { HealthModule } from './modules/health/health.module.js';
     DatabaseModule,
     CryptoModule,
     AuditModule,
+    RbacModule,
     AuthModule,
     HealthModule,
   ],

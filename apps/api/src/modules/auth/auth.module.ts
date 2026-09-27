@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
+import { RbacGuard } from '../rbac/rbac.guard.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
@@ -25,7 +26,9 @@ import { TwoFactorService } from './two-factor/two-factor.service.js';
     PasswordService,
     TokenService,
     TwoFactorService,
+    // Global guards run in this order: authenticate first, then check permissions.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useExisting: RbacGuard },
   ],
   exports: [PasswordService, TokenService],
 })

@@ -11,6 +11,7 @@ import type { EnvironmentVariables } from '../../config/env.validation.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { AuditService } from '../audit/audit.service.js';
+import { PermissionsService } from '../rbac/permissions.service.js';
 import { PasswordService } from './password.service.js';
 import { TokenService, type ClientInfo, type TokenPair } from './token.service.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
@@ -56,6 +57,7 @@ export class AuthService {
     private readonly tokens: TokenService,
     private readonly audit: AuditService,
     private readonly twoFactor: TwoFactorService,
+    private readonly permissions: PermissionsService,
     config: ConfigService<EnvironmentVariables, true>,
   ) {
     this.maxAttempts = config.get('LOGIN_MAX_ATTEMPTS', { infer: true });
@@ -186,20 +188,11 @@ export class AuthService {
   async me(auth: AuthUser): Promise<MeResult> {
     const user = await this.prisma.user.findFirst({
       where: { id: auth.userId, agencyId: auth.agencyId, isActive: true },
-      include: {
-        userRoles: {
-          include: { role: { include: { rolePermissions: { include: { permission: true } } } } },
-        },
-      },
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const permissions = new Set<string>();
-    for (const { role } of user.userRoles) {
-      for (const { permission } of role.rolePermissions) {
-        permissions.add(`${permission.resource}:${permission.action}`);
-      }
-    }
+    // Same lookup the RbacGuard uses, so the UI sees exactly what the API will enforce.
+    const access = await this.permissions.forUser(auth);
     return {
       id: user.id,
       agencyId: user.agencyId,
@@ -207,8 +200,8 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       is2faEnabled: user.is2faEnabled,
-      roles: user.userRoles.map(({ role }) => role.name).sort(),
-      permissions: [...permissions].sort(),
+      roles: access.roles,
+      permissions: [...access.permissions].sort(),
     };
   }
 
