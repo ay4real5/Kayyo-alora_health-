@@ -45,4 +45,4 @@ Docker can't run on the laptop (D-011), so development needs a Postgres + Redis 
 ## Resolved
 
 ### Q-001 — Repo is public
-Resolved 2026-09-27: owner made the repo private.
+Resolved 2026-09-27: made private, then made public again for the build phase — see DECISIONS D-012.

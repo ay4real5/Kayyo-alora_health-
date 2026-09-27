@@ -80,3 +80,10 @@ The owner's laptop has 5.7 GB RAM; Docker Desktop crashed it. So:
 - Local database/Redis for development: see OPEN_QUESTIONS Q-007 (cloud dev database). Dev data is always
   fake, so a free cloud database is fine for development; production still needs HIPAA hosting (Q-006).
 - Agents running in their own cloud VM (e.g. Devin) may use Docker there normally.
+
+### D-012 — Repo is public during the build phase
+2026-09-27 · Owner
+The owner made the repo public so agents can read CI results and work without GitHub credentials. It will be
+made private or moved before real use. Consequences: **never commit secrets, real PHI, or real agency/patient
+data** (already a rule), and assume anything pushed can be copied permanently. CI results are readable at
+`https://api.github.com/repos/ay4real5/Kayyo-alora_health-/actions/runs` without auth.
