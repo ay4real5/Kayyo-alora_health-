@@ -1191,6 +1191,634 @@
         ]
       }
     },
+    "/api/v1/staff": {
+      "get": {
+        "operationId": "StaffController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Matches first name, last name, email or employee id.",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "discipline",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RN",
+                "LPN",
+                "PT",
+                "PTA",
+                "OT",
+                "COTA",
+                "SLP",
+                "MSW",
+                "HHA",
+                "CNA",
+                "PCA"
+              ]
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "zip",
+            "required": false,
+            "in": "query",
+            "description": "Staff who serve this ZIP code.",
+            "schema": {
+              "pattern": "^\\d{5}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "post": {
+        "operationId": "StaffController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/me": {
+      "get": {
+        "operationId": "StaffController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The caller's own staff profile (including their pay details). For the mobile app.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/expiring-credentials": {
+      "get": {
+        "operationId": "StaffController_expiring",
+        "parameters": [
+          {
+            "name": "withinDays",
+            "required": true,
+            "in": "query",
+            "description": "Include credentials expiring within this many days (and already expired ones). Default 30.",
+            "schema": {
+              "minimum": 0,
+              "maximum": 365,
+              "default": 30,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}": {
+      "get": {
+        "operationId": "StaffController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Self, or staff:read.",
+        "tags": [
+          "staff"
+        ]
+      },
+      "patch": {
+        "operationId": "StaffController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "delete": {
+        "operationId": "StaffController_terminate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TerminateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Ends employment: inactive + termination date. Profiles are never deleted.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/credentials": {
+      "get": {
+        "operationId": "StaffController_listCredentials",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Self, or staff:read.",
+        "tags": [
+          "staff"
+        ]
+      },
+      "post": {
+        "operationId": "StaffController_addCredential",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCredentialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/credentials/{credentialId}": {
+      "patch": {
+        "operationId": "StaffController_updateCredential",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "credentialId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCredentialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "delete": {
+        "operationId": "StaffController_removeCredential",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "credentialId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/availability": {
+      "get": {
+        "operationId": "StaffController_getAvailability",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Self, or staff:read.",
+        "tags": [
+          "staff"
+        ]
+      },
+      "put": {
+        "operationId": "StaffController_setAvailability",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAvailabilityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Self, or staff:update. Replaces the whole weekly schedule.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/time-off": {
+      "get": {
+        "operationId": "StaffController_listTimeOff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Self, or staff:read.",
+        "tags": [
+          "staff"
+        ]
+      },
+      "post": {
+        "operationId": "StaffController_requestTimeOff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTimeOffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Self, or staff:update.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/time-off/{timeOffId}": {
+      "patch": {
+        "operationId": "StaffController_decideTimeOff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timeOffId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideTimeOffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "approved/denied need time_off:approve (not for your own request); cancelled: self or staff:update.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -1804,6 +2432,433 @@
             "type": "boolean"
           }
         }
+      },
+      "CreateStaffDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The user account this profile belongs to (same agency, not already staff).",
+            "format": "uuid"
+          },
+          "employeeId": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "discipline": {
+            "type": "string",
+            "enum": [
+              "RN",
+              "LPN",
+              "PT",
+              "PTA",
+              "OT",
+              "COTA",
+              "SLP",
+              "MSW",
+              "HHA",
+              "CNA",
+              "PCA"
+            ]
+          },
+          "employmentType": {
+            "type": "string",
+            "enum": [
+              "full_time",
+              "part_time",
+              "per_diem",
+              "contractor"
+            ]
+          },
+          "hireDate": {
+            "type": "string"
+          },
+          "hourlyRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "perVisitRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "overtimeRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1500
+          },
+          "mileageRate": {
+            "type": "number",
+            "description": "Dollars per mile, e.g. 0.67.",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "ssn": {
+            "type": "string",
+            "description": "Stored encrypted; only the last 4 digits are ever returned, and only to payroll."
+          },
+          "taxFilingStatus": {
+            "type": "string",
+            "enum": [
+              "single",
+              "married",
+              "married_separately",
+              "head_of_household"
+            ]
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "serviceAreaZipCodes": {
+            "description": "ZIP codes this person will travel to.",
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{5}$"
+            }
+          },
+          "maxPatients": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "skills": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 60
+            }
+          },
+          "languages": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 40
+            }
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "userId",
+          "discipline"
+        ]
+      },
+      "UpdateStaffDto": {
+        "type": "object",
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "discipline": {
+            "enum": [
+              "RN",
+              "LPN",
+              "PT",
+              "PTA",
+              "OT",
+              "COTA",
+              "SLP",
+              "MSW",
+              "HHA",
+              "CNA",
+              "PCA"
+            ],
+            "type": "string"
+          },
+          "employmentType": {
+            "enum": [
+              "full_time",
+              "part_time",
+              "per_diem",
+              "contractor"
+            ],
+            "type": "string"
+          },
+          "hireDate": {
+            "type": "string"
+          },
+          "hourlyRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "perVisitRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "overtimeRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1500
+          },
+          "mileageRate": {
+            "type": "number",
+            "description": "Dollars per mile, e.g. 0.67.",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "ssn": {
+            "type": "string",
+            "description": "Stored encrypted; only the last 4 digits are ever returned, and only to payroll."
+          },
+          "taxFilingStatus": {
+            "type": "string",
+            "enum": [
+              "single",
+              "married",
+              "married_separately",
+              "head_of_household"
+            ]
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "serviceAreaZipCodes": {
+            "description": "ZIP codes this person will travel to.",
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{5}$"
+            }
+          },
+          "maxPatients": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "skills": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 60
+            }
+          },
+          "languages": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 40
+            }
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000
+          }
+        }
+      },
+      "TerminateStaffDto": {
+        "type": "object",
+        "properties": {
+          "terminationDate": {
+            "type": "string",
+            "description": "Defaults to today."
+          }
+        }
+      },
+      "CreateCredentialDto": {
+        "type": "object",
+        "properties": {
+          "credentialType": {
+            "type": "string",
+            "description": "e.g. license, certification, cpr, tb_test, background_check, drivers_license, training",
+            "maxLength": 100
+          },
+          "credentialName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "credentialNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "issuingAuthority": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "issueDate": {
+            "type": "string"
+          },
+          "expiryDate": {
+            "type": "string"
+          },
+          "alertDaysBefore": {
+            "type": "number",
+            "description": "Warn this many days before expiry (default 30).",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "credentialType",
+          "credentialName"
+        ]
+      },
+      "UpdateCredentialDto": {
+        "type": "object",
+        "properties": {
+          "credentialType": {
+            "type": "string",
+            "description": "e.g. license, certification, cpr, tb_test, background_check, drivers_license, training",
+            "maxLength": 100
+          },
+          "credentialName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "credentialNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "issuingAuthority": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "issueDate": {
+            "type": "string"
+          },
+          "expiryDate": {
+            "type": "string"
+          },
+          "alertDaysBefore": {
+            "type": "number",
+            "description": "Warn this many days before expiry (default 30).",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "true records the caller as having verified the credential against the original."
+          }
+        }
+      },
+      "AvailabilitySlotDto": {
+        "type": "object",
+        "properties": {
+          "dayOfWeek": {
+            "type": "number",
+            "description": "0 = Sunday … 6 = Saturday",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "startTime": {
+            "type": "string",
+            "description": "HH:MM, 24-hour"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "HH:MM, 24-hour, after startTime"
+          }
+        },
+        "required": [
+          "dayOfWeek",
+          "startTime",
+          "endTime"
+        ]
+      },
+      "SetAvailabilityDto": {
+        "type": "object",
+        "properties": {
+          "slots": {
+            "description": "Replaces the whole weekly schedule. An empty list means \"no set availability\".",
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilitySlotDto"
+            }
+          }
+        },
+        "required": [
+          "slots"
+        ]
+      },
+      "CreateTimeOffDto": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "vacation",
+              "sick",
+              "personal",
+              "bereavement",
+              "other"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "type"
+        ]
+      },
+      "DecideTimeOffDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "approved/denied by an approver; cancelled by the requester (pending requests only).",
+            "enum": [
+              "approved",
+              "denied",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
       }
     }
   },

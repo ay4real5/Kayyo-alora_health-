@@ -339,3 +339,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Shared DTO helpers live in `common/validators/fields.ts` (phone, state, ZIP, trim transforms) — reuse them.
 - Postgres pool: idle connections recycled after 60 s (serverless Postgres like Neon drops idle connections
   when it scales to zero) and a 10 s connect timeout. Added after intermittent e2e failures against Neon.
+
+### D-029 — Staff module (P1-13)
+2026-09-27 · Claude Code
+- A staff profile belongs to exactly one existing user of the same agency (`POST /staff {userId, …}`); create the
+  login in `/users` first. `DELETE /staff/:id` **terminates** (inactive + termination date) — the login account
+  is managed separately, profiles are never deleted.
+- **"Self" rules**: a staff member may read their own profile (`GET /staff/me` or by id), credentials,
+  availability and time off, set their own availability, and request/cancel their own time off — without
+  `staff:*` permissions. These routes carry `@Audit` (not `@Permissions`) and the service checks
+  "self, or the named permission" (`StaffService.assertSelfOr`).
+- **Pay and SSN**: `pay` (rates as decimal strings like `"21.50"`, tax status, `ssnLast4`) appears only for
+  `payroll:read` holders and the person themselves. SSN encrypted with `PhiContext.StaffSsn`.
+- Credentials: `state` (valid / expiring_soon / expired / no_expiry) is **computed** from expiry date and
+  `alertDaysBefore`, never stored. `GET /staff/expiring-credentials?withinDays=30` lists active staff's expired and
+  soon-expiring credentials. `PATCH … {verified: true}` records who verified. Document upload waits for P3-12;
+  automatic alerts for P4-05 (cron) + notifications.
+- Availability: `PUT` replaces the weekly schedule; slots must be start < end and must not overlap per day.
+  `effective_date`/`end_date` (dated availability) are not used yet.
+- Time off: overlapping pending/approved requests are refused; approve/deny need `time_off:approve` and can't
+  be your own; only pending requests can change; the requester can cancel.
+- Disciplines: RN, LPN, PT, PTA, OT, COTA, SLP, MSW, HHA, CNA, PCA (`DISCIPLINES` in `@alora/shared`).
+- Date/time helpers are shared: `common/utils/dates.ts`, `common/validators/is-date-only.ts`.
