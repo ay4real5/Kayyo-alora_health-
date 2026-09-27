@@ -12,6 +12,7 @@ import { addDays, fromDate, fromTime, toDate, toTime } from '../../common/utils/
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { AuditService } from '../audit/audit.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import { ConflictDetectorService, type Conflict, type ProposedVisit } from './conflict-detector.service.js';
 import type {
@@ -25,7 +26,7 @@ import type {
 const VISIT_INCLUDE = {
   patient: { select: { id: true, firstName: true, lastName: true } },
   staff: {
-    select: { id: true, discipline: true, user: { select: { firstName: true, lastName: true } } },
+    select: { id: true, discipline: true, userId: true, user: { select: { firstName: true, lastName: true } } },
   },
 } satisfies Prisma.VisitInclude;
 type VisitRow = Prisma.VisitGetPayload<{ include: typeof VISIT_INCLUDE }>;
@@ -68,6 +69,7 @@ export class VisitsService {
     private readonly conflicts: ConflictDetectorService,
     private readonly permissions: PermissionsService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list(caller: AuthUser, query: ListVisitsQueryDto): Promise<Paginated<VisitView>> {
@@ -146,6 +148,7 @@ export class VisitsService {
       },
       include: VISIT_INCLUDE,
     });
+    await this.notifyCaregiver(caller, visit, 'shift_assigned', 'New visit assigned');
     return { ...toView(visit), warnings };
   }
 
@@ -183,6 +186,18 @@ export class VisitsService {
     if (dto.priority !== undefined) data.priority = dto.priority;
     if (dto.notes !== undefined) data.notes = dto.notes;
     const visit = await this.prisma.visit.update({ where: { id }, data, include: VISIT_INCLUDE });
+
+    const reassigned = existing.staffId !== visit.staffId;
+    const moved =
+      fromDate(existing.scheduledDate) !== fromDate(visit.scheduledDate) ||
+      fromTime(existing.scheduledStart) !== fromTime(visit.scheduledStart) ||
+      fromTime(existing.scheduledEnd) !== fromTime(visit.scheduledEnd);
+    if (reassigned) {
+      await this.notifyCaregiver(caller, existing, 'shift_unassigned', 'A visit was reassigned');
+      await this.notifyCaregiver(caller, visit, 'shift_assigned', 'New visit assigned');
+    } else if (moved) {
+      await this.notifyCaregiver(caller, visit, 'shift_updated', 'A visit was rescheduled');
+    }
     return { ...toView(visit), warnings };
   }
 
@@ -191,13 +206,39 @@ export class VisitsService {
     if (existing.status !== 'scheduled') {
       throw new ConflictException(`Only scheduled visits can be cancelled (this one is ${existing.status})`);
     }
-    return toView(
-      await this.prisma.visit.update({
-        where: { id },
-        data: { status: 'cancelled', cancelReason: reason },
-        include: VISIT_INCLUDE,
-      }),
-    );
+    const visit = await this.prisma.visit.update({
+      where: { id },
+      data: { status: 'cancelled', cancelReason: reason },
+      include: VISIT_INCLUDE,
+    });
+    await this.notifyCaregiver(caller, visit, 'shift_cancelled', 'A visit was cancelled');
+    return toView(visit);
+  }
+
+  /** Tells the visit's caregiver (if any, and not the person making the change). No PHI in the text. */
+  private async notifyCaregiver(
+    caller: AuthUser,
+    visit: VisitRow,
+    type: 'shift_assigned' | 'shift_unassigned' | 'shift_updated' | 'shift_cancelled',
+    title: string,
+  ): Promise<void> {
+    if (!visit.staff) return;
+    const when = `${fromDate(visit.scheduledDate)} at ${fromTime(visit.scheduledStart)}`;
+    const body = {
+      shift_assigned: `You have a visit on ${when}. Open the app for details.`,
+      shift_unassigned: `Your visit on ${when} has been given to someone else.`,
+      shift_updated: `Your visit is now on ${when}. Open the app for details.`,
+      shift_cancelled: `Your visit on ${when} was cancelled.`,
+    }[type];
+    await this.notifications.notify({
+      agencyId: caller.agencyId,
+      userIds: [visit.staff.userId],
+      actorUserId: caller.userId,
+      type,
+      title,
+      body,
+      data: { visitId: visit.id },
+    });
   }
 
   /** Pre-check a visit before saving it; nothing is written. */

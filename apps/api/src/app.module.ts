@@ -7,6 +7,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { PatientsModule } from './modules/patients/patients.module.js';
 import { PhysiciansModule } from './modules/physicians/physicians.module.js';
 import { RbacModule } from './modules/rbac/rbac.module.js';
@@ -29,6 +30,7 @@ import { UsersModule } from './modules/users/users.module.js';
     PhysiciansModule,
     StaffModule,
     SchedulingModule,
+    NotificationsModule,
     HealthModule,
   ],
   providers: [

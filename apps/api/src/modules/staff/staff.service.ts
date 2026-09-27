@@ -12,6 +12,7 @@ import { Paginated } from '../../common/dto/pagination.dto.js';
 import { fromDate, fromTime, toDate, today, toTime } from '../../common/utils/dates.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import type {
   CreateStaffDto,
@@ -92,6 +93,7 @@ export class StaffService {
     private readonly prisma: PrismaService,
     private readonly crypto: PhiCryptoService,
     private readonly permissions: PermissionsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list(caller: AuthUser, query: ListStaffQueryDto): Promise<Paginated<StaffSummary>> {
@@ -270,12 +272,23 @@ export class StaffService {
       if (profile.userId === caller.userId) throw new ForbiddenException('You cannot approve your own time off');
       await this.assertPermission(caller, 'time_off:approve');
     }
-    return toTimeOff(
-      await this.prisma.staffTimeOff.update({
-        where: { id: timeOffId },
-        data: { status, approvedById: status === 'cancelled' ? null : caller.userId },
-      }),
-    );
+    const updated = await this.prisma.staffTimeOff.update({
+      where: { id: timeOffId },
+      data: { status, approvedById: status === 'cancelled' ? null : caller.userId },
+    });
+    if (status !== 'cancelled') {
+      const range = `${fromDate(updated.startDate)} to ${fromDate(updated.endDate)}`;
+      await this.notifications.notify({
+        agencyId: caller.agencyId,
+        userIds: [profile.userId],
+        actorUserId: caller.userId,
+        type: 'time_off_decided',
+        title: status === 'approved' ? 'Time off approved' : 'Time off denied',
+        body: `Your time-off request for ${range} was ${status}.`,
+        data: { timeOffId: updated.id },
+      });
+    }
+    return toTimeOff(updated);
   }
 
   /** Finds a profile in the caller's agency (404 otherwise). */

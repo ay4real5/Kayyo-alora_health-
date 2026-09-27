@@ -5,6 +5,7 @@ import { Paginated } from '../../common/dto/pagination.dto.js';
 import { addDays, fromDate, fromTime, toDate, toTime } from '../../common/utils/dates.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import { ConflictDetectorService, type Conflict } from './conflict-detector.service.js';
 import type {
@@ -20,7 +21,7 @@ const CHECK_CONCURRENCY = 5;
 
 const RULE_INCLUDE = {
   patient: { select: { id: true, firstName: true, lastName: true, status: true } },
-  staff: { select: { id: true, discipline: true, user: { select: { firstName: true, lastName: true } } } },
+  staff: { select: { id: true, discipline: true, userId: true, user: { select: { firstName: true, lastName: true } } } },
 } satisfies Prisma.RecurrenceRuleInclude;
 type RuleRow = Prisma.RecurrenceRuleGetPayload<{ include: typeof RULE_INCLUDE }>;
 
@@ -62,6 +63,7 @@ export class RecurringService {
     private readonly prisma: PrismaService,
     private readonly conflicts: ConflictDetectorService,
     private readonly permissions: PermissionsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list(caller: AuthUser, query: ListRecurringQueryDto): Promise<Paginated<RecurringView>> {
@@ -114,7 +116,23 @@ export class RecurringService {
       },
       include: RULE_INCLUDE,
     });
-    return { ...toView(rule), generation: await this.generateFor(caller, rule) };
+    const generation = await this.generateFor(caller, rule);
+    await this.notifySeries(caller, rule, generation, 'New recurring visits assigned');
+    return { ...toView(rule), generation };
+  }
+
+  /** One notification per series change, not one per visit. No PHI. */
+  private async notifySeries(caller: AuthUser, rule: RuleRow, generation: GenerationResult, title: string): Promise<void> {
+    if (!rule.staff || !generation.created.length) return;
+    await this.notifications.notify({
+      agencyId: caller.agencyId,
+      userIds: [rule.staff.userId],
+      actorUserId: caller.userId,
+      type: 'shift_assigned',
+      title,
+      body: `${generation.created.length} visit(s) starting ${generation.created[0]!.scheduledDate}. Open the app for details.`,
+      data: { recurrenceRuleId: rule.id },
+    });
   }
 
   /**
@@ -152,7 +170,9 @@ export class RecurringService {
         include: RULE_INCLUDE,
       });
     });
-    return { ...toView(rule), generation: await this.generateFor(caller, rule) };
+    const generation = await this.generateFor(caller, rule);
+    await this.notifySeries(caller, rule, generation, 'Your recurring visits changed');
+    return { ...toView(rule), generation };
   }
 
   /** Ends the series: the rule is deactivated and its future scheduled occurrences are cancelled. */
