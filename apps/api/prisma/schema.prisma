@@ -498,6 +498,8 @@ model Visit {
   createdBy      User?           @relation("VisitCreatedBy", fields: [createdById], references: [id])
   documents      Document[]
 
+  /// At most one occurrence per recurring rule per date — generation can be re-run safely (D-031).
+  @@unique([recurrenceRuleId, scheduledDate])
   @@index([agencyId, scheduledDate])
   @@index([patientId, scheduledDate])
   @@index([staffId, scheduledDate])
