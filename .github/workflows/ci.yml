@@ -62,6 +62,10 @@ jobs:
           JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-000
         run: |
           docker compose up -d --no-build --wait postgres redis
+          # The API refuses to start on an unmigrated database, so apply the migrations first.
+          for f in apps/api/prisma/migrations/*/migration.sql; do
+            docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -q -U alora -d alora_health < "$f"
+          done
           docker run -d --name api --network host \
             -e DATABASE_URL=postgresql://alora:localdev123@localhost:5432/alora_health \
             -e JWT_SECRET \

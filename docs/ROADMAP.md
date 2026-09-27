@@ -89,6 +89,6 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P4-07** `agent` Notification preferences UI/API
 - [ ] **P4-08** `agent` Audit-log monthly partitioning + retention
 - [ ] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes
-- [ ] **P4-10** `agent` Production Dockerfiles, docker-compose.prod, nginx, deploy workflows
+- [ ] **P4-10** `agent` Production Dockerfiles, docker-compose.prod, nginx, deploy workflows. Deploys must run `prisma migrate deploy` (separate migration image/job — the API image has no Prisma CLI) **before** starting the API, which refuses to boot on an unmigrated DB.
 - [ ] **P4-11** `human` Hosting choice (HIPAA-eligible, BAA), production secrets, domain
 - [ ] **P4-12** `human` Rotate/revoke every dev credential shared during development (DECISIONS D-019); make repo private
