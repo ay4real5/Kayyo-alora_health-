@@ -11,6 +11,7 @@ import type { Role } from './roles.js';
 
 const CLINICAL_BASE: Permission[] = [
   'patients:read',
+  'physicians:read',
   'visits:read',
   'visit_notes:create',
   'visit_notes:update',
@@ -32,6 +33,9 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'patients:read',
     'patients:read_all',
     'patients:update',
+    'physicians:create',
+    'physicians:read',
+    'physicians:update',
     'care_plans:create',
     'care_plans:update',
     'assessments:create',
@@ -90,6 +94,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   billing_staff: [
     'patients:read',
     'patients:read_all',
+    'physicians:read',
     'visits:read',
     'evv:read',
     'billing:create',
@@ -106,6 +111,9 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'patients:create',
     'patients:read',
     'patients:read_all',
+    'physicians:create',
+    'physicians:read',
+    'physicians:update',
     'patients:update',
     'staff:create',
     'staff:read',

@@ -287,6 +287,8 @@ model Physician {
   agency   Agency    @relation(fields: [agencyId], references: [id])
   patients Patient[]
 
+  /// One directory entry per NPI within an agency (NULLs allowed — NPI is optional).
+  @@unique([agencyId, npi])
   @@index([agencyId])
   @@map("physicians")
 }
