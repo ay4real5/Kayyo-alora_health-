@@ -114,3 +114,11 @@ data** (already a rule), and assume anything pushed can be copied permanently. C
   (needs a shadow DB) or, for the very first migration only, `--from-empty`.
 - CI applies all migrations to a fresh Postgres and **fails if the migrations don't match `schema.prisma`**.
 - Never edit a migration that has been merged to `main`; add a new one.
+
+### D-015 — npm overrides for Prisma CLI's vulnerable dependencies
+2026-09-27 · Claude Code
+`prisma@7.10.0` (dev tool) pins `mysql2@3.15.3` and `@prisma/config` pins `deepmerge-ts@7.1.5`, both with
+high-severity advisories. Root `package.json` `overrides` forces `mysql2 ^3.23.1` and `deepmerge-ts ^8.0.0`.
+Verified: `prisma validate/generate/migrate diff` and CI migrations still work. `npm ls` reports them as
+"invalid" — expected with overrides. **Remove the overrides when Prisma ships a release with fixed pins.**
+Note: npm only applies new overrides on a clean install (delete `node_modules` + `package-lock.json`).
