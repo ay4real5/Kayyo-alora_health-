@@ -12,7 +12,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 
 - [x] **P0-01** `agent` Handoff system: AGENTS.md, CLAUDE.md, docs/STATUS, ROADMAP, DECISIONS, OPEN_QUESTIONS, DESIGN
 - [x] **P0-02** `agent` Root monorepo config: package.json workspaces, turbo.json, tsconfig.base, .editorconfig, .gitignore, .env.example, docker-compose (Postgres + Redis)
-- [ ] **P0-03** `human` Decide repo visibility (currently **public**) — see OPEN_QUESTIONS Q-001
+- [x] **P0-03** `human` Decide repo visibility — made private 2026-09-27
 - [ ] **P0-04** `human` Answer the Phase 1-blocking items in OPEN_QUESTIONS (Q-002 Base44 auth, Q-005 target state)
 
 ## Phase 1 — Foundation & core operations

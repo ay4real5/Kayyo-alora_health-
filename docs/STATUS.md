@@ -19,11 +19,11 @@ Before starting, read DECISIONS D-001 (Node/library versions).
 
 ## Blockers / waiting on human
 
-- Q-001 repo visibility (public right now) — see [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md)
 - Q-002 Base44 portal auth design — must be settled before P3-14/P3-16, not before Phase 1
 
 ## Session log
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-27 | Claude Code | P0-03 | Repo made private by owner; initial setup pushed to main. |
 | 2026-09-27 | Claude Code | P0-01, P0-02 | Repo cloned, design doc imported, handoff system + root config created. |

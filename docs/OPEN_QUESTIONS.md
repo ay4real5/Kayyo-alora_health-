@@ -6,12 +6,6 @@ move the item to "Resolved".
 
 ## Open
 
-### Q-001 — Repo is public
-The GitHub repo `ay4real5/Kayyo-alora_health-` is **public**. No PHI or secrets will ever be committed, but
-the full architecture, security design, and later the code of a healthcare system will be visible to
-anyone. Recommendation: make it private (Settings → General → Danger Zone → Change visibility). Devin and
-Claude Code both work with private repos once connected to your GitHub account.
-
 ### Q-002 — Base44 portal authentication is unsafe as designed  ⚠ blocks P3-14/P3-16
 DESIGN.md §3.3 and §7.1 say the portal stores the patient's JWT in **Base44 Secrets**. Secrets are app-wide
 environment variables, not per-user storage — so every patient would share one token (patient A sees
@@ -42,4 +36,5 @@ before P4-10/P4-11.
 
 ## Resolved
 
-(none yet)
+### Q-001 — Repo is public
+Resolved 2026-09-27: owner made the repo private.
