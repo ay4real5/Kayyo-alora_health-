@@ -144,6 +144,12 @@ from `@alora/shared`, run `npm run build` first.
 
 ## 8. Environment notes
 
+- **Checking CI without a GitHub login**: the repo is public, so
+  `curl -s "https://api.github.com/repos/ay4real5/Kayyo-alora_health-/actions/runs?per_page=5"` works, and a
+  failed job's annotations (the Docker job posts its container log there) are at
+  `.../check-runs/<job id>/annotations`. Full logs need a login. **Unauthenticated calls are limited to 60 per
+  hour** — poll once a minute at most, never in a tight loop.
+
 - Owner's machine: Windows 11, **5.7 GB RAM — do not start Docker Desktop there** (DECISIONS D-011). Docker
   checks run in GitHub Actions. Scripts must work in Git Bash and PowerShell; avoid bash-only npm scripts.
 - Node version: see `.nvmrc` and DECISIONS D-001.
