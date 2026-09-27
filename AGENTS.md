@@ -115,5 +115,6 @@ from `@alora/shared`, run `npm run build` first.
 
 ## 8. Environment notes
 
-- Owner's machine: Windows 11. Scripts must work in Git Bash and PowerShell; avoid bash-only npm scripts.
+- Owner's machine: Windows 11, **5.7 GB RAM — do not start Docker Desktop there** (DECISIONS D-011). Docker
+  checks run in GitHub Actions. Scripts must work in Git Bash and PowerShell; avoid bash-only npm scripts.
 - Node version: see `.nvmrc` and DECISIONS D-001.

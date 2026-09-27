@@ -71,3 +71,12 @@ needs no CORS entry at all.)
 2026-09-27 · Claude Code
 Global prefix, pipes, filters, interceptors, CORS, Swagger etc. are applied in `apps/api/src/setup-app.ts`,
 which both `main.ts` and the e2e tests call. That way e2e tests exercise the real configuration.
+
+### D-011 — Docker runs in the cloud, not on the owner's laptop
+2026-09-27 · Claude Code
+The owner's laptop has 5.7 GB RAM; Docker Desktop crashed it. So:
+- Docker image builds and container checks run in **GitHub Actions** (`.github/workflows/ci.yml`) on every push.
+- Agents working on the owner's laptop must **not start Docker Desktop**. Run the API with `npm run start:dev`.
+- Local database/Redis for development: see OPEN_QUESTIONS Q-007 (cloud dev database). Dev data is always
+  fake, so a free cloud database is fine for development; production still needs HIPAA hosting (Q-006).
+- Agents running in their own cloud VM (e.g. Devin) may use Docker there normally.

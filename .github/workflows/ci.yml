@@ -1,0 +1,47 @@
+# Runs on GitHub's machines for every push and PR, so nothing heavy has to run on a developer laptop.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Build, typecheck, lint, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run test:e2e -w @alora/api
+
+  docker:
+    name: Docker image (API)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -f docker/Dockerfile.api -t alora-api:ci .
+      - name: Start stack and check health
+        run: |
+          docker compose up -d --no-build postgres redis
+          docker run -d --name api -p 3001:3001 alora-api:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3001/api/v1/health; then echo; exit 0; fi
+            sleep 2
+          done
+          echo "API did not become healthy"; docker logs api; exit 1

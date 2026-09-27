@@ -18,7 +18,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 ## Phase 1 — Foundation & core operations
 
 - [ ] **P1-01** `agent` Scaffold `packages/shared` (types, constants: roles, permissions) and `apps/api` (NestJS, current stable). Add `api` service to docker-compose. deps: P0-02
-- [ ] **P1-02** `agent` CI: GitHub Actions — install, lint, typecheck, test, build on PR. deps: P1-01
+- [ ] **P1-02** `agent` CI: GitHub Actions — install, lint, typecheck, test, build, Docker image build + health check. deps: P1-01
 - [ ] **P1-03** `agent` Prisma schema for core tables (agencies, users, roles, permissions, role_permissions, user_roles, refresh_tokens, audit_logs, patients, physicians, patient_diagnoses, payers, staff_profiles, staff_credentials, staff_availability, staff_time_off, visits, recurrence_rules, authorizations, documents, notifications). First migration. deps: P1-01
 - [ ] **P1-04** `agent` Common layer: response transform interceptor, exception filter, validation pipe, correlation-id, config module with env validation. deps: P1-01
 - [ ] **P1-05** `agent` PHI encryption util (AES-256-GCM, key from env) + tests. deps: P1-01
