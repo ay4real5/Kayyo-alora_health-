@@ -292,12 +292,10 @@
           },
           "state": {
             "type": "string",
-            "description": "Two-letter US state code.",
-            "pattern": "^[A-Z]{2}$"
+            "description": "Two-letter US state code."
           },
           "zip": {
-            "type": "string",
-            "pattern": "^\\d{5}(-\\d{4})?$"
+            "type": "string"
           },
           "geoFenceRadiusMeters": {
             "type": "number",
@@ -410,12 +408,10 @@
           },
           "state": {
             "type": "string",
-            "description": "Two-letter US state code.",
-            "pattern": "^[A-Z]{2}$"
+            "description": "Two-letter US state code."
           },
           "zip": {
-            "type": "string",
-            "pattern": "^\\d{5}(-\\d{4})?$"
+            "type": "string"
           },
           "geoFenceRadiusMeters": {
             "type": "number",
@@ -527,6 +523,107 @@
         "required": [
           "allergen"
         ]
+      },
+      "CreatePhysicianDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "npi": {
+            "type": "string",
+            "description": "National Provider Identifier, unique within the agency."
+          },
+          "practiceName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string"
+          },
+          "fax": {
+            "type": "string",
+            "description": "Orders and care plans are faxed to physicians for signature (DESIGN.md §6.9)."
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName"
+        ]
+      },
+      "UpdatePhysicianDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "npi": {
+            "type": "string",
+            "description": "National Provider Identifier, unique within the agency."
+          },
+          "practiceName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string"
+          },
+          "fax": {
+            "type": "string",
+            "description": "Orders and care plans are faxed to physicians for signature (DESIGN.md §6.9)."
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
       }
     }
   },

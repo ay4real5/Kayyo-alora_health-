@@ -1040,6 +1040,157 @@
         ]
       }
     },
+    "/api/v1/physicians": {
+      "get": {
+        "operationId": "PhysiciansController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Matches name, practice name or exact NPI.",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "physicians"
+        ]
+      },
+      "post": {
+        "operationId": "PhysiciansController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePhysicianDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "physicians"
+        ]
+      }
+    },
+    "/api/v1/physicians/{id}": {
+      "get": {
+        "operationId": "PhysiciansController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "physicians"
+        ]
+      },
+      "patch": {
+        "operationId": "PhysiciansController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePhysicianDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "physicians"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -1321,12 +1472,10 @@
           },
           "state": {
             "type": "string",
-            "description": "Two-letter US state code.",
-            "pattern": "^[A-Z]{2}$"
+            "description": "Two-letter US state code."
           },
           "zip": {
-            "type": "string",
-            "pattern": "^\\d{5}(-\\d{4})?$"
+            "type": "string"
           },
           "geoFenceRadiusMeters": {
             "type": "number",
@@ -1439,12 +1588,10 @@
           },
           "state": {
             "type": "string",
-            "description": "Two-letter US state code.",
-            "pattern": "^[A-Z]{2}$"
+            "description": "Two-letter US state code."
           },
           "zip": {
-            "type": "string",
-            "pattern": "^\\d{5}(-\\d{4})?$"
+            "type": "string"
           },
           "geoFenceRadiusMeters": {
             "type": "number",
@@ -1556,6 +1703,107 @@
         "required": [
           "allergen"
         ]
+      },
+      "CreatePhysicianDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "npi": {
+            "type": "string",
+            "description": "National Provider Identifier, unique within the agency."
+          },
+          "practiceName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string"
+          },
+          "fax": {
+            "type": "string",
+            "description": "Orders and care plans are faxed to physicians for signature (DESIGN.md §6.9)."
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName"
+        ]
+      },
+      "UpdatePhysicianDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "npi": {
+            "type": "string",
+            "description": "National Provider Identifier, unique within the agency."
+          },
+          "practiceName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string"
+          },
+          "fax": {
+            "type": "string",
+            "description": "Orders and care plans are faxed to physicians for signature (DESIGN.md §6.9)."
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
       }
     }
   },

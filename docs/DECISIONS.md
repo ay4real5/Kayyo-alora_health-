@@ -324,3 +324,18 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   when scheduling needs it (P1-14).
 - Moved out: authorizations → P3-01 (they need payers). New task P1-12b: physicians directory. Medications,
   care plans, assessments, orders → P3-11 as planned.
+
+### D-028 — Physicians directory (P1-12b) and DB connection settings
+2026-09-27 · Claude Code
+- `/physicians`: list/search (name, practice, exact NPI), create, get, update. **No delete** — physicians are
+  referenced by patients, orders and care plans; set `isActive: false` instead.
+- NPI is optional but, when given, must pass the CMS check-digit test (`isValidNpi` in `@alora/shared`, Luhn
+  over "80840" + 9 digits) and be unique within the agency (migration). Not verified against NPPES yet — add
+  an NPPES lookup when billing needs it (P3).
+- New permissions `physicians:create/read/update`. Read: every clinical role, office, billing. Write:
+  supervisor, office staff, admins.
+- Services write **explicit column lists** from DTOs (no object spreading into Prisma), so a future DTO field
+  can't silently reach the database.
+- Shared DTO helpers live in `common/validators/fields.ts` (phone, state, ZIP, trim transforms) — reuse them.
+- Postgres pool: idle connections recycled after 60 s (serverless Postgres like Neon drops idle connections
+  when it scales to zero) and a 10 s connect timeout. Added after intermittent e2e failures against Neon.
