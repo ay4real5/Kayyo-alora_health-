@@ -10,12 +10,8 @@ import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/c
 import { Field } from '@/components/ui/field';
 import { SelectField } from '@/components/ui/form-controls';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { useAgencyToday } from '@/lib/use-agency-today';
 import type { PatientDetail } from '@/lib/types/patients';
-
-function todayLocal(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 export default function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -117,7 +113,8 @@ export default function PatientDetailPage() {
 type Act = (v: { path: string; method: 'POST' | 'DELETE'; body?: unknown }) => Promise<boolean>;
 
 function LifecycleActions({ patient, onAct, busy }: { patient: PatientDetail; onAct: Act; busy: boolean }) {
-  const [date, setDate] = useState(todayLocal());
+  const today = useAgencyToday();
+  const [date, setDate] = useState(today);
   const discharging = patient.status === 'active';
   return (
     <div className="flex flex-wrap items-end gap-2">
@@ -128,7 +125,7 @@ function LifecycleActions({ patient, onAct, busy }: { patient: PatientDetail; on
         label={discharging ? 'Discharge date' : 'Readmission date'}
         type="date"
         value={date}
-        max={todayLocal()}
+        max={today}
         onChange={(e) => setDate(e.target.value)}
       />
       <Button

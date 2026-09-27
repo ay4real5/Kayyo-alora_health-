@@ -4,12 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-provider';
-
-/** Today's date in the browser's timezone (the agency timezone isn't exposed to the web app yet). */
-function localToday(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
+import { useAgencyToday } from '@/lib/use-agency-today';
 
 function StatCard({ label, value, href, loading }: { label: string; value: number | undefined; href?: string; loading: boolean }) {
   const content = (
@@ -25,7 +20,7 @@ function StatCard({ label, value, href, loading }: { label: string; value: numbe
 
 export default function DashboardPage() {
   const { user, can, request } = useAuth();
-  const today = localToday();
+  const today = useAgencyToday();
 
   const visitsToday = useQuery({
     queryKey: ['dashboard', 'visits-today', today],

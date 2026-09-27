@@ -7,6 +7,8 @@ export interface Me {
   firstName: string;
   lastName: string;
   is2faEnabled: boolean;
+  /** IANA timezone of the agency — use it (not the browser clock) for "today". */
+  agencyTimezone: string;
   recoveryCodesRemaining: number | null;
   roles: string[];
   permissions: string[];

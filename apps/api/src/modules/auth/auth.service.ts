@@ -40,6 +40,8 @@ export interface MeResult {
   firstName: string;
   lastName: string;
   is2faEnabled: boolean;
+  /** IANA timezone of the user's agency, e.g. America/Chicago — clients use it for "today". */
+  agencyTimezone: string;
   /** Unused backup codes, when 2FA is on — clients should warn when this gets low. */
   recoveryCodesRemaining: number | null;
   roles: string[];
@@ -206,6 +208,7 @@ export class AuthService {
   async me(auth: AuthUser): Promise<MeResult> {
     const user = await this.prisma.user.findFirst({
       where: { id: auth.userId, agencyId: auth.agencyId, isActive: true },
+      include: { agency: { select: { timezone: true } } },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -218,6 +221,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       is2faEnabled: user.is2faEnabled,
+      agencyTimezone: user.agency.timezone,
       recoveryCodesRemaining: user.is2faEnabled ? await this.twoFactor.remainingRecoveryCodes(user.id) : null,
       roles: access.roles,
       permissions: [...access.permissions].sort(),

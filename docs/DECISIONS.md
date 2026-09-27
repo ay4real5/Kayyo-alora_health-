@@ -464,3 +464,18 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Browser tests: Playwright (`apps/web/e2e`, `npm run test:e2e -w @alora/web`) against a running API + dashboard with
   the demo seed. Run locally for now; wired into CI in P1-22. Dashboard "today" uses the browser's timezone until the
   API exposes the agency timezone.
+
+### D-035 — Patient screens and timezone fixes (P1-19)
+2026-09-28 · Claude Code
+- Web patients: list (search, status, paging), detail (demographics, SSN last 4, insurance, diagnoses, allergies),
+  shared admit/edit form, discharge/readmit. The API's validation messages are shown as-is (one source of rules);
+  on edit, clearing a field sends `null`; the SSN is only sent when a new one is typed (placeholder shows last 4).
+- Response types for the web live in `apps/web/src/lib/types/*` and are kept in sync with the API by hand until
+  response schemas are generated from OpenAPI (add `@ApiOkResponse` DTOs, then generate types — P1-22 or later).
+- Search terms stay in component state, never in the browser URL/history. The API still receives them as a query
+  parameter (`GET /patients?search=`), so **production proxies/load balancers must not log query strings** (P4-10).
+- **Timezone bug found by the browser tests** (after midnight in UTC+1): the web offered the local date, the API
+  rejected it as "in the future" (UTC). Fixes: `IsDateOnly({ notInFuture })` now allows up to the latest calendar
+  date on Earth (UTC+14); `/auth/me` returns `agencyTimezone`, and the web's `useAgencyToday()` uses it instead of
+  the browser clock.
+- Browser tests re-seed the demo agency first (`e2e/global-setup.ts`, `SKIP_SEED=1` to skip) so counts are known.
