@@ -21,6 +21,9 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
         // Fail fast (and visibly) instead of hanging when the database is unreachable.
         connectionTimeoutMillis: 10_000,
       }),
+      // Prisma's defaults (2 s to get a connection, 5 s total) are tight for a remote database whose
+      // connections can take seconds to open after it wakes; they caused intermittent test failures.
+      transactionOptions: { maxWait: 10_000, timeout: 15_000 },
     });
   }
 

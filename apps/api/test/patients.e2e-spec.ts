@@ -43,7 +43,7 @@ describe.skipIf(!hasDb)('Patients (e2e)', () => {
       .overrideProvider(ThrottlerStorage)
       .useValue(noThrottle)
       .compile();
-    app = setupApp(moduleRef.createNestApplication({ logger: false }));
+    app = setupApp(moduleRef.createNestApplication({ logger: ['error'] }));
     await app.init();
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Patients Test ${randomUUID()}` } })).id;
