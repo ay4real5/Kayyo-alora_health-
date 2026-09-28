@@ -6,6 +6,8 @@ export const NOTIFICATION_TYPES = [
   'shift_cancelled',
   'shift_updated',
   'open_shift',
+  'swap_requested',
+  'swap_decided',
   'missed_visit',
   'late_arrival',
   'credential_expiry',
