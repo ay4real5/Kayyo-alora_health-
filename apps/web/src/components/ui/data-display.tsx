@@ -58,6 +58,15 @@ export function StatusBadge({ status }: { status: string }) {
     discharged: 'bg-slate-100 text-slate-700 ring-slate-500/20',
     scheduled: 'bg-sky-50 text-sky-800 ring-sky-600/20',
     cancelled: 'bg-slate-100 text-slate-600 ring-slate-500/20',
+    inactive: 'bg-slate-100 text-slate-600 ring-slate-500/20',
+    pending: 'bg-amber-50 text-amber-800 ring-amber-600/20',
+    approved: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
+    denied: 'bg-red-50 text-red-800 ring-red-600/20',
+    locked: 'bg-red-50 text-red-800 ring-red-600/20',
+    valid: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
+    expiring_soon: 'bg-amber-50 text-amber-800 ring-amber-600/20',
+    expired: 'bg-red-50 text-red-800 ring-red-600/20',
+    no_expiry: 'bg-slate-100 text-slate-600 ring-slate-500/20',
   };
   return (
     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${tones[status] ?? tones.discharged}`}>
