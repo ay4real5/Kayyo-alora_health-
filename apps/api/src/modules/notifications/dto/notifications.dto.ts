@@ -9,3 +9,22 @@ export class ListNotificationsQueryDto extends PaginationQueryDto {
   @IsBoolean()
   unreadOnly?: boolean;
 }
+
+/** Channels to change for one notification type; omitted ones stay as they are (D-066). */
+export class NotificationPreferenceDto {
+  @IsOptional()
+  @IsBoolean()
+  inApp?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  push?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  sms?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  email?: boolean;
+}

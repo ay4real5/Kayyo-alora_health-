@@ -114,13 +114,20 @@
   schema/migration drift, runs DB e2e tests, builds the Docker image and health-checks it. All green.
 - Docker does not run on the owner's laptop (D-011); CI covers the image.
 
+- **Notification preferences (P4-07)**: per type and channel (in-app, push, SMS, email; all on by default), `notify()`
+  skips muted in-app alerts, `system` alerts mandatory; web `/settings/notifications` from the bell. D-066.
+
 ## In progress
 
-Nothing.
+Nothing. `task/P4-07-notification-prefs` is complete locally (3 API e2e + 1 browser test pass, openapi.json unchanged,
+typecheck/lint green); waiting for CI, then merge to main.
 
 ## Next up
 
-Phase 4 (reports, payroll, compliance, EVV aggregator for Virginia after DMAS research). The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+P4-08 audit-log monthly partitioning + retention; P4-09 security pass (must include: the API enforcing the forced
+password change like the 2FA-setup restriction, D-045/D-058); P4-04 Virginia EVV aggregator (research DMAS's current
+EVV vendor and format first — don't assume Sandata/HHAeXchange); P4-10 production packaging (hosting still undecided).
+The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -132,6 +139,8 @@ Phase 4 (reports, payroll, compliance, EVV aggregator for Virginia after DMAS re
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Devin | P4-07 | Browser test fixed (uncontrolled checkboxes), openapi/typecheck/lint green; pushed for CI + merge. |
+| 2026-09-28 | Claude Code | P4-07 (in progress) | Preferences API + page; P4-01/P4-02 merged. Owner switched to Devin. |
 | 2026-09-28 | Claude Code | P4-01, P4-02 | Reports API (4 e2e) + dashboard (2 browser tests); P4-03 merged. |
 | 2026-09-28 | Claude Code | P4-03 | Payroll calc (8 unit) + API (6 e2e) + web (browser test); P4-06 merged. |
 | 2026-09-28 | Claude Code | P4-06 | Submit/appeal/rebill/aging API (4 e2e) + web (browser test); P4-05 merged. |

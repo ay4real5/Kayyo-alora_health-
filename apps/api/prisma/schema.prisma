@@ -94,33 +94,34 @@ model User {
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency               Agency              @relation(fields: [agencyId], references: [id])
-  userRoles            UserRole[]
-  recoveryCodes        TwoFaRecoveryCode[]
-  evvVerified          EvvRecord[]         @relation("EvvVerifiedBy")
-  evvExceptionsFiled   EvvException[]      @relation("EvvExceptionRequestedBy")
-  evvExceptionsDecided EvvException[]      @relation("EvvExceptionDecidedBy")
-  openShiftsAssigned   OpenShift[]         @relation("OpenShiftAssignedBy")
-  openShiftsCreated    OpenShift[]         @relation("OpenShiftCreatedBy")
-  swapsDecided         ShiftSwapRequest[]  @relation("SwapDecidedBy")
-  claimsCreated        Claim[]             @relation("ClaimCreatedBy")
-  claimsSubmitted      Claim[]             @relation("ClaimSubmittedBy")
-  ediFilesUploaded     EdiFile[]           @relation("EdiFileUploadedBy")
-  paymentsPosted       Payment[]           @relation("PaymentPostedBy")
-  visitNotesAuthored   VisitNote[]         @relation("VisitNoteAuthor")
-  visitNotesSigned     VisitNote[]         @relation("VisitNoteSignedBy")
-  visitNotesQaReviewed VisitNote[]         @relation("VisitNoteQaReviewedBy")
-  vitalsRecorded       VisitVital[]        @relation("VisitVitalRecordedBy")
-  vitalsMarkedInError  VisitVital[]        @relation("VisitVitalErrorBy")
-  visitTasksCompleted  VisitTask[]         @relation("VisitTaskCompletedBy")
-  refreshTokens        RefreshToken[]
-  staffProfile         StaffProfile?
-  portalPatients       Patient[]           @relation("PatientPortalUser")
-  verifiedCredentials  StaffCredential[]   @relation("CredentialVerifiedBy")
-  approvedTimeOff      StaffTimeOff[]      @relation("TimeOffApprovedBy")
-  createdVisits        Visit[]             @relation("VisitCreatedBy")
-  uploadedDocuments    Document[]          @relation("DocumentUploadedBy")
-  notifications        Notification[]
+  agency                  Agency                   @relation(fields: [agencyId], references: [id])
+  userRoles               UserRole[]
+  recoveryCodes           TwoFaRecoveryCode[]
+  evvVerified             EvvRecord[]              @relation("EvvVerifiedBy")
+  evvExceptionsFiled      EvvException[]           @relation("EvvExceptionRequestedBy")
+  evvExceptionsDecided    EvvException[]           @relation("EvvExceptionDecidedBy")
+  openShiftsAssigned      OpenShift[]              @relation("OpenShiftAssignedBy")
+  openShiftsCreated       OpenShift[]              @relation("OpenShiftCreatedBy")
+  swapsDecided            ShiftSwapRequest[]       @relation("SwapDecidedBy")
+  claimsCreated           Claim[]                  @relation("ClaimCreatedBy")
+  claimsSubmitted         Claim[]                  @relation("ClaimSubmittedBy")
+  ediFilesUploaded        EdiFile[]                @relation("EdiFileUploadedBy")
+  paymentsPosted          Payment[]                @relation("PaymentPostedBy")
+  visitNotesAuthored      VisitNote[]              @relation("VisitNoteAuthor")
+  visitNotesSigned        VisitNote[]              @relation("VisitNoteSignedBy")
+  visitNotesQaReviewed    VisitNote[]              @relation("VisitNoteQaReviewedBy")
+  vitalsRecorded          VisitVital[]             @relation("VisitVitalRecordedBy")
+  vitalsMarkedInError     VisitVital[]             @relation("VisitVitalErrorBy")
+  visitTasksCompleted     VisitTask[]              @relation("VisitTaskCompletedBy")
+  refreshTokens           RefreshToken[]
+  staffProfile            StaffProfile?
+  portalPatients          Patient[]                @relation("PatientPortalUser")
+  verifiedCredentials     StaffCredential[]        @relation("CredentialVerifiedBy")
+  approvedTimeOff         StaffTimeOff[]           @relation("TimeOffApprovedBy")
+  createdVisits           Visit[]                  @relation("VisitCreatedBy")
+  uploadedDocuments       Document[]               @relation("DocumentUploadedBy")
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
 
   ordersTaken         PhysicianOrder[] @relation("OrderTakenBy")
   carePlansSigned     CarePlan[]       @relation("CarePlanSignedBy")
@@ -1678,4 +1679,20 @@ model MileageLog {
 
   @@index([staffProfileId, travelDate])
   @@map("mileage_logs")
+}
+
+/// Per-user notification choices (DECISIONS D-066). A row exists only where the user changed the defaults (all on).
+model NotificationPreference {
+  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String  @map("user_id") @db.Uuid
+  notificationType String  @map("notification_type") @db.VarChar(50)
+  channelInApp     Boolean @default(true) @map("channel_in_app")
+  channelPush      Boolean @default(true) @map("channel_push")
+  channelSms       Boolean @default(true) @map("channel_sms")
+  channelEmail     Boolean @default(true) @map("channel_email")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationType])
+  @@map("notification_preferences")
 }

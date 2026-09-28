@@ -21,3 +21,10 @@ export const NOTIFICATION_TYPES = [
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+/** Alerts nobody can switch off (security and serious-incident alerts, D-066). */
+export const MANDATORY_NOTIFICATION_TYPES: readonly NotificationType[] = ['system'];
+
+/** Delivery channels. In-app works today; push, SMS and email arrive with P2-12 / P3-19. */
+export const NOTIFICATION_CHANNELS = ['inApp', 'push', 'sms', 'email'] as const;
+export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
