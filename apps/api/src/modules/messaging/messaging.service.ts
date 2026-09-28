@@ -8,6 +8,7 @@ import { DocumentsService } from '../documents/documents.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { PatientsService } from '../patients/patients.service.js';
 import { RealtimeService } from '../realtime/realtime.service.js';
+import { messageContentContext as contentContext } from './message-content.js';
 import type {
   ContactsQueryDto,
   CreateConversationDto,
@@ -52,8 +53,6 @@ export interface ConversationView {
   /** The caller left this group: they can read what was said before, not send. */
   left: boolean;
 }
-
-const contentContext = (messageId: string) => `messages.content:${messageId}`;
 
 /**
  * Secure messaging between agency staff (DESIGN.md §6.13, DECISIONS D-057). Only participants can see a conversation

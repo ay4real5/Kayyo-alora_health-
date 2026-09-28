@@ -5,10 +5,11 @@
 import { resolve } from 'node:path';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { config } from 'dotenv';
-import { encryptPhi } from '../common/crypto/phi-crypto.js';
+import { encryptPhi, encryptPhiBytes } from '../common/crypto/phi-crypto.js';
 import { buildPhiKeyring } from '../common/crypto/phi-keyring.js';
 import { PhiContext } from '../common/crypto/phi-crypto.service.js';
 import { PrismaClient } from '../generated/prisma/client.js';
+import { messageContentContext } from '../modules/messaging/message-content.js';
 import { RbacSyncService } from '../modules/rbac/rbac-sync.service.js';
 import type { PrismaService } from '../database/prisma.service.js';
 import { DEMO_TOTP_SECRET, runDemoSeed } from './demo-seed.js';
@@ -32,6 +33,9 @@ try {
     syncRoles: () => new RbacSyncService(prisma as unknown as PrismaService).sync(),
     encryptTwoFaSecret: keyring
       ? (base32) => Buffer.from(encryptPhi(base32, PhiContext.UserTwoFaSecret, keyring)).toString('base64')
+      : undefined,
+    encryptMessage: keyring
+      ? (text, messageId) => new Uint8Array(encryptPhiBytes(Buffer.from(text, 'utf8'), messageContentContext(messageId), keyring))
       : undefined,
     encryptSsn: keyring
       ? (ssn, kind) =>
