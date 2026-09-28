@@ -637,6 +637,7 @@ async function seedBilling(
       ediSubmitterId: 'DEMOSUB01',
       ediReceiverId: 'DEMOCLEAR',
       state: 'VA',
+      evvClaimProfile: 'va_dmas',
       requiresAuthorization: true,
     },
   });

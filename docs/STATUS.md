@@ -123,17 +123,20 @@
 
 ## In progress
 
-**P4-09 security pass** — branch `task/P4-09-security-pass`. All parts done (D-068): (a) API-enforced forced password
-change, verified; (b) CSV formula injection; (c) nonce CSP; (d) npm audit decision; (e) load test + perf fixes
-(Prisma `relationJoins`, messages list, pool size). **Left**: the full API e2e suite was running when this was written
-(relationJoins changes how every nested query loads) — if it's green, tick P4-09, push, CI, merge.
+**P4-09 security pass** — branch `task/P4-09-security-pass`. All parts done (D-068). **Left**: the full API e2e suite
+was running (relationJoins changes how every nested query loads) — if it's green, tick P4-09, push, CI, merge.
+
+**P4-04 Virginia EVV on claims** — branch `task/P4-04-virginia-evv` (branched from P4-09; merge P4-09 first). Done
+(D-069): `edi/evv-virginia.ts` rules + 837P/837I segments, payer setting `evvClaimProfile = 'va_dmas'` (migration
+`20260929010000_payer_evv_claim_profile`, applied to Neon), EDI preview lists missing EVV data with the DMAS edit
+numbers, Billing setup "EVV on claims" column, unit tests + `test/evv-virginia.e2e-spec.ts` (green). **Left**:
+regenerate OpenAPI (`npm run build` then `npm run openapi -w @alora/api`), full checks, push, CI, merge.
 
 ## Next up
 
-P4-09 (above), then security pass (must include: the API enforcing the forced
-password change like the 2FA-setup restriction, D-045/D-058); P4-04 Virginia EVV aggregator (research DMAS's current
-EVV vendor and format first — don't assume Sandata/HHAeXchange); P4-10 production packaging (hosting still undecided).
-The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+P4-04b Virginia EVV follow-ups (midnight split, monthly rounding, modifier 76, readiness warnings); P4-10 production
+packaging (hosting still undecided — prepare what doesn't depend on it). The owner asked for autonomous work: go
+straight on, check in with questions every ~6 hours.
 
 ## Blockers / waiting on human
 

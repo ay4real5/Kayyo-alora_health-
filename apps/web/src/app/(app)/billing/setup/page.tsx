@@ -52,10 +52,10 @@ function PayersCard() {
       request('/billing/payers', { method: 'POST', body }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['billing', 'payers'] }),
   });
-  // Empty = back to the default for the payer type (sent as null).
-  const setFormat = useMutation({
-    mutationFn: ({ id, claimFormat }: { id: string; claimFormat: string }) =>
-      request(`/billing/payers/${id}`, { method: 'PATCH', body: { claimFormat: claimFormat || null } }),
+  // Empty = back to the default (claim form: by payer type; EVV: none) — sent as null.
+  const setField = useMutation({
+    mutationFn: ({ id, field, value }: { id: string; field: 'claimFormat' | 'evvClaimProfile'; value: string }) =>
+      request(`/billing/payers/${id}`, { method: 'PATCH', body: { [field]: value || null } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['billing', 'payers'] }),
   });
   const submit = (e: FormEvent<HTMLFormElement>) => {
@@ -67,6 +67,7 @@ function PayersCard() {
         name: text(f, 'name'),
         payerType: text(f, 'payerType'),
         ...(text(f, 'claimFormat') ? { claimFormat: text(f, 'claimFormat') } : {}),
+        ...(text(f, 'evvClaimProfile') ? { evvClaimProfile: text(f, 'evvClaimProfile') } : {}),
         ...(text(f, 'payerIdCode') ? { payerIdCode: text(f, 'payerIdCode') } : {}),
         ...(text(f, 'state') ? { state: text(f, 'state') } : {}),
         requiresAuthorization: f.get('requiresAuthorization') === 'on',
@@ -77,7 +78,7 @@ function PayersCard() {
   return (
     <Card className="flex flex-col gap-3 p-4">
       <h2 className="text-base font-semibold text-slate-900">Payers</h2>
-      <ErrorAlert error={payers.error ?? setFormat.error} />
+      <ErrorAlert error={payers.error ?? setField.error} />
       <table className="w-full text-left text-sm">
         <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
           <tr>
@@ -85,6 +86,7 @@ function PayersCard() {
             <th className="py-2 pr-4 font-medium">Type</th>
             <th className="py-2 pr-4 font-medium">Payer ID</th>
             <th className="py-2 pr-4 font-medium">Claim form</th>
+            <th className="py-2 pr-4 font-medium">EVV on claims</th>
             <th className="py-2 pr-4 font-medium">Needs authorization</th>
             <th className="py-2 font-medium">Timely filing</th>
           </tr>
@@ -100,7 +102,7 @@ function PayersCard() {
                   <select
                     aria-label={`Claim form for ${p.name}`}
                     value={p.claimFormat ?? ''}
-                    onChange={(e) => setFormat.mutate({ id: p.id, claimFormat: e.target.value })}
+                    onChange={(e) => setField.mutate({ id: p.id, field: 'claimFormat', value: e.target.value })}
                     className="rounded border border-slate-300 bg-white px-1 py-0.5 text-sm"
                   >
                     <option value="">Default ({p.payerType === 'medicare' ? '837I' : '837P'})</option>
@@ -109,6 +111,23 @@ function PayersCard() {
                   </select>
                 ) : (
                   (p.claimFormat ?? (p.payerType === 'medicare' ? '837I' : '837P'))
+                )}
+              </td>
+              <td className="py-2 pr-4">
+                {can('billing:update') && p.payerType !== 'private_pay' ? (
+                  <select
+                    aria-label={`EVV on claims for ${p.name}`}
+                    value={p.evvClaimProfile ?? ''}
+                    onChange={(e) => setField.mutate({ id: p.id, field: 'evvClaimProfile', value: e.target.value })}
+                    className="rounded border border-slate-300 bg-white px-1 py-0.5 text-sm"
+                  >
+                    <option value="">None</option>
+                    <option value="va_dmas">Virginia Medicaid (DMAS)</option>
+                  </select>
+                ) : p.evvClaimProfile === 'va_dmas' ? (
+                  'Virginia Medicaid (DMAS)'
+                ) : (
+                  '—'
                 )}
               </td>
               <td className="py-2 pr-4">{p.requiresAuthorization ? 'Yes' : 'No'}</td>
@@ -135,6 +154,10 @@ function PayersCard() {
             <option value="">Default</option>
             <option value="837P">837P</option>
             <option value="837I">837I (UB-04)</option>
+          </SelectField>
+          <SelectField label="EVV on claims" name="evvClaimProfile" defaultValue="">
+            <option value="">None</option>
+            <option value="va_dmas">Virginia Medicaid (DMAS)</option>
           </SelectField>
           <Field label="State" name="state" maxLength={2} className="w-20" />
           <label className="flex items-center gap-2 text-sm">

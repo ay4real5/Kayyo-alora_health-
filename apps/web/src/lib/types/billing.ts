@@ -6,6 +6,8 @@ export interface Payer {
   payerType: string;
   /** 837P / 837I; null = 837I for Medicare, else 837P (D-061). */
   claimFormat: string | null;
+  /** va_dmas = Virginia Medicaid EVV fields on claims (D-069). */
+  evvClaimProfile: string | null;
   payerIdCode: string | null;
   state: string | null;
   phone: string | null;

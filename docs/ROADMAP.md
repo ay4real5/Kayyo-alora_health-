@@ -86,7 +86,11 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P4-01** `agent` Reports module + materialized views + refresh job
 - [x] **P4-02** `agent` Web: dashboards (Recharts) + report export (CSV/PDF)
 - [x] **P4-03** `agent` Payroll: pay periods, stubs, calculation, export; mileage
-- [ ] **P4-04** `agent` EVV state aggregator adapter interface + first aggregator. deps: Q-005
+- [x] **P4-04** `agent` EVV state aggregator adapter interface + first aggregator. deps: Q-005 — *Virginia has no
+  aggregator: EVV goes on the 837P/837I claim per the DMAS companion guides (D-069).*
+- [ ] **P4-04b** `agent` Virginia EVV follow-ups (D-069): split shifts that cross midnight into one line per day,
+  monthly hour rounding for personal care, modifier 76 for a second same-day line, UB modifier for live-in; EVV
+  readiness warnings in "Ready to bill".
 - [x] **P4-05** `agent` Compliance: dashboard, incidents, credential-expiry cron, audit-log query
 - [x] **P4-06** `agent` Claims denial/appeal workflow + aging report
 - [x] **P4-07** `agent` Notification preferences UI/API

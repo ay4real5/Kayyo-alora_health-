@@ -404,6 +404,8 @@ model Payer {
   payerType             String    @map("payer_type") @db.VarChar(30)
   /// 837P (professional) or 837I (institutional / UB-04). Null: 837I for Medicare, 837P otherwise (D-061).
   claimFormat           String?   @map("claim_format") @db.VarChar(4)
+  /// State EVV fields on this payer's claims: va_dmas = Virginia DMAS companion guides (D-069). Null = none.
+  evvClaimProfile       String?   @map("evv_claim_profile") @db.VarChar(20)
   payerIdCode           String?   @map("payer_id_code") @db.VarChar(50)
   addressLine1          String?   @map("address_line1") @db.VarChar(255)
   city                  String?   @db.VarChar(100)

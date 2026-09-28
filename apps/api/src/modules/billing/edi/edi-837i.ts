@@ -195,7 +195,7 @@ export function build837I(input: Edi837IInput): string {
     // 2400 service lines; Medicare HH puts the HIPPS code first on revenue code 0023 with a zero charge.
     const lines = [
       ...(c.hippsCode
-        ? [{ revenueCode: '0023', serviceCode: null, hipps: c.hippsCode, modifiers: [], serviceDate: c.statementFrom, units: 1, chargeAmount: 0 }]
+        ? [{ revenueCode: '0023', serviceCode: null, hipps: c.hippsCode, modifiers: [], serviceDate: c.statementFrom, units: 1, chargeAmount: 0, evv: null }]
         : []),
       ...c.lines.map((l) => ({ ...l, hipps: null as string | null, evv: l.evv ?? null })),
     ];
