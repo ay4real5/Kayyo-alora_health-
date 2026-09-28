@@ -688,6 +688,9 @@ model ClaimLine {
   diagnosisPointers    Int[]    @default([1]) @map("diagnosis_pointers")
   placeOfService       String   @default("12") @map("place_of_service") @db.VarChar(2)
   renderingProviderNpi String?  @map("rendering_provider_npi") @db.VarChar(10)
+  /// The part of the visit this line bills, when a shift crossing midnight is split into one line per day (D-069).
+  evvStart             DateTime? @map("evv_start") @db.Timestamptz(6)
+  evvEnd               DateTime? @map("evv_end") @db.Timestamptz(6)
   /// False once the claim is voided — the visit can then be billed again.
   active               Boolean  @default(true)
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -695,7 +698,7 @@ model ClaimLine {
   claim Claim  @relation(fields: [claimId], references: [id], onDelete: Cascade)
   visit Visit? @relation(fields: [visitId], references: [id])
 
-  @@unique([visitId], map: "claim_lines_one_active_per_visit", where: raw("active"))
+  @@unique([visitId, serviceDate], map: "claim_lines_one_active_per_visit_day", where: raw("active"))
   @@index([claimId])
   @@map("claim_lines")
 }

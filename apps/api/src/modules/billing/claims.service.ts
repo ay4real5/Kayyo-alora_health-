@@ -11,7 +11,7 @@ import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
-import { memberIdFor } from './billing-readiness.js';
+import { billingUnits, claimFormatFor, memberIdFor } from './billing-readiness.js';
 import { BillingReadinessService, type BillableVisit } from './billing-readiness.service.js';
 import type { CreateClaimsDto, InstitutionalClaimDto, ListClaimsQueryDto } from './dto/claims.dto.js';
 
@@ -78,6 +78,17 @@ export interface CreateClaimsResult {
   created: ClaimView[];
   /** Visits in the range that weren't billed, and why. */
   skipped: { visitId: string; reasons: string[] }[];
+}
+
+interface NewLine {
+  visitId: string;
+  serviceCode: string;
+  serviceDate: Date;
+  units: number;
+  unitRate: number;
+  chargeAmount: number;
+  evvStart: Date | null;
+  evvEnd: Date | null;
 }
 
 const MAX_DIAGNOSES = 12; // X12 837 HI segment
@@ -265,7 +276,36 @@ export class ClaimsService {
         select: { id: true, payerType: true, claimFormat: true },
       }),
     ]);
-    const dates = visits.map((v) => v.serviceDate).sort();
+    // One line per visit — or per day, for a Virginia shift that crosses midnight (D-069).
+    const lines = visits.flatMap((v): NewLine[] =>
+      v.lineSplits
+        ? v.lineSplits.map((piece) => {
+            const units = billingUnits(v.unitType ?? 'visit', piece.minutes);
+            return {
+              visitId: v.visitId,
+              serviceCode: v.serviceCode!,
+              serviceDate: toDate(piece.date)!,
+              units,
+              unitRate: v.rate!,
+              chargeAmount: money(units * v.rate!),
+              evvStart: piece.start,
+              evvEnd: piece.end,
+            };
+          })
+        : [
+            {
+              visitId: v.visitId,
+              serviceCode: v.serviceCode!,
+              serviceDate: toDate(v.serviceDate)!,
+              units: v.units!,
+              unitRate: v.rate!,
+              chargeAmount: v.amount!,
+              evvStart: null,
+              evvEnd: null,
+            },
+          ],
+    );
+    const dates = lines.map((l) => fromDate(l.serviceDate)!).sort();
     const memberId = memberIdFor(payer.payerType, patient);
 
     for (let attempt = 0; ; attempt++) {
@@ -284,23 +324,13 @@ export class ClaimsService {
             status: 'ready',
             billingPeriodStart: toDate(dates[0])!,
             billingPeriodEnd: toDate(dates[dates.length - 1])!,
-            totalCharges: money(visits.reduce((sum, v) => sum + (v.amount ?? 0), 0)),
+            totalCharges: money(lines.reduce((sum, l) => sum + l.chargeAmount, 0)),
             memberId: memberId === 'n/a' ? null : memberId,
             diagnosisCodes: patient.diagnoses.map((d) => d.icd10Code),
             qaPassed: true,
             qaReviewedAt: new Date(),
             createdById: caller.userId,
-            lines: {
-              create: visits.map((v, i) => ({
-                visitId: v.visitId,
-                lineNumber: i + 1,
-                serviceCode: v.serviceCode!,
-                serviceDate: toDate(v.serviceDate)!,
-                units: v.units!,
-                unitRate: v.rate!,
-                chargeAmount: v.amount!,
-              })),
-            },
+            lines: { create: lines.map((l, i) => ({ ...l, lineNumber: i + 1 })) },
           },
           include: CLAIM_INCLUDE,
         });
@@ -406,10 +436,4 @@ function toView(c: ClaimRow): ClaimView {
     })),
     createdAt: c.createdAt,
   };
-}
-
-/** The payer's claim format, or by default 837I (UB-04) for Medicare home health and 837P for everyone else (D-061). */
-export function claimFormatFor(payer: { payerType: string; claimFormat: string | null }): '837P' | '837I' {
-  if (payer.claimFormat === '837I' || payer.claimFormat === '837P') return payer.claimFormat;
-  return payer.payerType === 'medicare' ? '837I' : '837P';
 }

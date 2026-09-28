@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { zonedTimeToUtc } from '@alora/shared';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
@@ -31,6 +32,7 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
   let mcoId: string;
   let personalCareVisit: string;
   let homeHealthVisit: string;
+  let overnightVisit: string;
   const http = () => request(app.getHttpServer());
   const day = addDays(utcTodayString(), -5);
   // 09:00–13:00 Eastern (EDT or EST, whichever applies on that day).
@@ -108,7 +110,7 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
     });
     aideStaffId = aide.staffProfile!.id;
 
-    const visitFor = async (payerPrimaryId: string, mrn: string, serviceCode: string) => {
+    const visitFor = async (payerPrimaryId: string, mrn: string, serviceCode: string, start = clockIn, end = clockOut) => {
       const p = await prisma.patient.create({
         data: {
           agencyId,
@@ -140,8 +142,8 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
           scheduledDate: toDate(day)!,
           scheduledStart: toTime('09:00'),
           scheduledEnd: toTime('13:00'),
-          actualStart: clockIn,
-          actualEnd: clockOut,
+          actualStart: start,
+          actualEnd: end,
         },
       });
       await prisma.evvRecord.create({
@@ -153,8 +155,8 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
           serviceType: 'personal_care',
           serviceDate: toDate(day)!,
           clockInMethod: 'gps',
-          clockInTime: clockIn,
-          clockOutTime: clockOut,
+          clockInTime: start,
+          clockOutTime: end,
           clockInWithinGeofence: true,
           clockOutWithinGeofence: true,
           status: 'verified',
@@ -167,6 +169,8 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
     };
     personalCareVisit = await visitFor(medicaidId, 'VAEVV-0001', 'T1019');
     homeHealthVisit = await visitFor(mcoId, 'VAEVV-0002', 'G0299');
+    // 22:00 to 06:00 Eastern the next morning — an overnight personal care shift.
+    overnightVisit = await visitFor(medicaidId, 'VAEVV-0003', 'T1019', zonedTimeToUtc(day, '22:00', TZ), zonedTimeToUtc(addDays(day, 1), '06:00', TZ));
   });
 
   afterAll(async () => {
@@ -226,5 +230,33 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
     expect(away.body.error.details).toEqual([
       `Line 1 (G0299 on ${day}): clock-out was away from the patient's home and hasn't been verified (DMAS edit 2096)`,
     ]);
+  });
+
+  it('an overnight shift is billed as one line per day; readiness catches missing caregiver IDs before the claim', async () => {
+    await prisma.staffProfile.update({ where: { id: aideStaffId }, data: { employeeId: null } });
+    const blocked = (await http().post(claims).set(billing).send({ visitIds: [overnightVisit] }).expect(201)).body.data;
+    expect(blocked.created).toEqual([]);
+    expect(blocked.skipped[0].reasons).toEqual([
+      'EVV data for the claim: caregiver has no employee ID (Staff → employee ID) (DMAS edit 2098)',
+    ]);
+
+    await prisma.staffProfile.update({ where: { id: aideStaffId }, data: { employeeId: 'VA0042' } });
+    const claim = (await http().post(claims).set(billing).send({ visitIds: [overnightVisit] }).expect(201)).body.data.created[0];
+    const next = addDays(day, 1);
+    expect(claim.lines.map((l: { serviceDate: string; units: number; chargeAmount: number }) => [l.serviceDate, l.units, l.chargeAmount])).toEqual([
+      [day, 2, 40],
+      [next, 6, 120],
+    ]);
+    expect(claim).toMatchObject({ billingPeriodStart: day, billingPeriodEnd: next, totalCharges: 160 });
+    const file = (await http().get(`${claims}/${claim.id}/837`).set(billing).expect(200)).body.data.content;
+    expect(file).toContain('SV1*HC:T1019:::::2200-2359*40*UN*2***1~');
+    expect(file).toContain('SV1*HC:T1019:::::0000-0600*120*UN*6***1~');
+
+    // Voiding frees both days; billing again works (one active line per visit and day).
+    await http().post(`${claims}/${claim.id}/void`).set(billing).send({ reason: 'test' }).expect(200);
+    const again = (await http().post(claims).set(billing).send({ visitIds: [overnightVisit] }).expect(201)).body.data;
+    expect(again.created[0].lines).toHaveLength(2);
+    const twice = (await http().post(claims).set(billing).send({ visitIds: [overnightVisit] }).expect(201)).body.data;
+    expect(twice.created).toEqual([]);
   });
 });

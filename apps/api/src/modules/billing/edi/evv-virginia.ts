@@ -13,6 +13,8 @@
  * edit the claim would be denied with (EOB 2094–2100), so billing staff can match them to a remittance.
  */
 
+import { zonedTimeToUtc } from '@alora/shared';
+
 /** Personal care services that need EVV on 837P claims (DMAS EVV FAQ; S9125 is excluded). */
 export const VA_EVV_PROCEDURE_CODES: ReadonlySet<string> = new Set(['T1019', 'T1005', 'S5135']);
 
@@ -60,6 +62,8 @@ export interface EvvLineFacts {
   serviceDate: string;
   /** Agency time zone — EVV times are reported as local clock times. */
   timeZone: string;
+  /** The part of the shift this line bills, when a shift crossing midnight was split into one line per day. */
+  window?: { start: Date; end: Date } | null;
   /** The visit's EVV record; null when there is none. */
   record: {
     clockIn: Date | null;
@@ -108,6 +112,27 @@ const nextDay = (date: string) => {
 };
 
 /**
+ * Splits a shift at local midnight into one piece per calendar day — Virginia bills each day on its own line
+ * (the first piece ends at 2400, the next starts at 0000). A shift within one day is one piece.
+ */
+export function splitAtMidnight(
+  start: Date,
+  end: Date,
+  timeZone: string,
+): { date: string; start: Date; end: Date; minutes: number }[] {
+  const pieces: { date: string; start: Date; end: Date; minutes: number }[] = [];
+  let from = start;
+  while (from < end) {
+    const date = localDateTime(from, timeZone).date;
+    const midnight = zonedTimeToUtc(nextDay(date), '00:00', timeZone);
+    const to = midnight > from && midnight < end ? midnight : end;
+    pieces.push({ date, start: from, end: to, minutes: Math.round((to.getTime() - from.getTime()) / 60_000) });
+    from = to;
+  }
+  return pieces;
+}
+
+/**
  * The EVV fields for one claim line, or the reasons they can't be filled. `problems` are phrased for billing staff
  * and carry the DMAS edit number.
  */
@@ -121,13 +146,15 @@ export function virginiaEvvForLine(f: EvvLineFacts): { evv: LineEvv | null; prob
   }
 
   let times: string | null = null;
-  if (!r.clockIn) edit(DMAS_EVV_EDIT.beginTime, 'EVV clock-in time missing');
-  if (!r.clockOut) edit(DMAS_EVV_EDIT.endTime, 'EVV clock-out time missing');
-  if (r.clockIn && r.clockOut) {
-    const start = localDateTime(r.clockIn, f.timeZone);
-    const end = localDateTime(r.clockOut, f.timeZone);
+  const clockIn = f.window?.start ?? r.clockIn;
+  const clockOut = f.window?.end ?? r.clockOut;
+  if (!clockIn) edit(DMAS_EVV_EDIT.beginTime, 'EVV clock-in time missing');
+  if (!clockOut) edit(DMAS_EVV_EDIT.endTime, 'EVV clock-out time missing');
+  if (clockIn && clockOut) {
+    const start = localDateTime(clockIn, f.timeZone);
+    const end = localDateTime(clockOut, f.timeZone);
     let endHhmm: string | null = end.hhmm;
-    if (r.clockOut <= r.clockIn) {
+    if (clockOut <= clockIn) {
       edit(DMAS_EVV_EDIT.endTime, 'EVV clock-out is not after clock-in');
       endHhmm = null;
     } else if (start.date !== f.serviceDate) {

@@ -129,12 +129,13 @@ was running (relationJoins changes how every nested query loads) — if it's gre
 **P4-04 Virginia EVV on claims** — branch `task/P4-04-virginia-evv` (branched from P4-09; merge P4-09 first). Done
 (D-069): `edi/evv-virginia.ts` rules + 837P/837I segments, payer setting `evvClaimProfile = 'va_dmas'` (migration
 `20260929010000_payer_evv_claim_profile`, applied to Neon), EDI preview lists missing EVV data with the DMAS edit
-numbers, Billing setup "EVV on claims" column, unit tests + `test/evv-virginia.e2e-spec.ts` (green). **Left**:
-regenerate OpenAPI (`npm run build` then `npm run openapi -w @alora/api`), full checks, push, CI, merge.
+numbers, Billing setup "EVV on claims" column, unit tests + `test/evv-virginia.e2e-spec.ts` (green). P4-04b too:
+overnight shifts split per day (migration `20260929020000_claim_line_evv_window`, applied), modifier 76, readiness
+check `evv_claim_data`; billing e2e files green. **Left**: merge main (P4-09 merged), full checks, push, CI, merge.
 
 ## Next up
 
-P4-04b Virginia EVV follow-ups (midnight split, monthly rounding, modifier 76, readiness warnings); P4-10 production
+P4-04c monthly hour rounding (after Q-012); P4-10 production
 packaging (hosting still undecided — prepare what doesn't depend on it). The owner asked for autonomous work: go
 straight on, check in with questions every ~6 hours.
 

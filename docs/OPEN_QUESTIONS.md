@@ -46,8 +46,9 @@ EVV now goes on Virginia claims the way the DMAS companion guides describe (no a
 1. Which **MCOs** do you bill (Anthem HealthKeepers Plus, Aetna Better Health, Humana, Molina, Sentara/Optima,
    UnitedHealthcare)? Some use their own EVV portals (reported: Humana → HHAeXchange, Anthem → Netsmart/Tellus). If
    an MCO requires its portal instead of claim fields, we'll add an adapter for it.
-2. Do you have **overnight or live-in** personal care shifts? Virginia needs them split at midnight (one line per
-   day) — that's next on the list (P4-04b), sooner if you have such clients.
+2. Do you have **live-in** personal care clients (they need the UB modifier)? Overnight shifts are already split at
+   midnight. Does your biller round personal care hours **per month** (DMAS rule: whole hours, leftover 30+ minutes
+   round up at month end)? Today hours bill in quarter hours per visit.
 3. Your caregivers' **employee IDs** go on every Virginia claim (DMAS rule: unique, letters/digits, not the SSN).
    Make sure every aide has one in Staff.
 Default until answered: claim fields for all Virginia Medicaid payers with "EVV on claims" set.

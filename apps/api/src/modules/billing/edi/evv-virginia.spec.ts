@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { build837I, type Edi837IInput } from './edi-837i.js';
 import { build837, type Edi837Input } from './edi-837p.js';
-import { localDateTime, virginiaEvvForLine, virginiaEvvRequired, type EvvLineFacts } from './evv-virginia.js';
+import { localDateTime, splitAtMidnight, virginiaEvvForLine, virginiaEvvRequired, type EvvLineFacts } from './evv-virginia.js';
 
 /** FAKE data only. Times are Eastern (UTC-4 in September). */
 const FACTS: EvvLineFacts = {
@@ -203,5 +203,18 @@ describe('EVV on Virginia claims', () => {
     );
     const { evvServiceLocation: _, ...noLocation } = input.claims[0]!;
     expect(() => build837I({ ...input, claims: [noLocation] })).toThrow(/EVV lines need the service location/);
+  });
+});
+
+describe('splitAtMidnight', () => {
+  it('cuts a shift at local midnight, one piece per day', () => {
+    const pieces = splitAtMidnight(new Date('2026-09-25T02:00:00Z'), new Date('2026-09-25T10:00:00Z'), 'America/New_York');
+    expect(pieces).toEqual([
+      { date: '2026-09-24', start: new Date('2026-09-25T02:00:00Z'), end: new Date('2026-09-25T04:00:00Z'), minutes: 120 },
+      { date: '2026-09-25', start: new Date('2026-09-25T04:00:00Z'), end: new Date('2026-09-25T10:00:00Z'), minutes: 360 },
+    ]);
+    // The second piece reads 0000-0600 on its own day.
+    expect(virginiaEvvForLine({ ...FACTS, serviceDate: '2026-09-25', window: pieces[1] }).evv?.times).toBe('0000-0600');
+    expect(splitAtMidnight(new Date('2026-09-24T12:00:00Z'), new Date('2026-09-24T16:00:00Z'), 'America/New_York')).toHaveLength(1);
   });
 });

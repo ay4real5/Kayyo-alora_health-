@@ -15,7 +15,8 @@ export type CheckCode =
   | 'authorization'
   | 'rate'
   | 'agency_npi'
-  | 'timely_filing';
+  | 'timely_filing'
+  | 'evv_claim_data';
 
 export interface Check {
   code: CheckCode;
@@ -57,6 +58,8 @@ export interface ReadinessFacts {
   payerRate: number | null;
   agencyNpi: string | null;
   today: string;
+  /** State EVV data the claim line(s) would need and lack (Virginia, D-069); null when the payer needs none. */
+  evvClaimProblems?: string[] | null;
 }
 
 export interface Readiness {
@@ -85,6 +88,12 @@ export function billingUnits(unitType: string, minutes: number): number {
     default:
       return 1;
   }
+}
+
+/** The payer's claim format, or by default 837I (UB-04) for Medicare home health and 837P for everyone else (D-061). */
+export function claimFormatFor(payer: { payerType: string; claimFormat: string | null }): '837P' | '837I' {
+  if (payer.claimFormat === '837I' || payer.claimFormat === '837P') return payer.claimFormat;
+  return payer.payerType === 'medicare' ? '837I' : '837P';
 }
 
 export function memberIdFor(payerType: string, ids: ReadinessFacts['memberIds']): string | null {
@@ -168,6 +177,9 @@ export function evaluate(f: ReadinessFacts): Readiness {
     });
   }
   check('agency_npi', Boolean(f.agencyNpi), 'The agency NPI is missing (Settings)');
+  if (f.evvClaimProblems) {
+    check('evv_claim_data', f.evvClaimProblems.length === 0, `EVV data for the claim: ${f.evvClaimProblems.join('; ')}`);
+  }
 
   if (f.payer) {
     const deadline = f.payer.timelyFilingDays - daysBetween(f.serviceDate, f.today);

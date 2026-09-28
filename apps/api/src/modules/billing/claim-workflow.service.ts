@@ -140,6 +140,8 @@ export class ClaimWorkflowService {
               unitRate: l.unitRate,
               chargeAmount: l.chargeAmount,
               placeOfService: l.placeOfService,
+              evvStart: l.evvStart,
+              evvEnd: l.evvEnd,
             })),
           },
         },

@@ -1201,6 +1201,13 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   contracts with it — Q-012). Other states get their own profile value later.
 - **Problems name the DMAS edit** the claim would be denied with (EOB 2094 data missing … 2100 end time invalid), in
   the claim's EDI preview (422 `EDI_INCOMPLETE`), so billers can fix them before submitting.
-- **Not done yet** (ROADMAP P4-04b): a shift that crosses midnight must be billed as one line per day (we list it as a
-  problem instead of splitting it); personal care hours round per month (whole hours, 30+ leftover minutes round up
-  at month end); modifier 76 for a second same-day line by another aide; the UB modifier for live-in settings.
+- **Checked before billing**: for these payers "Ready to bill" runs the same rules (check `evv_claim_data`), so a
+  visit missing EVV claim data is skipped with the reason instead of making a claim that would be denied.
+- **Overnight shifts**: a shift crossing local midnight becomes one line per day (`claim_lines.evv_start/evv_end`
+  hold each piece; units per piece). "One active line per visit" became **one active line per visit and service
+  date** (`claim_lines_one_active_per_visit_day`) — still no double billing.
+- **Modifier 76**: on Virginia 837P claims, a second line for the same service on the same day gets 76 (added when
+  the file is built).
+- **Not done yet** (ROADMAP P4-04b): personal care hours round per **month** (DMAS: whole 1-hour units, accrued
+  minutes carried forward, 30+ leftover minutes round up at month end) — today `hour` codes bill quarter hours per
+  visit; the UB modifier for live-in / exempt settings.

@@ -124,6 +124,7 @@ export class EdiService {
         format,
         serviceDate: fromDate(l.serviceDate)!,
         timeZone: a.timezone,
+        window: l.evvStart && l.evvEnd ? { start: l.evvStart, end: l.evvEnd } : null,
         record: record
           ? {
               clockIn: record.clockInTime,
@@ -220,6 +221,16 @@ export class EdiService {
         },
       ],
     };
+    if (claim.payer.evvClaimProfile === 'va_dmas') {
+      // Virginia: each line is one caregiver's shift; a second line for the same service on the same day carries
+      // modifier 76 so it isn't denied as a duplicate (DMAS EVV FAQ).
+      const seen = new Set<string>();
+      for (const line of input.claims[0]!.lines) {
+        const key = `${line.serviceCode}|${line.serviceDate}`;
+        if (seen.has(key) && !line.modifiers.includes('76') && line.modifiers.length < 4) line.modifiers.push('76');
+        seen.add(key);
+      }
+    }
     const problems = [...evvProblems, ...validate837(input)];
     if (problems.length) throw incomplete(problems);
     return {
