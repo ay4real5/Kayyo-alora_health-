@@ -86,5 +86,6 @@ export class MessagingController {
   imports: [PatientsModule, DocumentsModule],
   controllers: [MessagingController],
   providers: [MessagingService],
+  exports: [MessagingService],
 })
 export class MessagingModule {}

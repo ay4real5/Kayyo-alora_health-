@@ -31,6 +31,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   /** Clinical supervisor: all clinical and scheduling work, approvals, live monitoring. No billing/payroll. */
   supervisor: [
     'messages:use',
+    'messages:portal',
     'medications:manage',
     'authorizations:read',
     'authorizations:manage',
@@ -127,6 +128,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   /** Office coordinator: scheduling, basic patient info, staff management. No billing, no clinical notes. */
   office_staff: [
     'messages:use',
+    'messages:portal',
     'authorizations:read',
     'authorizations:manage',
     'patients:create',

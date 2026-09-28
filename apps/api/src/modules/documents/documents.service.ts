@@ -45,6 +45,7 @@ export interface DocumentView {
   /** A newer version exists. */
   superseded: boolean;
   isSigned: boolean;
+  sharedWithPatient: boolean;
   signature: { name: string; signedAt: string; signedById: string } | null;
   uploadedBy: { id: string; firstName: string; lastName: string };
   deleted: boolean;
@@ -94,6 +95,7 @@ export class DocumentsService {
     let type: string = dto.documentType;
     let version = 1;
     let previousVersionId: string | null = null;
+    let sharedWithPatient = dto.sharedWithPatient ?? false;
     if (dto.replacesDocumentId) {
       const previous = await this.find(caller, dto.replacesDocumentId);
       if (previous.deletedAt) throw new ConflictException('That document was deleted');
@@ -105,10 +107,14 @@ export class DocumentsService {
         visitId: previous.visitId,
       };
       type = previous.documentType;
+      sharedWithPatient = dto.sharedWithPatient ?? previous.sharedWithPatient;
       version = previous.version + 1;
       previousVersionId = previous.id;
     } else {
       await this.assertLinks(caller, links);
+    }
+    if (sharedWithPatient && !links.patientId) {
+      throw new BadRequestException('Only a document about a patient can be shared with the patient');
     }
 
     const id = (
@@ -132,6 +138,7 @@ export class DocumentsService {
             contentHash: sha256(file.buffer),
             version,
             previousVersionId,
+            sharedWithPatient,
             tags: [],
           },
         });
@@ -246,6 +253,43 @@ export class DocumentsService {
     return this.get(caller, id);
   }
 
+  /** Show or hide the document in the patient portal (D-058). */
+  async setSharing(caller: AuthUser, id: string, sharedWithPatient: boolean): Promise<DocumentView> {
+    const doc = await this.find(caller, id);
+    if (doc.deletedAt) throw new NotFoundException('Document not found');
+    if (sharedWithPatient && !doc.patientId) {
+      throw new BadRequestException('Only a document about a patient can be shared with the patient');
+    }
+    await this.prisma.document.update({ where: { id }, data: { sharedWithPatient } });
+    return this.get(caller, id);
+  }
+
+  /**
+   * The portal's view (D-058): newest versions of a patient's documents that staff shared, not deleted. The caller
+   * (PortalService) has already checked that the portal user belongs to this patient.
+   */
+  async listSharedWithPatient(agencyId: string, patientId: string) {
+    const rows = await this.prisma.document.findMany({
+      where: { agencyId, patientId, sharedWithPatient: true, deletedAt: null, nextVersion: null },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, documentType: true, title: true, fileName: true, fileSize: true, mimeType: true, isSigned: true, createdAt: true },
+    });
+    return rows;
+  }
+
+  /** Download for the portal — only a shared, current, not-deleted document of that patient. */
+  async downloadSharedWithPatient(agencyId: string, patientId: string, id: string) {
+    const doc = await this.prisma.document.findFirst({
+      where: { id, agencyId, patientId, sharedWithPatient: true, deletedAt: null, nextVersion: null },
+    });
+    if (!doc) throw new NotFoundException('Document not found');
+    const content = await this.storage.load(doc.id);
+    if (doc.contentHash && sha256(content) !== doc.contentHash) {
+      throw new ConflictException('The stored file does not match what was uploaded');
+    }
+    return { fileName: doc.fileName, mimeType: doc.mimeType ?? 'application/octet-stream', content };
+  }
+
   /** Soft delete with a reason — records are retained (HIPAA/state retention); the file stays stored. */
   async remove(caller: AuthUser, id: string, reason: string): Promise<void> {
     const doc = await this.find(caller, id);
@@ -313,6 +357,7 @@ function toView(d: DocumentRow & { deletedAt: Date | null }): DocumentView {
     previousVersionId: d.previousVersionId,
     superseded: Boolean(d.nextVersion),
     isSigned: d.isSigned,
+    sharedWithPatient: d.sharedWithPatient,
     signature: sig ? { name: sig.name, signedAt: sig.signedAt, signedById: sig.signedById } : null,
     uploadedBy: d.uploadedBy,
     deleted: Boolean(d.deletedAt),

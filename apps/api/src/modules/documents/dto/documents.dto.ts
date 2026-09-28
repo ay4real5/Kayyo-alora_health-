@@ -53,10 +53,21 @@ export class UploadDocumentDto {
   @IsUUID()
   visitId?: string;
 
-  /** Upload as a new version of this document (inherits its links and type). */
+  /** Upload as a new version of this document (inherits its links, type and portal sharing). */
   @IsOptional()
   @IsUUID()
   replacesDocumentId?: string;
+
+  /** Show it to the patient/family in the portal (D-058). Needs a patient. Multipart sends "true"/"false". */
+  @IsOptional()
+  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+  @IsBoolean()
+  sharedWithPatient?: boolean;
+}
+
+export class UpdateDocumentDto {
+  @IsBoolean()
+  sharedWithPatient!: boolean;
 }
 
 export class ListDocumentsQueryDto extends PaginationQueryDto {

@@ -268,6 +268,92 @@ export class MessagingService {
     });
   }
 
+  // ---- Patient portal (D-058). The portal controller has already checked the portal user belongs to the patient. ----
+
+  /** The portal user's conversation with the care team about one patient, with its messages (newest first). */
+  async portalThread(caller: AuthUser, patientId: string, query: ListMessagesQueryDto) {
+    const conversation = await this.findPortal(caller, patientId);
+    if (!conversation) return { conversationId: null, unread: 0, messages: [] as MessageView[] };
+    const [unread, messages] = await Promise.all([
+      this.unreadByConversation(caller.userId, [conversation.id]),
+      this.messages(caller, conversation.id, query),
+    ]);
+    return { conversationId: conversation.id, unread: unread.get(conversation.id) ?? 0, messages };
+  }
+
+  /**
+   * A message from the portal to the care team. The first one opens the conversation; every message (re)adds the
+   * agency's current portal responders (`messages:portal`) and alerts them in-app (no content in the alert).
+   */
+  async portalSend(caller: AuthUser, patientId: string, content: string): Promise<MessageView> {
+    const responders = await this.portalResponders(caller.agencyId);
+    const conversationId =
+      (await this.findPortal(caller, patientId))?.id ??
+      (
+        await this.prisma.conversation.create({
+          data: {
+            agencyId: caller.agencyId,
+            type: 'portal',
+            patientId,
+            createdById: caller.userId,
+            participants: { create: { userId: caller.userId } },
+          },
+          select: { id: true },
+        })
+      ).id;
+    await this.prisma.$transaction(
+      responders.map((userId) =>
+        this.prisma.conversationParticipant.upsert({
+          where: { conversationId_userId: { conversationId, userId } },
+          create: { conversationId, userId },
+          update: { leftAt: null },
+        }),
+      ),
+    );
+    const message = await this.send(caller, conversationId, { content });
+    await this.notifications.notify({
+      agencyId: caller.agencyId,
+      userIds: responders,
+      type: 'message_received',
+      title: 'New patient portal message',
+      body: 'A patient or family member wrote to the care team. Open Messages to read it.',
+      data: { conversationId },
+      actorUserId: caller.userId,
+    });
+    return message;
+  }
+
+  async portalMarkRead(caller: AuthUser, patientId: string): Promise<void> {
+    const conversation = await this.findPortal(caller, patientId);
+    if (conversation) await this.markRead(caller, conversation.id);
+  }
+
+  private findPortal(caller: AuthUser, patientId: string) {
+    return this.prisma.conversation.findFirst({
+      where: { agencyId: caller.agencyId, type: 'portal', patientId, createdById: caller.userId },
+      select: { id: true },
+    });
+  }
+
+  /** Active staff whose role (built-in or this agency's) grants `messages:portal`. */
+  private async portalResponders(agencyId: string): Promise<string[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        ...this.messageable(agencyId),
+        userRoles: {
+          some: {
+            role: {
+              OR: [{ agencyId: null }, { agencyId }],
+              rolePermissions: { some: { permission: { resource: 'messages', action: 'portal' } } },
+            },
+          },
+        },
+      },
+      select: { id: true },
+    });
+    return users.map((u) => u.id);
+  }
+
   /** 404 unless the sender can see the document. */
   private async assertAttachable(caller: AuthUser, documentId: string): Promise<void> {
     const doc = await this.documents.get(caller, documentId);

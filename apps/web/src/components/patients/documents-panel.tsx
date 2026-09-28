@@ -32,6 +32,7 @@ interface DocumentItem {
   version: number;
   superseded: boolean;
   isSigned: boolean;
+  sharedWithPatient: boolean;
   signature: { name: string; signedAt: string } | null;
   uploadedBy: { firstName: string; lastName: string };
   deleted: boolean;
@@ -68,7 +69,7 @@ export function DocumentsPanel({ patientId }: { patientId: string }) {
       body,
     }: {
       path: string;
-      method?: 'POST' | 'DELETE';
+      method?: 'POST' | 'PATCH' | 'DELETE';
       body?: unknown;
     }) => request(path, { method, body }),
     onSuccess: refresh,
@@ -155,6 +156,10 @@ export function DocumentsPanel({ patientId }: { patientId: string }) {
               className="text-sm font-normal"
             />
           </label>
+          <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
+            <input type="checkbox" name="sharedWithPatient" value="true" /> Share with the patient/family in the
+            portal
+          </label>
           {tooBig && <p className="text-sm text-red-700 sm:col-span-2">That file is over 10 MB.</p>}
           <div>
             <Button type="submit" variant="secondary" disabled={upload.isPending}>
@@ -175,7 +180,7 @@ function DocumentRow({
 }: {
   doc: DocumentItem;
   onDownload: () => void;
-  onAct: (path: string, method?: 'POST' | 'DELETE', body?: unknown) => void;
+  onAct: (path: string, method?: 'POST' | 'PATCH' | 'DELETE', body?: unknown) => void;
   onNewVersion: (file: File) => void;
 }) {
   const { request, can } = useAuth();
@@ -197,6 +202,9 @@ function DocumentRow({
             <span className="rounded bg-green-50 px-1.5 py-0.5 font-medium text-green-800">
               Signed
             </span>
+          )}
+          {d.sharedWithPatient && !d.deleted && (
+            <span className="rounded bg-sky-50 px-1.5 py-0.5 font-medium text-sky-800">In portal</span>
           )}
           {d.version > 1 && <span className="text-slate-500">v{d.version}</span>}
         </span>
@@ -252,6 +260,17 @@ function DocumentRow({
                 }}
               />
             </>
+          )}
+          {can('documents:create') && (
+            <button
+              type="button"
+              className="underline"
+              onClick={() =>
+                onAct(`/documents/${d.id}`, 'PATCH', { sharedWithPatient: !d.sharedWithPatient })
+              }
+            >
+              {d.sharedWithPatient ? 'Stop sharing in portal' : 'Share in portal'}
+            </button>
           )}
           {d.version > 1 && (
             <button type="button" className="underline" onClick={() => setShowHistory((v) => !v)}>
