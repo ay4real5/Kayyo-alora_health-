@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 /**
- * Security headers for the dashboard (DECISIONS D-034). A strict Content-Security-Policy with nonces is part of
- * the security pass (P4-09); these are the safe defaults that need no per-request work.
+ * Security headers for the dashboard (DECISIONS D-034). The Content-Security-Policy needs a per-request nonce, so it is
+ * set in src/proxy.ts (D-068); these are the headers that are the same on every response.
  */
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' }, // no clickjacking
