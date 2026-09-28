@@ -1122,3 +1122,6 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **`system` alerts (security, serious incidents) can't be switched off** (`MANDATORY_NOTIFICATION_TYPES`).
 - API: `GET /notifications/preferences` (all types with effective values), `PUT /notifications/preferences/:type`
   (only the channels sent change). Own preferences only; no permission needed. Web: Notification settings, from the bell.
+- Web checkboxes are **uncontrolled** (`defaultChecked` + a `key` that includes the saved value): a controlled checkbox
+  is reset by React before TanStack Query's async cache update re-renders, so the box visibly flips back for a moment
+  (and Playwright's `check()` fails). A failed save reverts the cache, which changes the key and remounts the box.

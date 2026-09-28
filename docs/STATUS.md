@@ -114,17 +114,13 @@
   schema/migration drift, runs DB e2e tests, builds the Docker image and health-checks it. All green.
 - Docker does not run on the owner's laptop (D-011); CI covers the image.
 
+- **Notification preferences (P4-07)**: per type and channel (in-app, push, SMS, email; all on by default), `notify()`
+  skips muted in-app alerts, `system` alerts mandatory; web `/settings/notifications` from the bell. D-066.
+
 ## In progress
 
-**P4-07 notification preferences** — branch `task/P4-07-notification-prefs` (up to date with main).
-- Done: `notification_preferences` table + migration (applied to Neon); `GET /notifications/preferences`,
-  `PUT /notifications/preferences/:type`; `notify()` skips users who muted that type in-app; `system` is mandatory
-  (`MANDATORY_NOTIFICATION_TYPES` in `@alora/shared`); 3 API e2e tests pass (`test/notification-preferences.e2e-spec.ts`).
-  Web: `/settings/notifications` page (linked from the notification bell's "Settings").
-- Left: run `e2e/notification-settings.spec.ts` (Playwright). Its first run failed because the checkbox waited for the
-  server ("Clicking the checkbox did not change its state"); fixed with an optimistic update (`onMutate`) but **not
-  re-run yet**. Then: `npm run openapi -w @alora/api` (after build), D-066 is written, tick P4-07 in ROADMAP, push,
-  wait for CI, merge to main.
+Nothing. `task/P4-07-notification-prefs` is complete locally (3 API e2e + 1 browser test pass, openapi.json unchanged,
+typecheck/lint green); waiting for CI, then merge to main.
 
 ## Next up
 
@@ -143,6 +139,7 @@ The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Devin | P4-07 | Browser test fixed (uncontrolled checkboxes), openapi/typecheck/lint green; pushed for CI + merge. |
 | 2026-09-28 | Claude Code | P4-07 (in progress) | Preferences API + page; P4-01/P4-02 merged. Owner switched to Devin. |
 | 2026-09-28 | Claude Code | P4-01, P4-02 | Reports API (4 e2e) + dashboard (2 browser tests); P4-03 merged. |
 | 2026-09-28 | Claude Code | P4-03 | Payroll calc (8 unit) + API (6 e2e) + web (browser test); P4-06 merged. |

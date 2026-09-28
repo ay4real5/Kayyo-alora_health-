@@ -49,24 +49,23 @@ const CHANNELS: { key: NotificationChannel; label: string; live: boolean }[] = [
 export default function NotificationSettingsPage() {
   const { request } = useAuth();
   const queryClient = useQueryClient();
+  const key = ['notifications', 'preferences'] as const;
   const prefs = useQuery({
-    queryKey: ['notifications', 'preferences'],
+    queryKey: key,
     queryFn: async () => (await request<Preference[]>('/notifications/preferences')).data,
   });
   const save = useMutation({
-    mutationFn: async ({ type, channel, on }: { type: string; channel: NotificationChannel; on: boolean }) =>
+    mutationFn: async ({ type, channel, on }: { type: string; channel: NotificationChannel; on: boolean; before?: Preference[] }) =>
       (await request<Preference[]>(`/notifications/preferences/${type}`, { method: 'PUT', body: { [channel]: on } })).data,
-    // Tick the box at once; put it back if saving fails.
-    onMutate: ({ type, channel, on }) => {
-      const before = queryClient.getQueryData<Preference[]>(['notifications', 'preferences']);
-      queryClient.setQueryData<Preference[]>(['notifications', 'preferences'], (old) =>
-        old?.map((p) => (p.type === type ? { ...p, [channel]: on } : p)),
-      );
-      return { before };
-    },
-    onError: (_error, _vars, context) => queryClient.setQueryData(['notifications', 'preferences'], context?.before),
-    onSuccess: (data) => queryClient.setQueryData(['notifications', 'preferences'], data),
+    // The box is ticked synchronously in onChange (see toggle); put it back if saving fails.
+    onError: (_error, { before }) => queryClient.setQueryData(key, before),
+    onSuccess: (data) => queryClient.setQueryData(key, data),
   });
+  const toggle = (type: NotificationType, channel: NotificationChannel, on: boolean) => {
+    const before = queryClient.getQueryData<Preference[]>(key);
+    queryClient.setQueryData<Preference[]>(key, (old) => old?.map((p) => (p.type === type ? { ...p, [channel]: on } : p)));
+    save.mutate({ type, channel, on, before });
+  };
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
@@ -97,11 +96,15 @@ export default function NotificationSettingsPage() {
                   {CHANNELS.map((c) => (
                     <td key={c.key} className="py-2 pr-4 text-center">
                       <input
+                        // Uncontrolled + keyed on the saved value: clicks toggle the box at once, and a
+                        // reverted value remounts the input back to the saved state (React restores the DOM
+                        // of a controlled checkbox before the async store update can commit).
+                        key={`${p.type}-${c.key}-${p[c.key]}`}
                         type="checkbox"
                         aria-label={`${label}: ${c.label}`}
-                        checked={p[c.key]}
+                        defaultChecked={p[c.key]}
                         disabled={p.mandatory && c.key === 'inApp'}
-                        onChange={(e) => save.mutate({ type: p.type, channel: c.key, on: e.target.checked })}
+                        onChange={(e) => toggle(p.type, c.key, e.target.checked)}
                       />
                     </td>
                   ))}

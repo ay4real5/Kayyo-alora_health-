@@ -89,7 +89,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P4-04** `agent` EVV state aggregator adapter interface + first aggregator. deps: Q-005
 - [x] **P4-05** `agent` Compliance: dashboard, incidents, credential-expiry cron, audit-log query
 - [x] **P4-06** `agent` Claims denial/appeal workflow + aging report
-- [ ] **P4-07** `agent` Notification preferences UI/API
+- [x] **P4-07** `agent` Notification preferences UI/API
 - [ ] **P4-08** `agent` Audit-log monthly partitioning + retention
 - [ ] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes. Include: the API should *enforce* the
   forced password change (like the 2FA-setup restriction, D-045) — today only the web/mobile clients redirect (D-058)
