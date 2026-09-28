@@ -84,6 +84,9 @@
 - **Documents (P3-12)**: upload (PDF/PNG/JPEG/DOCX recognised by content, 10 MB), encrypted storage behind a
   `DocumentStorage` interface (database driver until S3 + BAA), audited download with integrity check, versions,
   typed-name e-signature bound to the file hash, soft delete with a reason; web panel on the patient page. D-056.
+- **Messaging (P3-13)**: staff conversations (direct + group, optionally about a patient), encrypted message text,
+  unread counts, leave/re-add, urgent alerts, live `message:new` pushes (IDs only); web Messages page with unread badge;
+  demo seed has two threads. D-057.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -97,7 +100,7 @@ Nothing.
 
 ## Next up
 
-**P3-13** secure messaging, then the patient portal (**P3-14** API, **P3-16** screens in `apps/web`). Also P3-10
+The patient portal (**P3-14** API, **P3-16** screens in `apps/web`; portal messaging reuses the D-057 tables). Also P3-10
 private-pay invoices and P3-07 eligibility. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
@@ -110,6 +113,7 @@ private-pay invoices and P3-07 eligibility. The owner asked for autonomous work:
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P3-13 | Messaging API (7 e2e) + web page + demo threads; 25 browser tests pass. P3-12 merged. |
 | 2026-09-28 | Claude Code | P3-12 | Documents API (6 e2e) + web panel (1 browser test); P3-11 merged to main. |
 | 2026-09-28 | Claude Code | P3-11 | Clinical records API + web; 4 e2e + 1 browser test; 23 browser tests pass. Owner tried the app on web and phone. |
 | 2026-09-28 | Claude Code | P3-06 | 835 parser + upload + posting API and web; 22 browser tests pass. |

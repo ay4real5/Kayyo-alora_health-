@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { MessagesBadge } from './messages-badge';
 import { NAVIGATION } from './navigation';
 import { NotificationBell } from './notification-bell';
 
@@ -45,6 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className={`rounded-md px-3 py-2 text-sm ${active ? 'bg-teal-50 font-medium text-teal-900' : 'text-slate-700 hover:bg-slate-100'}`}
               >
                 {item.label}
+                {item.href === '/messages' && <MessagesBadge />}
               </Link>
             );
           })}

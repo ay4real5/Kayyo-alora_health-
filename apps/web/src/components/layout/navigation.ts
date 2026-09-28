@@ -1,6 +1,7 @@
 /** Sidebar entries; each shows only if the user holds its permission (the API enforces it regardless). */
 export const NAVIGATION = [
   { href: '/', label: 'Dashboard', permission: null },
+  { href: '/messages', label: 'Messages', permission: 'messages:use' },
   { href: '/schedule', label: 'Schedule', permission: 'visits:read' },
   { href: '/monitor', label: 'Live monitor', permission: 'evv:read' },
   { href: '/evv', label: 'EVV review', permission: 'evv:read' },
