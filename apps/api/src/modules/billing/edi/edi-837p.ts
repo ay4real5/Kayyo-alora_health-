@@ -10,6 +10,7 @@ import {
   COMPONENT,
   REPETITION,
 } from './x12.js';
+import type { EvvAddress, LineEvv } from './evv-virginia.js';
 
 /**
  * EDI 837 Professional (ASC X12 005010X222A1) for one or more claims to one payer (DECISIONS D-053). Pure: everything
@@ -41,6 +42,8 @@ export interface Edi837Line {
   serviceDate: string;
   units: number;
   chargeAmount: number;
+  /** Virginia Medicaid EVV data for personal care lines (D-069): SV101-7, 2420D, 2420G/H. */
+  evv?: LineEvv | null;
 }
 
 export interface Edi837Claim {
@@ -116,11 +119,20 @@ export function validate837(input: Edi837Input): string[] {
       problems.push(`${who}: a corrected claim needs the payer's claim number of the original`);
     if (c.lines.length > 50) problems.push(`${who}: more than 50 lines (837P limit)`);
     if (c.diagnosisCodes.length > 12) problems.push(`${who}: more than 12 diagnoses`);
+    for (const l of c.lines) {
+      if (l.evv && !/^([01]\d|2[0-3])[0-5]\d-([01]\d|2[0-3])[0-5]\d$/.test(l.evv.times))
+        problems.push(`${who}: ${l.serviceCode} on ${l.serviceDate}: EVV times must be HHMM-HHMM (00–23 hours)`);
+    }
   }
   if (input.controlNumber < 1 || input.controlNumber > 999_999_999)
     problems.push('Control number out of range');
   return problems;
 }
+
+const address = (a: EvvAddress) => [
+  segment('N3', clean(a.addressLine1, 55)),
+  segment('N4', clean(a.city, 30), clean(a.state), digits(a.zip)),
+];
 
 /** Builds the 837P text. Call `validate837` first; this throws if the input isn't valid. */
 export function build837(input: Edi837Input): string {
@@ -307,10 +319,14 @@ export function build837(input: Edi837Input): string {
     // 2400 service lines
     claim.lines.forEach((line, i) => {
       st.push(segment('LX', i + 1));
+      const modifiers = line.modifiers.map((m) => clean(m, 2));
       st.push(
         segment(
           'SV1',
-          composite('HC', clean(line.serviceCode), ...line.modifiers.map((m) => clean(m, 2))),
+          // SV101-7 (description) carries the EVV begin-end time, after the four modifier slots.
+          line.evv
+            ? composite('HC', clean(line.serviceCode), ...[...modifiers, '', '', '', ''].slice(0, 4), line.evv.times)
+            : composite('HC', clean(line.serviceCode), ...modifiers),
           amount(line.chargeAmount),
           'UN',
           amount(line.units),
@@ -320,6 +336,15 @@ export function build837(input: Edi837Input): string {
         ),
       );
       st.push(segment('DTP', '472', 'D8', ccyymmdd(line.serviceDate)));
+      if (line.evv) {
+        const e = line.evv;
+        // 2420D supervising provider = the attendant (DMAS), REF*LU = attendant ID.
+        st.push(segment('NM1', 'DQ', '1', clean(e.attendant.lastName, 60), clean(e.attendant.firstName, 35)));
+        st.push(segment('REF', 'LU', clean(e.attendant.id, 50)));
+        // 2420G / 2420H ambulance pick-up / drop-off = where the service began / ended.
+        st.push(segment('NM1', 'PW', '2'), ...address(e.begin));
+        st.push(segment('NM1', '45', '2'), ...address(e.end));
+      }
     });
   }
   st.push(segment('SE', st.length + 1, '0001'));
