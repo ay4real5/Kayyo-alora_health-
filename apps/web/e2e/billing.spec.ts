@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 const PASSWORD = 'Demo-Password-1!';
@@ -103,4 +104,14 @@ test('billing creates claims from ready visits, opens one and voids it', async (
   await page.getByRole('button', { name: 'Void claim' }).click();
   await expect(page.getByText('Playwright test')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Void claim' })).toHaveCount(0);
+});
+
+test('billing loads an 835 remittance and sees which claims are not ours', async ({ page }) => {
+  await signIn(page, 'billing.staff@demo.alora.test');
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Payments' }).click();
+  await page.getByLabel('835 file').setInputFiles(join(__dirname, '..', '..', 'api', 'src', 'modules', 'billing', 'edi', '__fixtures__', '835-basic.edi'));
+  const payments = page.getByRole('list', { name: 'Payments' });
+  await expect(payments).toContainText('$30.50');
+  await expect(payments).toContainText('Not our claims (not posted): 260928ABC234, 260928DEF567');
+  await expect(page.getByRole('table', { name: 'Payment details' })).toContainText('Denied');
 });

@@ -855,3 +855,21 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   `common/validators`. Web: **Agency settings** page; **Download 837P (preview)** on the claim page.
 - Virginia DMAS/MCO companion guides may require extra segments or values — check them with the clearinghouse
   before production (D-044).
+
+### D-054 — 835 remittances and payment posting (P3-06)
+2026-09-28 · Claude Code
+- **Parser** (`billing/edi/edi-835.ts`, 005010X221A1) is pure and reads separators from ISA (any delimiters, with or
+  without line breaks): BPR (amount, method, date), TRN (trace/check number), N1 PR/PE (+REF*2U payer ID, payee NPI),
+  CLP (our claim number, status 1/2/3 processed, 4 denied, 22 reversal, charge, paid, patient responsibility, payer
+  claim number), NM1*QC, CAS (group + up to six reason/amount/quantity triples, claim or line level), SVC (code,
+  modifiers, charge, paid, units), DTM*472, LQ*HE remarks, PLB provider adjustments. Fixture tests.
+- **Upload** (`POST /billing/edi-files/upload-835`, JSON `{fileName, content}`, ≤5 MB; global JSON limit raised to
+  6 MB): stored in `edi_files` (content in the DB until S3 exists; `content_hash` unique per agency → a file can't be
+  loaded twice), one `payments` row, one `payment_details` row per CLP, matched to our claims by claim number
+  (unmatched ones listed, never posted). Payer matched by payer ID.
+- **Posting** (`POST /billing/payments/:id/post`, once — guarded update): claim `total_paid`, `total_adjustments` (all
+  CAS except PR), `patient_responsibility`, payer claim number; lines matched by code + date + first modifier get paid
+  and adjustment amounts. Status: CLP02 4 (or nothing paid) → `denied` with the first CARC; 22 reversal →
+  `submitted`; else balance ≤ $0.005 → `paid`, otherwise `partially_paid`. Void claims are skipped.
+- Web: **Payments** page — load an 835, review per claim, post.
+- Not yet: 999/277 acknowledgments, PLB application to balances, patient statements for patient responsibility.

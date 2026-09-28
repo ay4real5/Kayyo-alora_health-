@@ -66,7 +66,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-03** `agent` Claim creation from verified visits + claim lines. deps: P3-02
 - [x] **P3-04** `agent` X12 utils + EDI 837P generator with golden-file tests. deps: P3-03
 - [ ] **P3-05** `agent` EDI 837I generator. deps: P3-04
-- [ ] **P3-06** `agent` EDI 835 parser + payment posting/reconciliation. deps: P3-04
+- [x] **P3-06** `agent` EDI 835 parser + payment posting/reconciliation. deps: P3-04
 - [ ] **P3-07** `agent` EDI 270/271 eligibility. deps: P3-04
 - [ ] **P3-08** `human` Clearinghouse account (Availity/Waystar), SFTP creds, BAA
 - [ ] **P3-09** `agent` Clearinghouse SFTP submit/poll via claims-queue. deps: P3-04, P3-08

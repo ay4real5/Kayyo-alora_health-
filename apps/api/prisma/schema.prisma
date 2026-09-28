@@ -52,6 +52,8 @@ model Agency {
   openShifts      OpenShift[]
   serviceCodes    ServiceCode[]
   claims          Claim[]
+  ediFiles        EdiFile[]
+  payments        Payment[]
   swapRequests    ShiftSwapRequest[]
   notifications   Notification[]
 
@@ -94,6 +96,8 @@ model User {
   swapsDecided         ShiftSwapRequest[]  @relation("SwapDecidedBy")
   claimsCreated        Claim[]             @relation("ClaimCreatedBy")
   claimsSubmitted      Claim[]             @relation("ClaimSubmittedBy")
+  ediFilesUploaded     EdiFile[]           @relation("EdiFileUploadedBy")
+  paymentsPosted       Payment[]           @relation("PaymentPostedBy")
   visitNotesAuthored   VisitNote[]         @relation("VisitNoteAuthor")
   visitNotesSigned     VisitNote[]         @relation("VisitNoteSignedBy")
   visitNotesQaReviewed VisitNote[]         @relation("VisitNoteQaReviewedBy")
@@ -349,25 +353,26 @@ model PatientAllergy {
 // ─────────────────────────────── Payers (§5.6, needed by patients/authorizations) ───────────────────────────────
 
 model Payer {
-  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  agencyId              String   @map("agency_id") @db.Uuid
-  name                  String   @db.VarChar(255)
-  payerType             String   @map("payer_type") @db.VarChar(30)
-  payerIdCode           String?  @map("payer_id_code") @db.VarChar(50)
-  addressLine1          String?  @map("address_line1") @db.VarChar(255)
-  city                  String?  @db.VarChar(100)
-  state                 String?  @db.VarChar(2)
-  zip                   String?  @db.VarChar(10)
-  phone                 String?  @db.VarChar(20)
-  claimsAddress         String?  @map("claims_address") @db.VarChar(255)
-  ediSubmitterId        String?  @map("edi_submitter_id") @db.VarChar(50)
-  ediReceiverId         String?  @map("edi_receiver_id") @db.VarChar(50)
-  timelyFilingDays      Int      @default(365) @map("timely_filing_days")
-  requiresAuthorization Boolean  @default(false) @map("requires_authorization")
-  isActive              Boolean  @default(true) @map("is_active")
-  settings              Json     @default("{}")
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId              String    @map("agency_id") @db.Uuid
+  name                  String    @db.VarChar(255)
+  payerType             String    @map("payer_type") @db.VarChar(30)
+  payerIdCode           String?   @map("payer_id_code") @db.VarChar(50)
+  addressLine1          String?   @map("address_line1") @db.VarChar(255)
+  city                  String?   @db.VarChar(100)
+  state                 String?   @db.VarChar(2)
+  zip                   String?   @db.VarChar(10)
+  phone                 String?   @db.VarChar(20)
+  claimsAddress         String?   @map("claims_address") @db.VarChar(255)
+  payments              Payment[]
+  ediSubmitterId        String?   @map("edi_submitter_id") @db.VarChar(50)
+  ediReceiverId         String?   @map("edi_receiver_id") @db.VarChar(50)
+  timelyFilingDays      Int       @default(365) @map("timely_filing_days")
+  requiresAuthorization Boolean   @default(false) @map("requires_authorization")
+  isActive              Boolean   @default(true) @map("is_active")
+  settings              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   agency            Agency          @relation(fields: [agencyId], references: [id])
   primaryPatients   Patient[]       @relation("PatientPayerPrimary")
@@ -578,14 +583,15 @@ model Claim {
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency        Agency      @relation(fields: [agencyId], references: [id])
-  patient       Patient     @relation(fields: [patientId], references: [id])
-  payer         Payer       @relation(fields: [payerId], references: [id])
-  createdBy     User        @relation("ClaimCreatedBy", fields: [createdById], references: [id])
-  submittedBy   User?       @relation("ClaimSubmittedBy", fields: [submittedById], references: [id])
-  originalClaim Claim?      @relation("ClaimReplacements", fields: [originalClaimId], references: [id])
-  replacements  Claim[]     @relation("ClaimReplacements")
-  lines         ClaimLine[]
+  agency         Agency          @relation(fields: [agencyId], references: [id])
+  patient        Patient         @relation(fields: [patientId], references: [id])
+  payer          Payer           @relation(fields: [payerId], references: [id])
+  createdBy      User            @relation("ClaimCreatedBy", fields: [createdById], references: [id])
+  submittedBy    User?           @relation("ClaimSubmittedBy", fields: [submittedById], references: [id])
+  originalClaim  Claim?          @relation("ClaimReplacements", fields: [originalClaimId], references: [id])
+  replacements   Claim[]         @relation("ClaimReplacements")
+  lines          ClaimLine[]
+  paymentDetails PaymentDetail[]
 
   @@unique([agencyId, claimNumber])
   @@index([agencyId, status])
@@ -623,6 +629,95 @@ model ClaimLine {
   @@unique([visitId], map: "claim_lines_one_active_per_visit", where: raw("active"))
   @@index([claimId])
   @@map("claim_lines")
+}
+
+// ─────────────────────────────── EDI files & payments (§5.6, DECISIONS D-054) ───────────────────────────────
+
+/// An EDI file received or sent. Content is kept in the database until file storage (S3) exists.
+model EdiFile {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId                 String    @map("agency_id") @db.Uuid
+  /// 835 | 837P | 837I | 999 | 277
+  fileType                 String    @map("file_type") @db.VarChar(10)
+  /// inbound | outbound
+  direction                String    @db.VarChar(10)
+  fileName                 String?   @map("file_name") @db.VarChar(255)
+  s3Key                    String?   @map("s3_key") @db.VarChar(500)
+  content                  String?
+  contentHash              String    @map("content_hash") @db.VarChar(64)
+  interchangeControlNumber String?   @map("interchange_control_number") @db.VarChar(20)
+  recordCount              Int?      @map("record_count")
+  /// received | parsed | error | generated | submitted
+  status                   String    @default("received") @db.VarChar(20)
+  errorDetails             Json?     @map("error_details")
+  processedAt              DateTime? @map("processed_at") @db.Timestamptz(6)
+  uploadedById             String?   @map("uploaded_by") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency     Agency    @relation(fields: [agencyId], references: [id])
+  uploadedBy User?     @relation("EdiFileUploadedBy", fields: [uploadedById], references: [id])
+  payments   Payment[]
+
+  /// The same file can't be loaded twice.
+  @@unique([agencyId, contentHash])
+  @@map("edi_files")
+}
+
+/// A payment from a payer (one 835 remittance, or entered by hand).
+model Payment {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  payerId             String?   @map("payer_id") @db.Uuid
+  ediFileId           String?   @map("edi_file_id") @db.Uuid
+  checkNumber         String?   @map("check_number") @db.VarChar(50)
+  paymentDate         DateTime? @map("payment_date") @db.Date
+  paymentAmount       Decimal   @map("payment_amount") @db.Decimal(12, 2)
+  /// ACH | CHK | NON | other
+  paymentMethod       String?   @map("payment_method") @db.VarChar(20)
+  /// received | posted
+  status              String    @default("received") @db.VarChar(20)
+  /// PLB provider-level adjustments, as received.
+  providerAdjustments Json?     @map("provider_adjustments")
+  notes               String?
+  postedAt            DateTime? @map("posted_at") @db.Timestamptz(6)
+  postedById          String?   @map("posted_by") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency   Agency          @relation(fields: [agencyId], references: [id])
+  payer    Payer?          @relation(fields: [payerId], references: [id])
+  ediFile  EdiFile?        @relation(fields: [ediFileId], references: [id])
+  postedBy User?           @relation("PaymentPostedBy", fields: [postedById], references: [id])
+  details  PaymentDetail[]
+
+  @@index([agencyId, status])
+  @@map("payments")
+}
+
+/// One claim's result within a payment (CLP loop). `claimId` is null when the claim number isn't ours.
+model PaymentDetail {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId             String   @map("payment_id") @db.Uuid
+  claimId               String?  @map("claim_id") @db.Uuid
+  claimNumber           String   @map("claim_number") @db.VarChar(38)
+  /// CLP02: 1/2/3 processed, 4 denied, 22 reversal
+  statusCode            String   @map("status_code") @db.VarChar(3)
+  chargeAmount          Decimal  @map("charge_amount") @db.Decimal(10, 2)
+  paidAmount            Decimal  @map("paid_amount") @db.Decimal(10, 2)
+  adjustmentAmount      Decimal  @default(0) @map("adjustment_amount") @db.Decimal(10, 2)
+  patientResponsibility Decimal  @default(0) @map("patient_responsibility") @db.Decimal(10, 2)
+  payerClaimNumber      String?  @map("payer_claim_number") @db.VarChar(100)
+  adjustmentReasonCodes Json?    @map("adjustment_reason_codes")
+  remarkCodes           Json?    @map("remark_codes")
+  /// Service lines as received (SVC loops).
+  lines                 Json?
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  claim   Claim?  @relation(fields: [claimId], references: [id])
+
+  @@index([paymentId])
+  @@index([claimId])
+  @@map("payment_details")
 }
 
 // ─────────────────────────────── Scheduling (§5.4, core subset) ───────────────────────────────

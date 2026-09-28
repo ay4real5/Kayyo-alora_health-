@@ -1788,6 +1788,23 @@
           "reason"
         ]
       },
+      "Upload835Dto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "content": {
+            "type": "string",
+            "description": "The 835 file's text (up to 5 MB)."
+          }
+        },
+        "required": [
+          "fileName",
+          "content"
+        ]
+      },
       "ClockDto": {
         "type": "object",
         "properties": {

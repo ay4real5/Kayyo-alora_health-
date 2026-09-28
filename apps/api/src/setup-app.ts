@@ -1,5 +1,6 @@
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js';
@@ -19,6 +20,8 @@ export function setupApp(app: INestApplication): INestApplication {
   const config = app.get<ConfigService<EnvironmentVariables, true>>(ConfigService);
 
   app.setGlobalPrefix(API_PREFIX);
+  // 835 remittance uploads can be a few MB (services cap their own sizes; D-054). Express's default is 100 kB.
+  (app as NestExpressApplication).useBodyParser('json', { limit: '6mb' });
   app.use(correlationIdMiddleware);
   app.use(noStoreMiddleware);
   app.use(helmet());
@@ -27,7 +30,9 @@ export function setupApp(app: INestApplication): INestApplication {
     origin: config.get('CORS_ORIGINS', { infer: true }),
     credentials: true,
   });
-  app.useWebSocketAdapter(new ConfiguredIoAdapter(app, config.get('CORS_ORIGINS', { infer: true })));
+  app.useWebSocketAdapter(
+    new ConfiguredIoAdapter(app, config.get('CORS_ORIGINS', { infer: true })),
+  );
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // strip properties without validation decorators…
