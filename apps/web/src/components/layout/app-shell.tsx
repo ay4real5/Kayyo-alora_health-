@@ -14,11 +14,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const mustSetUp2fa = Boolean(user?.is2faRequired && !user.is2faEnabled);
   useEffect(() => {
     if (status === 'anonymous') router.replace('/login');
-  }, [status, router]);
+    // Admins must use 2FA (D-045); the API refuses everything else until it's on.
+    else if (status === 'authenticated' && mustSetUp2fa) router.replace('/setup-two-factor');
+  }, [status, mustSetUp2fa, router]);
 
-  if (status !== 'authenticated' || !user) {
+  if (status !== 'authenticated' || !user || mustSetUp2fa) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-slate-500" aria-live="polite">
         Loading…

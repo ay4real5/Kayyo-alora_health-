@@ -5,7 +5,7 @@
 
 ## Current state
 
-**Phase 1 is complete** on `main` (P1-01 … P1-22), except P1-11c (mandatory 2FA — waits on the owner, Q-008).
+**Phase 1 is complete** on `main` (P1-01 … P1-22, P1-11c).
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -60,6 +60,8 @@
   authenticated; `GET /evv/live` snapshot; every-minute late/no-show/missed monitor; nightly recurring extension. D-041.
 - **Web live monitor & co. (P2-03)**: `/monitor` (map + live feed), `/evv` review, visit page documentation + open-
   shift offer, `/schedule/open-shifts` (offers + swap decisions), live notification bell. 17 browser tests. D-042.
+- **Mandatory 2FA for admins (P1-11c)**: admins without 2FA get a setup-only session until they turn it on; web
+  `/setup-two-factor` with QR code; demo admins use the published demo key (README). D-045. Owner answers: D-044.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -82,13 +84,13 @@ with Expo Go on a phone. The owner asked for autonomous work: go straight on, ch
 
 ## Blockers / waiting on human
 
-- Q-008 which roles must use 2FA (blocks P1-11c only)
-- Q-002 Base44 portal auth design — must be settled before P3-14/P3-16, not before Phase 1
+- Q-006 hosting (owner deferred; needed before P4-10). Google Maps key (owner will provide).
 
 ## Session log
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P1-11c | Owner answered Q-002/3/5/8 (D-044); admin-only mandatory 2FA + web setup page (D-045). |
 | 2026-09-28 | Claude Code | P2-03 | Web live monitor, EVV review, visit docs, open shifts/swaps, notification bell; 4 new browser tests. |
 | 2026-09-28 | Claude Code | P2-02 | Socket.IO + live events, visit monitor + recurring jobs, /evv/live; 5 e2e tests. |
 | 2026-09-28 | Claude Code | P2-05 | Open shifts + shift swaps API, 7 e2e tests (incl. simultaneous claims). |

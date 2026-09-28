@@ -646,3 +646,42 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Browser tests run with **one worker**: they share the demo agency, and parallel dev-server compiles exhausted the
   owner's laptop. 17 browser tests.
 - The API's open-shift broadcast now checks candidates in parallel batches of 5 (it was sequential and slow).
+
+### D-044 — Owner answers: 2FA roles, multi-agency, Virginia, portal (2026-09-28)
+2026-09-28 · Claude Code (owner's answers)
+- **Q-008 → mandatory 2FA for admins only**: `agency_admin` and `super_admin`. Everyone else may turn it on.
+  Implemented in P1-11c (D-045).
+- **Q-003 → multi-agency SaaS.** Keep everything agency-scoped (already the rule). Consequences, to plan in Phase 4:
+  agency onboarding (create agency + first admin), `super_admin` cross-agency tooling, per-agency settings and
+  billing, and tenant isolation tests. Never add a feature that reads across agencies except for `super_admin`.
+- **Q-005 → Virginia first.** Virginia Medicaid (DMAS) requires EVV for personal care and home health; which
+  aggregator/vendor and data format apply must be researched from DMAS's current guidance before P4-04 — don't
+  assume Sandata or HHAeXchange. Billing rules (Virginia Medicaid + its managed-care plans) follow in Phase 3.
+- **Q-006 → deferred** by the owner; development continues on Neon/Upstash. Production must still be HIPAA-eligible
+  with a BAA — ask again before P4-10.
+- **Q-002 → build the patient portal ourselves, in this repo, instead of on Base44.** The owner asked for the
+  unsafe design to be fixed. Building it here removes both problems: sessions are per patient (the same secure
+  sign-in as the dashboard, `portal_user` role, API guard limiting them to their own record — P3-14), and PHI no
+  longer passes through a third party (no Base44 BAA needed). P3-16 changes from `base44` to `agent`;
+  `docs/base44-portal/` becomes obsolete once the portal exists. Portal screens live in the web app under their own
+  layout; portal users can't reach staff pages and vice versa.
+- **Google Maps key**: the owner will provide it later; until then patient map points are entered by hand and the map
+  uses OpenStreetMap (D-042).
+
+### D-045 — Mandatory 2FA for admins (P1-11c)
+2026-09-28 · Claude Code
+- Roles `agency_admin` and `super_admin` (`MANDATORY_TWO_FACTOR_ROLES` in `@alora/shared`) must use 2FA.
+- An admin without 2FA can still sign in (they need a session to set it up), but tokens are issued with a
+  setup-only claim: every route answers **403 `TWO_FACTOR_SETUP_REQUIRED`** except those marked
+  `@AllowDuringTwoFactorSetup()` — `/auth/me`, `/auth/2fa/setup`, `/auth/2fa/enable`, `/auth/change-password`
+  (plus the public refresh/logout). Sockets are refused too. Login/refresh responses carry `mustEnable2fa`;
+  `/auth/me` carries `is2faRequired`.
+- The claim is computed from the database whenever tokens are issued, so after enabling 2FA the client refreshes and
+  the restriction is gone; if an admin's 2FA is reset, the next token is restricted again. Admins can't turn 2FA off.
+- Web: login sends such admins to **`/setup-two-factor`** (QR code drawn in the browser from the otpauth URI — the
+  secret never goes to a third party — the key as text, code confirmation, backup codes), and the app shell redirects
+  there too. Any user may open the page to turn 2FA on voluntarily.
+- Demo data: the demo admins have 2FA on with the published demo key `JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP` (fake data;
+  the seed refuses production). Tests: API suites sign admins in through `test/login-helper.ts`, which performs the
+  real setup; browser tests compute codes from the demo key (`e2e/two-factor.ts`) and wait for the next code when a
+  second sign-in in the same 30 s is refused as a replay.

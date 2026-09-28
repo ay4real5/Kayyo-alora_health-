@@ -27,3 +27,6 @@ export const FIELD_ROLES = [
 export function isRole(value: string): value is Role {
   return (ROLES as readonly string[]).includes(value);
 }
+
+/** Roles that must use two-factor authentication (owner's decision, DECISIONS D-044/D-045). */
+export const MANDATORY_TWO_FACTOR_ROLES: readonly Role[] = ['super_admin', 'agency_admin'];

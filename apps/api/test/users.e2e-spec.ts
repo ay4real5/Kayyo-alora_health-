@@ -7,6 +7,7 @@ import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
+import { loginForTests } from './login-helper.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const PASSWORD = 'Correct-Horse-9!';
@@ -62,7 +63,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
         userRoles: { create: roles.map((name) => ({ roleId: roleIds[name] ?? name })) },
       },
     });
-    const { accessToken } = (await http().post('/api/v1/auth/login').send({ email, password: PASSWORD })).body.data;
+    const accessToken = await loginForTests(http(), email, PASSWORD);
     return { id: user.id, email, auth: { Authorization: `Bearer ${accessToken}` } };
   }
 

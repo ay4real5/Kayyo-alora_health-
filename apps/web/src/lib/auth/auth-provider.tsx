@@ -23,6 +23,8 @@ interface AuthContextValue {
   adoptTokens(tokens: SessionTokens): void;
   /** The current access token, for the Socket.IO handshake only (sockets can't use the request helper). */
   currentAccessToken(): string | null;
+  /** Renews the access token and reloads the user — after enabling 2FA, so the setup-only restriction lifts. */
+  refreshSession(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -106,7 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session.markActive();
       session.adopt(tokens);
       await loadUser();
-      return { kind: 'signed-in', mustChangePassword: Boolean(tokens.mustChangePassword) };
+      return {
+        kind: 'signed-in',
+        mustChangePassword: Boolean(tokens.mustChangePassword),
+        mustEnable2fa: Boolean(tokens.mustEnable2fa),
+      };
     },
     [session, loadUser],
   );
@@ -165,8 +171,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       can: (permission) => Boolean(user?.permissions.includes(permission)),
       adoptTokens: (tokens) => session.adopt(tokens),
       currentAccessToken: () => session.accessToken,
+      refreshSession: async () => {
+        await session.renew();
+        await loadUser();
+      },
     }),
-    [status, user, idleWarning, login, verifyTwoFactor, logout, request, session],
+    [status, user, idleWarning, login, verifyTwoFactor, logout, request, session, loadUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

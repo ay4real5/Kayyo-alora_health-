@@ -8,6 +8,7 @@ import { addDays, toDate, toTime, utcTodayString } from '../src/common/utils/dat
 import { PrismaService } from '../src/database/prisma.service.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
+import { loginForTests } from './login-helper.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const PASSWORD = 'Correct-Horse-9!';
@@ -91,9 +92,7 @@ describe.skipIf(!hasDb)('Open shifts and swaps (e2e)', () => {
         userRoles: { create: { roleId: role.id } },
       },
     });
-    const { accessToken } = (
-      await http().post('/api/v1/auth/login').send({ email, password: PASSWORD })
-    ).body.data;
+    const accessToken = await loginForTests(http(), email, PASSWORD);
     return { id: user.id, auth: { Authorization: `Bearer ${accessToken}` } };
   }
 
