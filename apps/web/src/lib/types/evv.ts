@@ -74,7 +74,13 @@ export interface EvvException {
 
 export interface EvvRecord {
   id: string;
-  visit: { id: string; visitType: string; scheduledDate: string; scheduledStart: string; scheduledEnd: string };
+  visit: {
+    id: string;
+    visitType: string;
+    scheduledDate: string;
+    scheduledStart: string;
+    scheduledEnd: string;
+  };
   patient: PersonRef;
   staff: PersonRef & { discipline: string };
   serviceDate: string;
@@ -153,7 +159,8 @@ export interface OpenShift {
   };
   area: { city: string | null; zip: string | null };
   patient: PersonRef | null;
-  filledBy: (PersonRef & { staffId: string; discipline: string; how: 'claimed' | 'assigned' }) | null;
+  filledBy:
+    (PersonRef & { staffId: string; discipline: string; how: 'claimed' | 'assigned' }) | null;
   createdAt: string;
 }
 
@@ -162,7 +169,13 @@ export interface ShiftSwap {
   status: 'pending' | 'approved' | 'denied' | 'cancelled';
   reason: string | null;
   decisionNote: string | null;
-  visit: { id: string; visitType: string; scheduledDate: string; scheduledStart: string; scheduledEnd: string };
+  visit: {
+    id: string;
+    visitType: string;
+    scheduledDate: string;
+    scheduledStart: string;
+    scheduledEnd: string;
+  };
   requesting: PersonRef & { discipline: string };
   target: (PersonRef & { discipline: string }) | null;
   createdAt: string;

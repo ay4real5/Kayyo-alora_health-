@@ -2,6 +2,8 @@
 export const NAVIGATION = [
   { href: '/', label: 'Dashboard', permission: null },
   { href: '/schedule', label: 'Schedule', permission: 'visits:read' },
+  { href: '/monitor', label: 'Live monitor', permission: 'evv:read' },
+  { href: '/evv', label: 'EVV review', permission: 'evv:read' },
   { href: '/patients', label: 'Patients', permission: 'patients:read' },
   { href: '/staff', label: 'Staff', permission: 'staff:read' },
   { href: '/physicians', label: 'Physicians', permission: 'physicians:read' },

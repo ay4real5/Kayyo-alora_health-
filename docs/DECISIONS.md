@@ -619,3 +619,30 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   late, no-show, unassigned, EVV records needing review).
 - socket.io is pinned to the exact version `@nestjs/platform-socket.io` ships (4.8.3) so there's one copy and the
   types line up.
+
+### D-042 — Web: live monitor, EVV review, visit documentation, open shifts, live notifications (P2-03)
+2026-09-28 · Claude Code
+- **`/monitor`** (`evv:read`): today's counts, a map of active visits (patient home vs clock-in point, red when
+  outside the geofence), late/no-show and unassigned lists, and a live feed. Socket events only trigger a refetch of
+  `GET /evv/live`; it also refetches every minute because lateness grows with the clock, not with events.
+- **Map**: Leaflet + react-leaflet with **OpenStreetMap tiles** (no key needed; loaded client-only). Circle markers,
+  so no icon assets. OSM's public tiles are fine for development and small use; production needs a tile provider
+  (or Google Maps if the owner provides a key) — noted for P4. Patient coordinates are sent to the tile server only as
+  map tile requests (areas), never with names.
+- **`/evv`** list (default: needing review) and **`/evv/:id`**: what the device captured, flags in plain words,
+  verify/reject (note required to reject; disabled while corrections are pending), and time corrections (request;
+  approve/deny by someone else — the UI hides the buttons for the requester). `datetime-local` is interpreted in the
+  browser's timezone (the office works in the agency's zone).
+- **Visit page**: EVV summary (supervisors), task checklist (office adds/removes open tasks), vitals (entered-in-error
+  shown struck through) and notes, read-only — caregivers write them in the mobile app. "Offer as an open shift"
+  (with call-out confirmation) creates the offer and broadcasts it.
+- **`/schedule/open-shifts`** (link from the schedule for `visits:read_all`): offers by status with notify again /
+  assign (caregivers of a fitting discipline; conflicts shown with override for `visits:approve`) / withdraw; pending
+  swap requests with approve (and approve anyway on conflicts) / deny.
+- **Notification bell** in the header for everyone: unread count, latest ten, mark all read; live via the
+  `/notifications` socket (`useLiveSocket` in `lib/realtime.ts` reads the current access token at each connect and
+  reconnects after the server closes the socket at token expiry).
+- Demo seed adds EVV history (verified, completed, two flagged records) and, in daytime, one visit in progress.
+- Browser tests run with **one worker**: they share the demo agency, and parallel dev-server compiles exhausted the
+  owner's laptop. 17 browser tests.
+- The API's open-shift broadcast now checks candidates in parallel batches of 5 (it was sequential and slow).

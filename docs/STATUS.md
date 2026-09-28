@@ -58,6 +58,8 @@
   first-come claim, assign with override; swap requests to a colleague or back to the pool, supervisor-approved. D-040.
 - **Real-time + jobs (P2-02)**: Socket.IO `/notifications` (live inbox) and `/live-monitor` (visit events), token-
   authenticated; `GET /evv/live` snapshot; every-minute late/no-show/missed monitor; nightly recurring extension. D-041.
+- **Web live monitor & co. (P2-03)**: `/monitor` (map + live feed), `/evv` review, visit page documentation + open-
+  shift offer, `/schedule/open-shifts` (offers + swap decisions), live notification bell. 17 browser tests. D-042.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -71,12 +73,12 @@ Nothing.
 
 ## Next up
 
-**Phase 2 — EVV & mobile.** P2-01, P2-02, P2-04, P2-05 are done (API). Next: **P2-03** web live monitor page (map +
-feed using `/live-monitor` socket + `GET /evv/live`), and with it web screens for EVV review (records needing review,
-verify/reject, corrections), visit notes/vitals/tasks on the visit page, open shifts and swap requests, and live
-notifications. Map tiles: use OpenStreetMap/Leaflet unless the owner provides a Google Maps key. Then P2-06+ mobile app.
-Human-only tasks (P2-11 Twilio/Firebase) are skipped until the owner acts. The owner asked for autonomous work: go
-straight on, check in ~every 4 hours.
+**Phase 2 — mobile.** The API and web parts of Phase 2 are done (P2-01..05). Next: **P2-06** scaffold `apps/mobile`
+(Expo + Expo Router, TypeScript): login with 2FA, secure token storage (expo-secure-store), app PIN/biometric lock,
+talks to the same API. Then P2-07 schedule + clock-in/out with location, P2-08 tasks/vitals/notes/signature,
+P2-09 offline queue, P2-10 background location. P2-12/P2-13 need Twilio/Firebase (P2-11, owner). Mobile can't be
+run on the owner's laptop emulator easily — build with Expo, type-check and unit-test in CI; the owner can try it
+with Expo Go on a phone. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -87,6 +89,7 @@ straight on, check in ~every 4 hours.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P2-03 | Web live monitor, EVV review, visit docs, open shifts/swaps, notification bell; 4 new browser tests. |
 | 2026-09-28 | Claude Code | P2-02 | Socket.IO + live events, visit monitor + recurring jobs, /evv/live; 5 e2e tests. |
 | 2026-09-28 | Claude Code | P2-05 | Open shifts + shift swaps API, 7 e2e tests (incl. simultaneous claims). |
 | 2026-09-28 | Claude Code | P2-04 | Visit notes/vitals/tasks API, 5 e2e tests; demo aide checklists. |

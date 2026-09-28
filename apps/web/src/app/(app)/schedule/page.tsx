@@ -74,6 +74,11 @@ export default function SchedulePage() {
             <Button variant="secondary" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Next week">
               →
             </Button>
+            {can('visits:read_all') && (
+              <ButtonLink href="/schedule/open-shifts" variant="secondary">
+                Open shifts
+              </ButtonLink>
+            )}
             {can('visits:create') && <ButtonLink href="/schedule/new">Book visit</ButtonLink>}
           </>
         }

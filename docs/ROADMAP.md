@@ -47,7 +47,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 
 - [x] **P2-01** `agent` EVV module: GPS clock-in/out, geofence (haversine), exceptions, verify. deps: P1-14
 - [x] **P2-02** `agent` Socket.IO gateway with JWT handshake + rooms; `/live-monitor` events; late/no-show cron; nightly job extending recurring-visit windows (D-031). deps: P2-01
-- [ ] **P2-03** `agent` Web: live monitor page (map + feed). deps: P2-02, P1-18
+- [x] **P2-03** `agent` Web: live monitor page (map + feed). deps: P2-02, P1-18
 - [x] **P2-04** `agent` Visit documentation API: notes (sign), vitals, tasks. deps: P1-14
 - [x] **P2-05** `agent` Open shifts (create, broadcast, claim, assign) + shift swaps. deps: P1-14, P1-16
 - [ ] **P2-06** `agent` Scaffold `apps/mobile` (Expo, Expo Router): login, PIN, secure token storage. deps: P1-06
