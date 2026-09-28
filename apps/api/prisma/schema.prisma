@@ -48,6 +48,7 @@ model Agency {
   visits          Visit[]
   recurrenceRules RecurrenceRule[]
   documents       Document[]
+  evvRecords      EvvRecord[]
   notifications   Notification[]
 
   @@map("agencies")
@@ -78,17 +79,20 @@ model User {
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency              Agency              @relation(fields: [agencyId], references: [id])
-  userRoles           UserRole[]
-  recoveryCodes       TwoFaRecoveryCode[]
-  refreshTokens       RefreshToken[]
-  staffProfile        StaffProfile?
-  portalPatients      Patient[]           @relation("PatientPortalUser")
-  verifiedCredentials StaffCredential[]   @relation("CredentialVerifiedBy")
-  approvedTimeOff     StaffTimeOff[]      @relation("TimeOffApprovedBy")
-  createdVisits       Visit[]             @relation("VisitCreatedBy")
-  uploadedDocuments   Document[]          @relation("DocumentUploadedBy")
-  notifications       Notification[]
+  agency               Agency              @relation(fields: [agencyId], references: [id])
+  userRoles            UserRole[]
+  recoveryCodes        TwoFaRecoveryCode[]
+  evvVerified          EvvRecord[]         @relation("EvvVerifiedBy")
+  evvExceptionsFiled   EvvException[]      @relation("EvvExceptionRequestedBy")
+  evvExceptionsDecided EvvException[]      @relation("EvvExceptionDecidedBy")
+  refreshTokens        RefreshToken[]
+  staffProfile         StaffProfile?
+  portalPatients       Patient[]           @relation("PatientPortalUser")
+  verifiedCredentials  StaffCredential[]   @relation("CredentialVerifiedBy")
+  approvedTimeOff      StaffTimeOff[]      @relation("TimeOffApprovedBy")
+  createdVisits        Visit[]             @relation("VisitCreatedBy")
+  uploadedDocuments    Document[]          @relation("DocumentUploadedBy")
+  notifications        Notification[]
 
   @@index([agencyId])
   @@map("users")
@@ -256,6 +260,7 @@ model Patient {
   visits           Visit[]
   recurrenceRules  RecurrenceRule[]
   documents        Document[]
+  evvRecords       EvvRecord[]
 
   /// Medical record numbers are unique within an agency (NULLs allowed — MRN is optional).
   @@unique([agencyId, mrn])
@@ -394,6 +399,7 @@ model StaffProfile {
   visits          Visit[]
   recurrenceRules RecurrenceRule[]
   documents       Document[]
+  evvRecords      EvvRecord[]
 
   @@unique([agencyId, employeeId])
   @@index([agencyId])
@@ -497,6 +503,7 @@ model Visit {
   recurrenceRule RecurrenceRule? @relation(fields: [recurrenceRuleId], references: [id])
   createdBy      User?           @relation("VisitCreatedBy", fields: [createdById], references: [id])
   documents      Document[]
+  evvRecords     EvvRecord[]
 
   /// At most one occurrence per recurring rule per date — generation can be re-run safely (D-031).
   @@unique([recurrenceRuleId, scheduledDate])
@@ -627,4 +634,89 @@ model Notification {
   @@index([userId, isRead, createdAt(sort: Desc)])
   @@index([agencyId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+// ─────────────────────────────── EVV (§5.5, DECISIONS D-038) ───────────────────────────────
+
+/// One per visit. Holds the 21st Century Cures Act data: service type, person served, caregiver, date,
+/// location, start/end times — plus how each was captured.
+model EvvRecord {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId                  String    @unique @map("visit_id") @db.Uuid
+  agencyId                 String    @map("agency_id") @db.Uuid
+  staffId                  String    @map("staff_id") @db.Uuid
+  patientId                String    @map("patient_id") @db.Uuid
+  serviceType              String    @map("service_type") @db.VarChar(50)
+  serviceDate              DateTime  @map("service_date") @db.Date
+  clockInTime              DateTime? @map("clock_in_time") @db.Timestamptz(6)
+  clockOutTime             DateTime? @map("clock_out_time") @db.Timestamptz(6)
+  /// gps | telephony | manual
+  clockInMethod            String    @map("clock_in_method") @db.VarChar(20)
+  clockOutMethod           String?   @map("clock_out_method") @db.VarChar(20)
+  clockInLatitude          Decimal?  @map("clock_in_latitude") @db.Decimal(10, 8)
+  clockInLongitude         Decimal?  @map("clock_in_longitude") @db.Decimal(11, 8)
+  clockOutLatitude         Decimal?  @map("clock_out_latitude") @db.Decimal(10, 8)
+  clockOutLongitude        Decimal?  @map("clock_out_longitude") @db.Decimal(11, 8)
+  /// Reported GPS accuracy (meters) — context for borderline geofence results.
+  clockInAccuracyMeters    Int?      @map("clock_in_accuracy_meters")
+  clockOutAccuracyMeters   Int?      @map("clock_out_accuracy_meters")
+  clockInPhoneNumber       String?   @map("clock_in_phone_number") @db.VarChar(20)
+  clockOutPhoneNumber      String?   @map("clock_out_phone_number") @db.VarChar(20)
+  clockInWithinGeofence    Boolean?  @map("clock_in_within_geofence")
+  clockOutWithinGeofence   Boolean?  @map("clock_out_within_geofence")
+  clockInDistanceMeters    Int?      @map("clock_in_distance_meters")
+  clockOutDistanceMeters   Int?      @map("clock_out_distance_meters")
+  patientSignatureUrl      String?   @map("patient_signature_url") @db.VarChar(500)
+  caregiverSignatureUrl    String?   @map("caregiver_signature_url") @db.VarChar(500)
+  /// in_progress | completed | exception | verified | rejected
+  status                   String    @default("in_progress") @db.VarChar(20)
+  /// Machine-readable reasons the record needs review, e.g. ["outside_geofence_in"].
+  flags                    String[]
+  verifiedById             String?   @map("verified_by") @db.Uuid
+  verifiedAt               DateTime? @map("verified_at") @db.Timestamptz(6)
+  verificationNote         String?   @map("verification_note")
+  aggregatorSubmittedAt    DateTime? @map("aggregator_submitted_at") @db.Timestamptz(6)
+  aggregatorConfirmationId String?   @map("aggregator_confirmation_id") @db.VarChar(100)
+  aggregatorStatus         String?   @map("aggregator_status") @db.VarChar(20)
+  deviceId                 String?   @map("device_id") @db.VarChar(100)
+  deviceModel              String?   @map("device_model") @db.VarChar(100)
+  appVersion               String?   @map("app_version") @db.VarChar(20)
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  visit      Visit          @relation(fields: [visitId], references: [id])
+  agency     Agency         @relation(fields: [agencyId], references: [id])
+  staff      StaffProfile   @relation(fields: [staffId], references: [id])
+  patient    Patient        @relation(fields: [patientId], references: [id])
+  verifiedBy User?          @relation("EvvVerifiedBy", fields: [verifiedById], references: [id])
+  exceptions EvvException[]
+
+  @@index([agencyId, serviceDate])
+  @@index([staffId, serviceDate])
+  @@index([agencyId, status])
+  @@map("evv_records")
+}
+
+/// A correction to an EVV record (e.g. forgot to clock out) with a required reason; applied only when approved.
+model EvvException {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  evvRecordId    String    @map("evv_record_id") @db.Uuid
+  /// clock_in_time | clock_out_time
+  exceptionType  String    @map("exception_type") @db.VarChar(50)
+  originalValue  String?   @map("original_value")
+  correctedValue String?   @map("corrected_value")
+  reason         String
+  requestedById  String    @map("requested_by") @db.Uuid
+  /// pending | approved | denied
+  status         String    @default("pending") @db.VarChar(20)
+  decidedById    String?   @map("approved_by") @db.Uuid
+  decidedAt      DateTime? @map("approved_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  evvRecord   EvvRecord @relation(fields: [evvRecordId], references: [id], onDelete: Cascade)
+  requestedBy User      @relation("EvvExceptionRequestedBy", fields: [requestedById], references: [id])
+  decidedBy   User?     @relation("EvvExceptionDecidedBy", fields: [decidedById], references: [id])
+
+  @@index([evvRecordId])
+  @@map("evv_exceptions")
 }
