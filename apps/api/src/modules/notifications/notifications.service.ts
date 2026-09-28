@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import type { NotificationType } from '@alora/shared';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { MANDATORY_NOTIFICATION_TYPES, NOTIFICATION_TYPES, type NotificationType } from '@alora/shared';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Paginated, type PaginationQueryDto } from '../../common/dto/pagination.dto.js';
 import { PrismaService } from '../../database/prisma.service.js';
@@ -19,6 +19,16 @@ export interface NewNotification {
   data?: Record<string, string | number | boolean | null>;
   /** Who caused it — never notified about their own action. */
   actorUserId?: string;
+}
+
+export interface PreferenceView {
+  type: NotificationType;
+  /** Can't be switched off in the app. */
+  mandatory: boolean;
+  inApp: boolean;
+  push: boolean;
+  sms: boolean;
+  email: boolean;
 }
 
 export interface NotificationView {
@@ -47,11 +57,21 @@ export class NotificationsService {
 
   /** Never throws: a failed notification must not fail the action that triggered it. */
   async notify(notification: NewNotification): Promise<void> {
-    const recipients = [...new Set(notification.userIds.filter((id): id is string => Boolean(id)))].filter(
+    let recipients = [...new Set(notification.userIds.filter((id): id is string => Boolean(id)))].filter(
       (id) => id !== notification.actorUserId,
     );
     if (!recipients.length) return;
     try {
+      // People who switched this alert off in the app don't get it (D-066); mandatory types always go out.
+      if (!MANDATORY_NOTIFICATION_TYPES.includes(notification.type)) {
+        const off = await this.prisma.notificationPreference.findMany({
+          where: { userId: { in: recipients }, notificationType: notification.type, channelInApp: false },
+          select: { userId: true },
+        });
+        const muted = new Set(off.map((p) => p.userId));
+        recipients = recipients.filter((id) => !muted.has(id));
+        if (!recipients.length) return;
+      }
       const created = await this.prisma.notification.createManyAndReturn({
         data: recipients.map((userId) => ({
           agencyId: notification.agencyId,
@@ -68,6 +88,47 @@ export class NotificationsService {
     } catch (error) {
       this.logger.error(`Failed to create ${notification.type} notification`, (error as Error).stack);
     }
+  }
+
+  /** Every notification type with the caller's channel choices (defaults: all on). */
+  async preferences(caller: AuthUser): Promise<PreferenceView[]> {
+    const rows = await this.prisma.notificationPreference.findMany({ where: { userId: caller.userId } });
+    const byType = new Map(rows.map((r) => [r.notificationType, r]));
+    return NOTIFICATION_TYPES.map((type) => {
+      const r = byType.get(type);
+      const mandatory = MANDATORY_NOTIFICATION_TYPES.includes(type);
+      return {
+        type,
+        mandatory,
+        inApp: mandatory || (r?.channelInApp ?? true),
+        push: r?.channelPush ?? true,
+        sms: r?.channelSms ?? true,
+        email: r?.channelEmail ?? true,
+      };
+    });
+  }
+
+  async setPreference(
+    caller: AuthUser,
+    type: string,
+    dto: { inApp?: boolean; push?: boolean; sms?: boolean; email?: boolean },
+  ): Promise<PreferenceView[]> {
+    if (!(NOTIFICATION_TYPES as readonly string[]).includes(type)) throw new BadRequestException('Unknown notification type');
+    if (MANDATORY_NOTIFICATION_TYPES.includes(type as NotificationType) && dto.inApp === false) {
+      throw new BadRequestException('This alert can’t be turned off');
+    }
+    const data = {
+      ...(dto.inApp !== undefined ? { channelInApp: dto.inApp } : {}),
+      ...(dto.push !== undefined ? { channelPush: dto.push } : {}),
+      ...(dto.sms !== undefined ? { channelSms: dto.sms } : {}),
+      ...(dto.email !== undefined ? { channelEmail: dto.email } : {}),
+    };
+    await this.prisma.notificationPreference.upsert({
+      where: { userId_notificationType: { userId: caller.userId, notificationType: type } },
+      create: { userId: caller.userId, notificationType: type, ...data },
+      update: data,
+    });
+    return this.preferences(caller);
   }
 
   async list(caller: AuthUser, query: PaginationQueryDto & { unreadOnly?: boolean }): Promise<Paginated<NotificationView>> {

@@ -1,7 +1,7 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
-import { ListNotificationsQueryDto } from './dto/notifications.dto.js';
+import { ListNotificationsQueryDto, NotificationPreferenceDto } from './dto/notifications.dto.js';
 import { NotificationsService } from './notifications.service.js';
 
 /**
@@ -16,6 +16,17 @@ export class NotificationsController {
   @Get()
   list(@CurrentUser() caller: AuthUser, @Query() query: ListNotificationsQueryDto) {
     return this.notifications.list(caller, query);
+  }
+
+  /** Which alerts the caller gets, per channel (D-066). */
+  @Get('preferences')
+  preferences(@CurrentUser() caller: AuthUser) {
+    return this.notifications.preferences(caller);
+  }
+
+  @Put('preferences/:type')
+  setPreference(@CurrentUser() caller: AuthUser, @Param('type') type: string, @Body() dto: NotificationPreferenceDto) {
+    return this.notifications.setPreference(caller, type, dto);
   }
 
   @Get('unread-count')
