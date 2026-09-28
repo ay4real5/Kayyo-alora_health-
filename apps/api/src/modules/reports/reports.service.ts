@@ -238,7 +238,7 @@ export class ReportsService {
 /** Rows → CSV (RFC 4180, CRLF). Only for list reports; no free-text PHI beyond what the screen shows. */
 export function toCsv(columns: { key: string; label: string }[], rows: Record<string, unknown>[]): string {
   const cell = (v: unknown) => {
-    const text = v === null || v === undefined ? '' : String(v);
+    const text = v === null || v === undefined ? '' : v instanceof Date ? v.toISOString() : typeof v === 'object' ? JSON.stringify(v) : String(v as string | number | boolean);
     return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
   };
   return [columns.map((c) => cell(c.label)).join(','), ...rows.map((r) => columns.map((c) => cell(r[c.key])).join(','))].join('\r\n') + '\r\n';
