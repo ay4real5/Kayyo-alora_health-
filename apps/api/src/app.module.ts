@@ -27,6 +27,7 @@ import { DocumentsModule } from './modules/documents/documents.module.js';
 import { MessagingModule } from './modules/messaging/messaging.module.js';
 import { PortalModule } from './modules/portal/portal.module.js';
 import { ComplianceModule } from './modules/compliance/compliance.module.js';
+import { PayrollModule } from './modules/payroll/payroll.module.js';
 import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 
 @Module({
@@ -59,6 +60,7 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
     MessagingModule,
     PortalModule,
     ComplianceModule,
+    PayrollModule,
     VisitDocsModule,
     NotificationsModule,
     RealtimeModule,

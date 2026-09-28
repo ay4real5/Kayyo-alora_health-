@@ -6492,6 +6492,328 @@
         ]
       }
     },
+    "/api/v1/payroll/pay-periods": {
+      "get": {
+        "operationId": "PayrollController_listPeriods",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      },
+      "post": {
+        "operationId": "PayrollController_createPeriod",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayPeriodDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
+    "/api/v1/payroll/pay-periods/{id}": {
+      "get": {
+        "operationId": "PayrollController_getPeriod",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
+    "/api/v1/payroll/pay-periods/{id}/calculate": {
+      "post": {
+        "operationId": "PayrollController_calculate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
+    "/api/v1/payroll/pay-periods/{id}/approve": {
+      "post": {
+        "operationId": "PayrollController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
+    "/api/v1/payroll/pay-periods/{id}/export": {
+      "post": {
+        "operationId": "PayrollController_export",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
+    "/api/v1/payroll/my-stubs": {
+      "get": {
+        "operationId": "PayrollController_myStubs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
+    "/api/v1/payroll/pay-stubs/{id}": {
+      "get": {
+        "operationId": "PayrollController_getStub",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      },
+      "patch": {
+        "operationId": "PayrollController_adjustStub",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustPayStubDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
+    "/api/v1/payroll/mileage": {
+      "post": {
+        "operationId": "PayrollController_logMileage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogMileageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      },
+      "get": {
+        "operationId": "PayrollController_listMileage",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
+    "/api/v1/payroll/mileage/{id}": {
+      "patch": {
+        "operationId": "PayrollController_decideMileage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideMileageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payroll"
+        ]
+      }
+    },
     "/api/v1/schedule/visits/{visitId}/notes": {
       "get": {
         "operationId": "VisitDocsController_listNotes",
@@ -9845,6 +10167,93 @@
             "maxLength": 10000
           }
         }
+      },
+      "CreatePayPeriodDto": {
+        "type": "object",
+        "properties": {
+          "periodStart": {
+            "type": "string"
+          },
+          "periodEnd": {
+            "type": "string"
+          },
+          "payDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "periodStart",
+          "periodEnd",
+          "payDate"
+        ]
+      },
+      "AdjustPayStubDto": {
+        "type": "object",
+        "properties": {
+          "bonusAmount": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "deductions": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "LogMileageDto": {
+        "type": "object",
+        "properties": {
+          "travelDate": {
+            "type": "string"
+          },
+          "miles": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 1000
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "visitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "staffId": {
+            "type": "string",
+            "description": "Payroll staff logging for someone else; default = yourself.",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "travelDate",
+          "miles"
+        ]
+      },
+      "DecideMileageDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "decision"
+        ]
       },
       "CreateVisitNoteDto": {
         "type": "object",
