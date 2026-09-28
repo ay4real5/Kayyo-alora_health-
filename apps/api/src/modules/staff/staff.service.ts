@@ -141,6 +141,16 @@ export class StaffService {
     return this.toDetail(caller, profile);
   }
 
+  /** Active users of the agency who don't have a staff profile yet — who a new profile can be created for. */
+  async candidates(caller: AuthUser): Promise<{ id: string; firstName: string; lastName: string; email: string }[]> {
+    return this.prisma.user.findMany({
+      where: { agencyId: caller.agencyId, isActive: true, staffProfile: null },
+      select: { id: true, firstName: true, lastName: true, email: true },
+      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      take: 500,
+    });
+  }
+
   async create(caller: AuthUser, dto: CreateStaffDto): Promise<StaffDetail> {
     const user = await this.prisma.user.findFirst({ where: { id: dto.userId, agencyId: caller.agencyId } });
     if (!user) throw new BadRequestException('userId does not match a user in this agency');

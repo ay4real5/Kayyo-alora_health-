@@ -151,6 +151,21 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
     });
   });
 
+  it('lists users who can still get a staff profile (active, no profile yet)', async () => {
+    const withProfile = await caregiver();
+    const without = await seedUser('office_staff');
+    const inactive = await seedUser('office_staff');
+    await prisma.user.update({ where: { id: inactive.id }, data: { isActive: false } });
+
+    const ids = (await http().get('/api/v1/staff/candidates').set(office.auth).expect(200)).body.data.map(
+      (u: { id: string }) => u.id,
+    );
+    expect(ids).toContain(without.id);
+    expect(ids).not.toContain(withProfile.id);
+    expect(ids).not.toContain(inactive.id);
+    await http().get('/api/v1/staff/candidates').set(withProfile.auth).expect(403);
+  });
+
   describe('credentials', () => {
     it('tracks expiry state and verification, and lists expiring credentials agency-wide', async () => {
       const cg = await caregiver();

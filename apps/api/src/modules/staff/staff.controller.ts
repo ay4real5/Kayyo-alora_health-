@@ -36,7 +36,7 @@ const uuid = () => new ParseUUIDPipe();
 /**
  * Staff (DESIGN.md §6.4). Routes without @Permissions allow the staff member themselves OR a holder of the
  * permission named in their service call ("self" rules, DECISIONS D-029); those carry @Audit so they are
- * still audited. Fixed paths (me, expiring-credentials) must stay above ':id'.
+ * still audited. Fixed paths (me, expiring-credentials, candidates) must stay above ':id'.
  */
 @ApiTags('staff')
 @Controller('staff')
@@ -63,6 +63,13 @@ export class StaffController {
   @Get('expiring-credentials')
   expiring(@CurrentUser() caller: AuthUser, @Query() query: ExpiringCredentialsQueryDto) {
     return this.credentials.expiring(caller, query.withinDays);
+  }
+
+  /** Users who can be given a staff profile (active, no profile yet). */
+  @Permissions('staff:create')
+  @Get('candidates')
+  candidates(@CurrentUser() caller: AuthUser) {
+    return this.staff.candidates(caller);
   }
 
   @Permissions('staff:create')

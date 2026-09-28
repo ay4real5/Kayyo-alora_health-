@@ -187,6 +187,21 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
     expect(me.permissions).toEqual(['billing:read']);
   });
 
+  it("lists assignable roles: built-in plus own custom roles, never another agency's", async () => {
+    const own = await prisma.role.create({ data: { agencyId, name: `own-${randomUUID()}` } });
+    const foreign = await prisma.role.create({ data: { agencyId: otherAgencyId, name: `foreign-${randomUUID()}` } });
+    const admin = await userWithRoles([await systemRoleId('agency_admin')]);
+
+    const roles = (await http().get('/api/v1/roles').set(admin.auth).expect(200)).body.data as { id: string; name: string; isSystem: boolean; permissions: string[] }[];
+    expect(roles.filter((r) => r.isSystem)).toHaveLength(ROLES.length);
+    expect(roles.map((r) => r.id)).toContain(own.id);
+    expect(roles.map((r) => r.id)).not.toContain(foreign.id);
+    expect(roles.find((r) => r.name === 'billing_staff')!.permissions).toContain('billing:read');
+
+    const nurse = await userWithRoles([await systemRoleId('registered_nurse')]);
+    await http().get('/api/v1/roles').set(nurse.auth).expect(403);
+  });
+
   it('picks up role changes once the cache is invalidated', async () => {
     const user = await userWithRoles([]);
     await http().get('/api/v1/rbac-probe/billing').set(user.auth).expect(403);
