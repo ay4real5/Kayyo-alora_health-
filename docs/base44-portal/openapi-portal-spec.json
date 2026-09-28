@@ -294,6 +294,13 @@
           "zip": {
             "type": "string"
           },
+          "latitude": {
+            "type": "number",
+            "description": "Home location for the EVV geofence (WGS84). Set both or neither; address geocoding comes later."
+          },
+          "longitude": {
+            "type": "number"
+          },
           "geoFenceRadiusMeters": {
             "type": "number",
             "description": "EVV geofence around the home, in meters.",
@@ -409,6 +416,13 @@
           },
           "zip": {
             "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Home location for the EVV geofence (WGS84). Set both or neither; address geocoding comes later."
+          },
+          "longitude": {
+            "type": "number"
           },
           "geoFenceRadiusMeters": {
             "type": "number",
@@ -1331,6 +1345,112 @@
             "description": "Create occurrences up to this date (default: 4 weeks from today, max 1 year)."
           }
         }
+      },
+      "ClockDto": {
+        "type": "object",
+        "properties": {
+          "visitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "description": "Reported GPS accuracy radius in meters.",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "When it happened on the device (ISO 8601 with offset). May be up to 72 hours old — clock events captured\noffline are synced later — but not in the future."
+          },
+          "deviceId": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "deviceModel": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "appVersion": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "visitId",
+          "latitude",
+          "longitude",
+          "timestamp"
+        ]
+      },
+      "VerifyEvvDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      },
+      "RejectEvvDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "note"
+        ]
+      },
+      "CreateEvvExceptionDto": {
+        "type": "object",
+        "properties": {
+          "exceptionType": {
+            "type": "string",
+            "description": "Which time is being corrected.",
+            "enum": [
+              "clock_in_time",
+              "clock_out_time"
+            ]
+          },
+          "correctedValue": {
+            "type": "string",
+            "description": "The corrected time (ISO 8601 with offset)."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Required: why the correction is needed, e.g. \"Phone battery died; caregiver left at 4:05 PM per patient\".",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "exceptionType",
+          "correctedValue",
+          "reason"
+        ]
+      },
+      "DecideEvvExceptionDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "denied"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
       }
     }
   },

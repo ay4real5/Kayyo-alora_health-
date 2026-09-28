@@ -5,6 +5,8 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -96,6 +98,17 @@ export class CreatePatientDto {
   @IsOptional()
   @Matches(US_ZIP, { message: 'zip must be 12345 or 12345-6789' })
   zip?: string;
+
+  /** Home location for the EVV geofence (WGS84). Set both or neither; address geocoding comes later. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsLatitude()
+  latitude?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsLongitude()
+  longitude?: number;
 
   /** EVV geofence around the home, in meters. */
   @IsOptional()

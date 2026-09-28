@@ -51,6 +51,11 @@ export function PatientForm({
     }
     const ssn = String(form.get('ssn') ?? '').trim();
     if (ssn) body.ssn = ssn;
+    for (const key of ['latitude', 'longitude'] as const) {
+      const value = String(form.get(key) ?? '').trim();
+      if (value) body[key] = Number(value);
+      else if (patient?.[key] !== null && patient?.[key] !== undefined) body[key] = null;
+    }
     const radius = String(form.get('geoFenceRadiusMeters') ?? '').trim();
     if (radius) body.geoFenceRadiusMeters = Number(radius);
     if (!patient) {
@@ -111,6 +116,10 @@ export function PatientForm({
         <div className="grid grid-cols-2 gap-4">
           <Field label="State" name="state" maxLength={2} defaultValue={v('state')} placeholder="IL" />
           <Field label="ZIP" name="zip" defaultValue={v('zip')} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Latitude" name="latitude" type="number" step="any" min={-90} max={90} defaultValue={patient?.latitude ?? ''} />
+          <Field label="Longitude" name="longitude" type="number" step="any" min={-180} max={180} defaultValue={patient?.longitude ?? ''} />
         </div>
         <Field
           label="EVV geofence radius (meters)"

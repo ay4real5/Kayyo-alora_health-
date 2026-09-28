@@ -23,7 +23,9 @@ test('an admin signs in, sees live numbers, navigates and signs out', async ({ p
   await nav.getByRole('link', { name: 'Patients' }).click();
   await expect(page).toHaveURL(/\/patients$/);
 
+  const reloaded = page.waitForEvent('load'); // sign-out is a full page load; don't race it
   await page.getByRole('button', { name: 'Sign out' }).click();
+  await reloaded;
   await expect(page).toHaveURL(/\/login$/);
   // Signed out means signed out: going back to the app lands on the login page again.
   await page.goto('/');

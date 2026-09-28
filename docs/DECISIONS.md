@@ -510,3 +510,33 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - `/schedule/visits/:id`: details, reschedule/reassign (409 conflicts shown with the same list + override for
   supervisors), cancel with a reason. Only `scheduled` visits are editable.
 - Browser tests use times inside the demo caregivers' stated hours (08:00–17:00) — outside them the app rightly warns.
+
+### D-038 — EVV: GPS clock-in/out, flags, verification, corrections (P2-01)
+2026-09-28 · Claude Code
+- **Flag, never block.** Care that happened must be recorded, so being far from the home, off-schedule, or a very
+  short visit never refuses a clock event; it adds a flag (`EVV_FLAGS` in `@alora/shared`) and the record ends as
+  `exception` instead of `completed` for a supervisor. Refused outright only when it can't be right: not your visit
+  (404, not 403 — don't confirm it exists), visit not `scheduled`, already clocked into another visit, device time
+  in the future (>5 min) or more than 72 h old (offline sync limit), or more than 12 h from the scheduled window
+  (wrong visit). Thresholds live in `EVV_RULES`.
+- **Time window** uses the agency timezone (`zonedTimeToUtc`, DST-safe): clock-in flagged before start−2 h or after
+  the scheduled end; clock-out flagged after end+2 h; `very_short_visit` under 25% of the scheduled length.
+- **Geofence**: haversine distance from `patients.latitude/longitude` vs `geo_fence_radius_meters` (default 200 m).
+  Patients get coordinates entered by hand for now (fields on the patient form); address geocoding needs a Google
+  Maps key (owner). No coordinates → `no_patient_location` flag. Accuracy is stored for context, not used.
+- **Six Cures Act data points**: service type (`service_type`), individual receiving (`patient_id`), date
+  (`service_date`), location (GPS + distance), provider (`staff_id`), begin/end times.
+- **Races**: clock-in is a guarded `scheduled → in_progress` update plus a unique `visit_id`; clock-out and reviews
+  are guarded updates on the expected status — two devices can't both win.
+- **Clock routes** use `visits:read` (every field role has it) plus the own-visit check; audited as
+  `EVV_CLOCK_IN/OUT` with the EVV record id.
+- **Review** (`evv:approve`): verify or reject (note required) only `completed`/`exception` records, not your own
+  visit, and not while a correction is pending.
+- **No direct edits** (DESIGN's `PATCH /evv/records/:id` is not built). Every time change is an exception
+  (`POST /evv/records/:id/exception`, `evv:update`, reason required) decided by **someone else** (`evv:approve`).
+  Approving applies the time to the record and visit, adds `manual_correction`, and leaves the record `exception` so
+  it's verified with that in view (states count manual edits). A clock-out correction closes a forgotten visit
+  (method `manual`). The requester gets an `evv_correction_decided` notification. Caregivers can't file corrections
+  themselves yet — the mobile app (P2-07) may add a caregiver "request" later.
+- Deferred: live monitor (`/evv/live`, P2-02/P2-03), telephony/IVR (P2-13), aggregator export (Phase 3), signatures
+  (P2-08).

@@ -67,6 +67,7 @@ export default function PatientDetailPage() {
             ['Email', p.email],
             ['Address', [p.addressLine1, p.addressLine2, p.city, p.state, p.zip].filter(Boolean).join(', ')],
             ['EVV geofence', `${p.geoFenceRadiusMeters} m`],
+            ['Home location', p.latitude !== null && p.longitude !== null ? `${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}` : 'Not set — clock-ins will be flagged for review'],
           ]}
         />
       </Card>

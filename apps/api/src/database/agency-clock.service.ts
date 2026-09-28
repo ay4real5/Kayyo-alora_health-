@@ -21,7 +21,7 @@ export class AgencyClockService {
     return toDate(await this.todayString(agencyId))!;
   }
 
-  private async timezone(agencyId: string): Promise<string> {
+  async timezone(agencyId: string): Promise<string> {
     const cached = this.zones.get(agencyId);
     if (cached) return cached;
     const agency = await this.prisma.agency.findUniqueOrThrow({ where: { id: agencyId }, select: { timezone: true } });

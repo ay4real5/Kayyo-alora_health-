@@ -15,6 +15,7 @@ export const NOTIFICATION_TYPES = [
   'document_signature',
   'payroll_ready',
   'time_off_decided',
+  'evv_correction_decided',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
