@@ -58,12 +58,15 @@ export function PortalShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const isPortalUser = Boolean(user?.roles.includes('portal_user'));
+  const mustChangePassword = Boolean(user?.mustChangePassword);
   const [chosen, setChosen] = useState<string | null>(() => (typeof window === 'undefined' ? null : readStoredPatient()));
 
   useEffect(() => {
     if (status === 'anonymous') router.replace('/login');
+    // A forced password change comes first — the API refuses all other routes (P4-09).
+    else if (status === 'authenticated' && mustChangePassword) router.replace('/change-password?required=1');
     else if (status === 'authenticated' && !isPortalUser) router.replace('/');
-  }, [status, isPortalUser, router]);
+  }, [status, mustChangePassword, isPortalUser, router]);
 
   const me = useQuery({
     queryKey: ['portal', 'me'],
@@ -71,7 +74,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
     queryFn: async () => (await request<PortalMe>('/portal/me')).data,
   });
 
-  if (status !== 'authenticated' || !isPortalUser || !me.data) {
+  if (status !== 'authenticated' || mustChangePassword || !isPortalUser || !me.data) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-sm text-slate-500" aria-live="polite">
         {me.error ? <ErrorAlert error={me.error} /> : 'Loading…'}

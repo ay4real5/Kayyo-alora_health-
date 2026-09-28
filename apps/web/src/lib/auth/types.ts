@@ -9,6 +9,8 @@ export interface Me {
   is2faEnabled: boolean;
   /** The user's role requires 2FA (D-045). */
   is2faRequired: boolean;
+  /** Password never set or too old — every other API route answers 403 until it changes (P4-09). */
+  mustChangePassword: boolean;
   /** IANA timezone of the agency — use it (not the browser clock) for "today". */
   agencyTimezone: string;
   recoveryCodesRemaining: number | null;

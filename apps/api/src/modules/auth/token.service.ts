@@ -6,6 +6,7 @@ import type { EnvironmentVariables } from '../../config/env.validation.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { AuditService } from '../audit/audit.service.js';
+import { passwordChangeRequired } from './password-policy.js';
 import { twoFactorPolicy } from './two-factor/two-factor-policy.js';
 
 export interface TokenPair {
@@ -16,6 +17,8 @@ export interface TokenPair {
   refreshTokenExpiresAt: string;
   /** The user's role requires 2FA and it isn't on yet: only 2FA setup works until it is (D-045). */
   mustEnable2fa: boolean;
+  /** The password was never set or is too old: only /auth/me and change-password work until it changes (P4-09). */
+  mustChangePassword: boolean;
 }
 
 export interface ClientInfo {
@@ -28,6 +31,8 @@ interface AccessTokenClaims {
   agencyId: string;
   /** Present (true) while mandatory 2FA isn't set up yet. */
   tfs?: true;
+  /** Present (true) while a password change is forced. */
+  pwc?: true;
 }
 
 export const JWT_ISSUER = 'alora-api';
@@ -59,6 +64,7 @@ export class TokenService {
   private readonly accessTtlMinutes: number;
   private readonly refreshTtlDays: number;
   private readonly idleTimeoutMs: number;
+  private readonly passwordMaxAgeDays: number;
 
   constructor(
     private readonly jwt: JwtService,
@@ -69,6 +75,7 @@ export class TokenService {
     this.accessTtlMinutes = config.get('ACCESS_TOKEN_TTL_MINUTES', { infer: true });
     this.refreshTtlDays = config.get('REFRESH_TOKEN_TTL_DAYS', { infer: true });
     this.idleTimeoutMs = config.get('SESSION_IDLE_TIMEOUT_MINUTES', { infer: true }) * 60_000;
+    this.passwordMaxAgeDays = config.get('PASSWORD_MAX_AGE_DAYS', { infer: true });
   }
 
   /** Starts a new session (login). */
@@ -185,6 +192,7 @@ export class TokenService {
       userId: claims.sub,
       agencyId: claims.agencyId,
       ...(claims.tfs ? { twoFactorSetupRequired: true } : {}),
+      ...(claims.pwc ? { passwordChangeRequired: true } : {}),
     };
   }
 
@@ -199,6 +207,7 @@ export class TokenService {
       userId: claims.sub,
       agencyId: claims.agencyId,
       ...(claims.tfs ? { twoFactorSetupRequired: true } : {}),
+      ...(claims.pwc ? { passwordChangeRequired: true } : {}),
       expiresAt: new Date(claims.exp * 1000),
     };
   }
@@ -215,12 +224,17 @@ export class TokenService {
       },
     });
 
-    const policy = await twoFactorPolicy(this.prisma, user.userId);
+    const [policy, account] = await Promise.all([
+      twoFactorPolicy(this.prisma, user.userId),
+      this.prisma.user.findUnique({ where: { id: user.userId }, select: { passwordChangedAt: true } }),
+    ]);
     const mustEnable2fa = policy.mandatory && !policy.enabled;
+    const mustChangePassword = passwordChangeRequired(account?.passwordChangedAt ?? null, this.passwordMaxAgeDays);
     const claims: AccessTokenClaims = {
       sub: user.userId,
       agencyId: user.agencyId,
       ...(mustEnable2fa ? { tfs: true as const } : {}),
+      ...(mustChangePassword ? { pwc: true as const } : {}),
     };
     const accessToken = await this.jwt.signAsync(claims, {
       algorithm: 'HS256',
@@ -235,6 +249,7 @@ export class TokenService {
       refreshToken,
       refreshTokenExpiresAt: expiresAt.toISOString(),
       mustEnable2fa,
+      mustChangePassword,
     };
   }
 }

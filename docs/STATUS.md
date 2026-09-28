@@ -123,11 +123,47 @@
 
 ## In progress
 
-Nothing. `task/P4-08-audit-partitioning` pushed; merge to main once CI is green.
+**P4-09 security pass** — branch `task/P4-09-security-pass` (from main 443ac38). Work was interrupted mid-step; the
+last commit is a WIP snapshot: **not typechecked or tested yet**.
+
+Part (a) API-enforced forced password change (code written, unverified). Design:
+- `auth/password-policy.ts` `passwordChangeRequired(changedAt, maxAgeDays)` (null → true; older than
+  `PASSWORD_MAX_AGE_DAYS` → true; 0 = off) replaces `AuthService.isPasswordExpired`.
+- `TokenService.issue` reads `passwordChangedAt` fresh, signs claim `pwc: true`, and returns `mustChangePassword` in
+  every `TokenPair` (login, 2FA verify, refresh, change-password) → `AuthUser.passwordChangeRequired`.
+- `JwtAuthGuard`: **before** the 2FA check, 403 `PASSWORD_CHANGE_REQUIRED` unless the route has
+  `@AllowDuringPasswordChange()`, which goes only on `GET /auth/me` and `POST /auth/change-password`. Sockets refused too.
+- `/auth/me` returns `mustChangePassword`; web AppShell/PortalShell redirect to `/change-password?required=1` (before
+  the 2FA redirect); the change-password page reloads the profile before navigating; mobile takes it from `/auth/me` in
+  both `finish` and `unlock`.
+- New e2e `test/forced-password-change.e2e-spec.ts`: null password → restricted; refresh still restricted; change →
+  free; 100-day-old password restricted; admin without 2FA: password first, then 2FA setup.
+- **Left for (a)**: review the diff against that design; `npx turbo run typecheck lint test --concurrency=2
+  --filter=@alora/api --filter=@alora/web --filter=@alora/mobile`; API e2e `forced-password-change, auth, two-factor,
+  users, portal, realtime, database` (users/portal/database create users with a null `passwordChangedAt` — fix the
+  **tests** (change the password or set the date), never weaken the guard); Playwright `portal.spec.ts` + the login/2FA
+  specs; `npm run openapi -w @alora/api` (openapi.json will change: new fields).
+
+OWASP review (done, by reading the code) — fixes still to make:
+- (b) **CSV formula injection**: `toCsv` in `reports/reports.service.ts` and the payroll CSV in `payroll.service.ts`
+  write user text as-is. Prefix `'` to string cells starting with `= + - @` tab or CR (leave real numbers alone); unit test.
+- (c) **No Content-Security-Policy on the web** (next.config.ts defers it to P4-09). Nonce-based CSP in `proxy.ts` per
+  `node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md`: `script-src 'self' 'nonce-…'
+  'strict-dynamic'` (+ `'unsafe-eval'` in dev only); `style-src 'self' 'unsafe-inline'` (Leaflet/Recharts inline styles);
+  `connect-src 'self'` + the API origin from `NEXT_PUBLIC_API_URL` + its ws(s) origin; `img-src 'self' data: blob:
+  https://*.tile.openstreetmap.org`; `object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`.
+  Run all Playwright tests after (the map, QR code and charts must still render).
+- (d) npm audit: 3 moderate in the mobile-only chain `expo-router → query-string → decode-uri-component <=0.4.2`.
+  Try a root `overrides` for `decode-uri-component ^0.5.0` (published 2026-06-29), then check that the mobile app still bundles.
+- Checked and OK: raw SQL (fixed strings or digit-only identifiers), agency scoping (every by-id write follows a
+  scoped lookup), mass assignment (whitelist + forbidNonWhitelisted), refresh cookie (httpOnly/Secure/SameSite=strict),
+  download file names sanitised, Swagger off in production, secrets validated, no SSRF surface. `trust proxy` + Redis
+  rate-limit store stay in P4-10.
+- (e) Then the load test + perf fixes (not started), D-068 in DECISIONS, tick P4-09, push, CI, merge.
 
 ## Next up
 
-P4-09 security pass (must include: the API enforcing the forced
+P4-09 (above), then security pass (must include: the API enforcing the forced
 password change like the 2FA-setup restriction, D-045/D-058); P4-04 Virginia EVV aggregator (research DMAS's current
 EVV vendor and format first — don't assume Sandata/HHAeXchange); P4-10 production packaging (hosting still undecided).
 The owner asked for autonomous work: go straight on, check in ~every 4 hours.
@@ -142,6 +178,7 @@ The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Devin | P4-09 (in progress) | Forced-password-change enforcement written (unverified WIP); OWASP review findings in STATUS. Owner switched to Claude Code. |
 | 2026-09-28 | Devin | P4-08 | Audit-log partitions + append-only trigger + retention job; 5 unit + 3 e2e, drift check clean. |
 | 2026-09-28 | Devin | P4-07 | Browser test fixed (uncontrolled checkboxes), openapi/typecheck/lint green; pushed for CI + merge. |
 | 2026-09-28 | Claude Code | P4-07 (in progress) | Preferences API + page; P4-01/P4-02 merged. Owner switched to Devin. |

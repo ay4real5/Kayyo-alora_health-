@@ -14,16 +14,14 @@ import type { AuthUser } from '../../common/decorators/current-user.decorator.js
 import { AuditService } from '../audit/audit.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import { PasswordService } from './password.service.js';
+import { passwordChangeRequired } from './password-policy.js';
 import { TokenService, type ClientInfo, type TokenPair } from './token.service.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
 /** One message for every login failure, so callers can't tell which emails exist or are locked. */
 export const INVALID_LOGIN = 'Invalid email or password, or the account is temporarily locked';
 
-export interface LoginResult extends TokenPair {
-  /** True when the password is older than PASSWORD_MAX_AGE_DAYS; clients should prompt a change. */
-  mustChangePassword: boolean;
-}
+export type LoginResult = TokenPair;
 
 /** Returned by /auth/login instead of tokens when the user has 2FA on. */
 export interface TwoFactorChallenge {
@@ -45,6 +43,8 @@ export interface MeResult {
   is2faRequired: boolean;
   /** IANA timezone of the user's agency, e.g. America/Chicago — clients use it for "today". */
   agencyTimezone: string;
+  /** The password was never set or is too old — only this endpoint and change-password work until it changes. */
+  mustChangePassword: boolean;
   /** Unused backup codes, when 2FA is on — clients should warn when this gets low. */
   recoveryCodesRemaining: number | null;
   roles: string[];
@@ -56,7 +56,7 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly maxAttempts: number;
   private readonly lockoutMs: number;
-  private readonly passwordMaxAgeMs: number;
+  private readonly passwordMaxAgeDays: number;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -69,7 +69,7 @@ export class AuthService {
   ) {
     this.maxAttempts = config.get('LOGIN_MAX_ATTEMPTS', { infer: true });
     this.lockoutMs = config.get('LOGIN_LOCKOUT_MINUTES', { infer: true }) * 60_000;
-    this.passwordMaxAgeMs = config.get('PASSWORD_MAX_AGE_DAYS', { infer: true }) * 24 * 60 * 60_000;
+    this.passwordMaxAgeDays = config.get('PASSWORD_MAX_AGE_DAYS', { infer: true });
   }
 
   async login(email: string, password: string, client: ClientInfo): Promise<LoginResult | TwoFactorChallenge> {
@@ -180,7 +180,7 @@ export class AuthService {
   }
 
   private async completeLogin(
-    user: { id: string; agencyId: string; passwordChangedAt: Date | null },
+    user: { id: string; agencyId: string },
     client: ClientInfo,
     method: 'password' | 'password+totp' | 'password+recovery_code',
   ): Promise<LoginResult> {
@@ -196,7 +196,7 @@ export class AuthService {
       details: { method },
       ...client,
     });
-    return { ...tokens, mustChangePassword: this.isPasswordExpired(user.passwordChangedAt) };
+    return tokens;
   }
 
   refresh(refreshToken: string, client: ClientInfo): Promise<TokenPair> {
@@ -225,6 +225,7 @@ export class AuthService {
       lastName: user.lastName,
       is2faEnabled: user.is2faEnabled,
       is2faRequired: (await twoFactorPolicy(this.prisma, user.id)).mandatory,
+      mustChangePassword: passwordChangeRequired(user.passwordChangedAt, this.passwordMaxAgeDays),
       agencyTimezone: user.agency.timezone,
       recoveryCodesRemaining: user.is2faEnabled ? await this.twoFactor.remainingRecoveryCodes(user.id) : null,
       roles: access.roles,
@@ -257,12 +258,6 @@ export class AuthService {
     await this.tokens.revokeAllForUser(user.id, 'password_changed');
     await this.audit.record({ agencyId: user.agencyId, userId: user.id, action: 'PASSWORD_CHANGED', ...client });
     return this.tokens.issueForNewSession(auth, client);
-  }
-
-  private isPasswordExpired(changedAt: Date | null): boolean {
-    if (this.passwordMaxAgeMs === 0) return false;
-    if (!changedAt) return true; // never set (e.g. admin-created account) → ask for a real password
-    return Date.now() - changedAt.getTime() > this.passwordMaxAgeMs;
   }
 }
 

@@ -39,7 +39,7 @@ function ChangePasswordForm() {
         body: { currentPassword: form.get('currentPassword'), newPassword: form.get('newPassword') },
         cookieAuth: true, // so the API puts the new refresh token in the httpOnly cookie
       });
-      adoptTokens(data);
+      await adoptTokens(data); // reloads /auth/me so the shells see mustChangePassword: false
       router.replace('/');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Something went wrong. Please try again.');
