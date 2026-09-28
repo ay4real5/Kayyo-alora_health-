@@ -121,19 +121,18 @@
   `purgeAuditLogs`), daily job creates months ahead and drops months older than `AUDIT_RETENTION_MONTHS` (≥ 72). Migration
   applied to Neon (36 rows kept). D-067, Q-011.
 
+- **Security pass (P4-09)**: API-enforced forced password change (403 `PASSWORD_CHANGE_REQUIRED`), CSV formula
+  injection guard, nonce-based CSP on the dashboard, load test script + Prisma `relationJoins` (~1.5× throughput),
+  `DATABASE_POOL_SIZE`. D-068.
+
 ## In progress
 
-**P4-09 security pass** — branch `task/P4-09-security-pass`. All parts done (D-068): (a) API-enforced forced password
-change, verified; (b) CSV formula injection; (c) nonce CSP; (d) npm audit decision; (e) load test + perf fixes
-(Prisma `relationJoins`, messages list, pool size). **Left**: the full API e2e suite was running when this was written
-(relationJoins changes how every nested query loads) — if it's green, tick P4-09, push, CI, merge.
+Nothing on this branch — P4-09 is done (D-068; full API e2e 238/238 green with Prisma `relationJoins`).
 
 ## Next up
 
-P4-09 (above), then security pass (must include: the API enforcing the forced
-password change like the 2FA-setup restriction, D-045/D-058); P4-04 Virginia EVV aggregator (research DMAS's current
-EVV vendor and format first — don't assume Sandata/HHAeXchange); P4-10 production packaging (hosting still undecided).
-The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+P4-04 Virginia EVV (branch `task/P4-04-virginia-evv`, see its STATUS); P4-10 production packaging (hosting still
+undecided). The owner asked for autonomous work: go straight on, check in with questions every ~6 hours.
 
 ## Blockers / waiting on human
 
