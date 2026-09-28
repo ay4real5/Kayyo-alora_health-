@@ -9,3 +9,4 @@ export * from './constants/staff.js';
 export * from './constants/scheduling.js';
 export * from './constants/recurrence.js';
 export * from './constants/notifications.js';
+export * from './constants/geo.js';

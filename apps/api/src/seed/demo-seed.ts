@@ -232,6 +232,9 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
         city: 'Springfield',
         state: 'IL',
         zip: rand.pick(['62701', '62702', '62703', '62704']),
+        // Homes scattered within ~8 km of central Springfield, IL (fake).
+        latitude: 39.7817 + (rand.next() - 0.5) * 0.14,
+        longitude: -89.6501 + (rand.next() - 0.5) * 0.18,
         emergencyContactName: `${rand.pick(FIRST)} ${rand.pick(LAST)}`,
         emergencyContactPhone: `555-040-${String(1000 + i)}`,
         emergencyContactRelation: rand.pick(['daughter', 'son', 'spouse', 'friend']),

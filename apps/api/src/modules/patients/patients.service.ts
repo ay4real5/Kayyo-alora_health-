@@ -44,6 +44,8 @@ export interface PatientDetail extends PatientSummary {
   state: string | null;
   zip: string | null;
   geoFenceRadiusMeters: number;
+  latitude: number | null;
+  longitude: number | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
   emergencyContactRelation: string | null;
@@ -271,7 +273,7 @@ export class PatientsService {
     const data: Record<string, unknown> = {};
     const copy = [
       'firstName', 'lastName', 'gender', 'mrn', 'phoneHome', 'phoneCell', 'email', 'addressLine1',
-      'addressLine2', 'city', 'state', 'zip', 'geoFenceRadiusMeters', 'emergencyContactName',
+      'addressLine2', 'city', 'state', 'zip', 'latitude', 'longitude', 'geoFenceRadiusMeters', 'emergencyContactName',
       'emergencyContactPhone', 'emergencyContactRelation', 'primaryPhysicianId', 'medicareBeneficiaryId',
       'medicaidId', 'insuranceMemberId', 'insuranceGroupNumber', 'notes',
     ] as const;
@@ -308,6 +310,8 @@ export class PatientsService {
       state: patient.state,
       zip: patient.zip,
       geoFenceRadiusMeters: patient.geoFenceRadiusMeters,
+      latitude: patient.latitude === null ? null : Number(patient.latitude),
+      longitude: patient.longitude === null ? null : Number(patient.longitude),
       emergencyContactName: patient.emergencyContactName,
       emergencyContactPhone: patient.emergencyContactPhone,
       emergencyContactRelation: patient.emergencyContactRelation,

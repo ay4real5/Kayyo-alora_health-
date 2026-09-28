@@ -41,6 +41,8 @@ export interface PatientDetail extends PatientSummary {
   state: string | null;
   zip: string | null;
   geoFenceRadiusMeters: number;
+  latitude: number | null;
+  longitude: number | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
   emergencyContactRelation: string | null;
