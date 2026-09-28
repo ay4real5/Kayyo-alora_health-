@@ -26,8 +26,11 @@ export const PERMISSION_CATALOGUE = {
   payroll: ['create', 'read', 'update', 'approve', 'export'],
   documents: ['create', 'read', 'delete', 'sign', 'send'],
   notifications: ['create'],
-  /** Secure staff messaging (D-057). Patients/family use the portal's own messages instead. */
-  messages: ['use'],
+  /**
+   * use = secure staff messaging (D-057). portal = receive and answer messages from patients/family in the portal
+   * (D-058); portal users themselves have no permissions and use only /portal.
+   */
+  messages: ['use', 'portal'],
   reports: ['read'],
   compliance: ['create', 'read', 'update'],
   audit_logs: ['read'],

@@ -982,6 +982,8 @@ model Document {
   s3Key             String    @map("s3_key") @db.VarChar(500)
   s3VersionId       String?   @map("s3_version_id") @db.VarChar(100)
   isSigned          Boolean   @default(false) @map("is_signed")
+  /// Visible to the patient/family in the portal (D-058). Off by default; staff choose per document.
+  sharedWithPatient Boolean   @default(false) @map("shared_with_patient")
   signatureData     Json?     @map("signature_data")
   isFaxed           Boolean   @default(false) @map("is_faxed")
   faxedTo           String?   @map("faxed_to") @db.VarChar(20)
