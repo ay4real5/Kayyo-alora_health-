@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Alert, AppState } from 'react-native';
 import { OfflineError, type ApiResult, type RequestOptions } from './api';
 import { useAuth } from './auth-context';
+import { cancelAllReminders } from './notifications';
 import { classify, OfflineQueue, type NewOp, type QueuedOp } from './offline-queue';
 import { openQueueStore, type ReadCache } from './queue-store';
 
@@ -153,6 +154,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
         const wipe = async () => {
           if (queue) for (const op of await queue.list()) await queue.remove(op.id);
           await cache?.clear();
+          await cancelAllReminders();
           setOps([]);
           await auth.signOut();
         };

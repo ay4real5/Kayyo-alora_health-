@@ -755,3 +755,17 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Sign-out wipes** the queue and cache; if unsent work exists the caregiver is warned first.
 - Not yet: a background sync task while the app is closed (the next foreground sends it), conflict merging beyond
   "the API decides".
+
+### D-049 — No background location tracking; clock-out reminders instead (P2-10)
+2026-09-28 · Claude Code (conservative default — owner may overrule, see OPEN_QUESTIONS Q-009)
+- **The app does not track caregivers' location in the background.** EVV (21st Century Cures Act; Virginia DMAS)
+  needs the location at the start and end of the visit, which clock-in/out already capture. Continuous tracking
+  would need "Always" location permission (app-store scrutiny, many caregivers refuse it), drains batteries, and
+  collects far more location data than required — minimum necessary.
+- Instead, the most common real EVV problem — **forgetting to clock out** — gets a **local reminder on the phone**
+  15 minutes after the scheduled end (agency timezone; 30 minutes after clock-in if the visit already ran over),
+  set at clock-in and cancelled at clock-out, even offline (queued clock events). Text has no patient details
+  (lock screens are visible). Notification permission is asked at the first clock-in; refusing it changes nothing
+  else. Sign-out cancels all reminders. `expo-notifications`, local only — push comes with P2-12 (Firebase).
+- If the owner wants mid-visit location checks, the cheaper middle ground is a single location ping at the scheduled
+  end, not continuous tracking.
