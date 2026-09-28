@@ -85,6 +85,12 @@ model User {
   evvVerified          EvvRecord[]         @relation("EvvVerifiedBy")
   evvExceptionsFiled   EvvException[]      @relation("EvvExceptionRequestedBy")
   evvExceptionsDecided EvvException[]      @relation("EvvExceptionDecidedBy")
+  visitNotesAuthored   VisitNote[]         @relation("VisitNoteAuthor")
+  visitNotesSigned     VisitNote[]         @relation("VisitNoteSignedBy")
+  visitNotesQaReviewed VisitNote[]         @relation("VisitNoteQaReviewedBy")
+  vitalsRecorded       VisitVital[]        @relation("VisitVitalRecordedBy")
+  vitalsMarkedInError  VisitVital[]        @relation("VisitVitalErrorBy")
+  visitTasksCompleted  VisitTask[]         @relation("VisitTaskCompletedBy")
   refreshTokens        RefreshToken[]
   staffProfile         StaffProfile?
   portalPatients       Patient[]           @relation("PatientPortalUser")
@@ -400,6 +406,7 @@ model StaffProfile {
   recurrenceRules RecurrenceRule[]
   documents       Document[]
   evvRecords      EvvRecord[]
+  visitNotes      VisitNote[]
 
   @@unique([agencyId, employeeId])
   @@index([agencyId])
@@ -504,6 +511,9 @@ model Visit {
   createdBy      User?           @relation("VisitCreatedBy", fields: [createdById], references: [id])
   documents      Document[]
   evvRecords     EvvRecord[]
+  visitNotes     VisitNote[]
+  vitals         VisitVital[]
+  tasks          VisitTask[]
 
   /// At most one occurrence per recurring rule per date — generation can be re-run safely (D-031).
   @@unique([recurrenceRuleId, scheduledDate])
@@ -639,6 +649,101 @@ model Notification {
 // ─────────────────────────────── EVV (§5.5, DECISIONS D-038) ───────────────────────────────
 
 /// One per visit. Holds the 21st Century Cures Act data: service type, person served, caregiver, date,
+
+// ─────────────────────────────── Visit documentation (§5.4, DECISIONS D-039) ───────────────────────────────
+
+/// A clinical or activity note for a visit, written by the visit's caregiver. Locked once signed or submitted;
+/// later changes are addenda (a new note pointing at the one it amends).
+model VisitNote {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId        String    @map("visit_id") @db.Uuid
+  staffId        String    @map("staff_id") @db.Uuid
+  authorId       String    @map("author_id") @db.Uuid
+  /// progress | skilled_nursing | therapy | aide_activity | addendum
+  noteType       String    @map("note_type") @db.VarChar(50)
+  subjective     String?
+  objective      String?
+  assessment     String?
+  plan           String?
+  narrative      String?
+  formData       Json?     @map("form_data")
+  /// draft | submitted | signed
+  status         String    @default("draft") @db.VarChar(20)
+  amendsNoteId   String?   @map("amends_note_id") @db.Uuid
+  submittedAt    DateTime? @map("submitted_at") @db.Timestamptz(6)
+  signedAt       DateTime? @map("signed_at") @db.Timestamptz(6)
+  signedById     String?   @map("signed_by") @db.Uuid
+  qaReviewedById String?   @map("qa_reviewed_by") @db.Uuid
+  qaReviewedAt   DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  visit        Visit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  staff        StaffProfile @relation(fields: [staffId], references: [id])
+  author       User         @relation("VisitNoteAuthor", fields: [authorId], references: [id])
+  signedBy     User?        @relation("VisitNoteSignedBy", fields: [signedById], references: [id])
+  qaReviewedBy User?        @relation("VisitNoteQaReviewedBy", fields: [qaReviewedById], references: [id])
+  amends       VisitNote?   @relation("VisitNoteAddenda", fields: [amendsNoteId], references: [id])
+  addenda      VisitNote[]  @relation("VisitNoteAddenda")
+
+  @@index([visitId])
+  @@map("visit_notes")
+}
+
+/// Vital signs taken during a visit. Append-only: a wrong entry is marked "entered in error", never edited.
+model VisitVital {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId                String    @map("visit_id") @db.Uuid
+  recordedById           String    @map("recorded_by") @db.Uuid
+  bloodPressureSystolic  Int?      @map("blood_pressure_systolic")
+  bloodPressureDiastolic Int?      @map("blood_pressure_diastolic")
+  heartRate              Int?      @map("heart_rate")
+  respiratoryRate        Int?      @map("respiratory_rate")
+  temperature            Decimal?  @db.Decimal(5, 2)
+  /// F | C
+  temperatureUnit        String    @default("F") @map("temperature_unit") @db.VarChar(1)
+  oxygenSaturation       Decimal?  @map("oxygen_saturation") @db.Decimal(5, 2)
+  weight                 Decimal?  @db.Decimal(6, 2)
+  /// lbs | kg
+  weightUnit             String    @default("lbs") @map("weight_unit") @db.VarChar(3)
+  painLevel              Int?      @map("pain_level")
+  bloodGlucose           Int?      @map("blood_glucose")
+  notes                  String?
+  recordedAt             DateTime  @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  enteredInErrorAt       DateTime? @map("entered_in_error_at") @db.Timestamptz(6)
+  enteredInErrorById     String?   @map("entered_in_error_by") @db.Uuid
+  enteredInErrorReason   String?   @map("entered_in_error_reason")
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  visit            Visit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  recordedBy       User  @relation("VisitVitalRecordedBy", fields: [recordedById], references: [id])
+  enteredInErrorBy User? @relation("VisitVitalErrorBy", fields: [enteredInErrorById], references: [id])
+
+  @@index([visitId])
+  @@map("visit_vitals")
+}
+
+/// A checklist item for a visit (bathing, meal prep, medication reminder…). Done, or not done with a reason.
+model VisitTask {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId       String    @map("visit_id") @db.Uuid
+  taskName      String    @map("task_name") @db.VarChar(255)
+  description   String?
+  isCompleted   Boolean   @default(false) @map("is_completed")
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz(6)
+  completedById String?   @map("completed_by") @db.Uuid
+  /// Why it wasn't done (e.g. "Patient declined"). Set together with completedById when marked not done.
+  notDoneReason String?   @map("not_done_reason")
+  sortOrder     Int       @default(0) @map("sort_order")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  visit       Visit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  completedBy User? @relation("VisitTaskCompletedBy", fields: [completedById], references: [id])
+
+  @@index([visitId, sortOrder])
+  @@map("visit_tasks")
+}
+
 /// location, start/end times — plus how each was captured.
 model EvvRecord {
   id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

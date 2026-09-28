@@ -1451,6 +1451,216 @@
         "required": [
           "status"
         ]
+      },
+      "CreateVisitNoteDto": {
+        "type": "object",
+        "properties": {
+          "noteType": {
+            "type": "string",
+            "enum": [
+              "progress",
+              "skilled_nursing",
+              "therapy",
+              "aide_activity",
+              "addendum"
+            ]
+          },
+          "amendsNoteId": {
+            "type": "string",
+            "description": "For an addendum: the signed or submitted note (same visit) it amends.",
+            "format": "uuid"
+          },
+          "subjective": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "objective": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "assessment": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "plan": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "narrative": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "formData": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Structured answers from a discipline-specific form (shape owned by the client form; stored as-is)."
+          }
+        },
+        "required": [
+          "noteType"
+        ]
+      },
+      "UpdateVisitNoteDto": {
+        "type": "object",
+        "properties": {
+          "subjective": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "objective": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "assessment": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "plan": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "narrative": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "formData": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Structured answers from a discipline-specific form (shape owned by the client form; stored as-is)."
+          }
+        }
+      },
+      "CreateVitalsDto": {
+        "type": "object",
+        "properties": {
+          "bloodPressureSystolic": {
+            "type": "number",
+            "minimum": 40,
+            "maximum": 300
+          },
+          "bloodPressureDiastolic": {
+            "type": "number",
+            "minimum": 20,
+            "maximum": 200
+          },
+          "heartRate": {
+            "type": "number",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "respiratoryRate": {
+            "type": "number",
+            "minimum": 4,
+            "maximum": 80
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Checked against the unit: 85–115 °F or 29–46 °C."
+          },
+          "temperatureUnit": {
+            "type": "string",
+            "enum": [
+              "F",
+              "C"
+            ]
+          },
+          "oxygenSaturation": {
+            "type": "number",
+            "minimum": 50,
+            "maximum": 100
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1500
+          },
+          "weightUnit": {
+            "type": "string",
+            "enum": [
+              "lbs",
+              "kg"
+            ]
+          },
+          "painLevel": {
+            "type": "number",
+            "description": "0 (none) – 10 (worst).",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "bloodGlucose": {
+            "type": "number",
+            "description": "mg/dL.",
+            "minimum": 10,
+            "maximum": 1000
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "recordedAt": {
+            "type": "string",
+            "description": "When they were taken (ISO 8601). Defaults to now; may be up to 72 hours old (offline sync), not in the future."
+          }
+        }
+      },
+      "EnteredInErrorDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "NewTaskDto": {
+        "type": "object",
+        "properties": {
+          "taskName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "taskName"
+        ]
+      },
+      "AddTasksDto": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NewTaskDto"
+            }
+          }
+        },
+        "required": [
+          "tasks"
+        ]
+      },
+      "UpdateTaskDto": {
+        "type": "object",
+        "properties": {
+          "completed": {
+            "type": "boolean"
+          },
+          "notDoneReason": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "completed"
+        ]
       }
     }
   },
