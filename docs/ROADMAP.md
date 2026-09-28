@@ -88,7 +88,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P4-03** `agent` Payroll: pay periods, stubs, calculation, export; mileage
 - [ ] **P4-04** `agent` EVV state aggregator adapter interface + first aggregator. deps: Q-005
 - [x] **P4-05** `agent` Compliance: dashboard, incidents, credential-expiry cron, audit-log query
-- [ ] **P4-06** `agent` Claims denial/appeal workflow + aging report
+- [x] **P4-06** `agent` Claims denial/appeal workflow + aging report
 - [ ] **P4-07** `agent` Notification preferences UI/API
 - [ ] **P4-08** `agent` Audit-log monthly partitioning + retention
 - [ ] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes. Include: the API should *enforce* the

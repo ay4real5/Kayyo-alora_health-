@@ -104,6 +104,14 @@ export class PayerDto {
   @Max(3650)
   timelyFilingDays?: number;
 
+  /** Days after a denial to appeal (D-063). */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(3650)
+  appealWindowDays?: number;
+
   @IsOptional()
   @IsBoolean()
   requiresAuthorization?: boolean;
@@ -180,6 +188,14 @@ export class UpdatePayerDto implements Partial<PayerDto> {
   @Min(1)
   @Max(3650)
   timelyFilingDays?: number;
+
+  /** Days after a denial to appeal (D-063). */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(3650)
+  appealWindowDays?: number;
 
   @IsOptional()
   @IsBoolean()

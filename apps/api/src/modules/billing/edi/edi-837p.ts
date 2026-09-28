@@ -49,6 +49,8 @@ export interface Edi837Claim {
   totalCharges: number;
   diagnosisCodes: string[];
   priorAuthorization: string | null;
+  /** The payer's claim number of the claim being corrected or voided (frequency 7/8) — REF*F8. */
+  originalReference?: string | null;
   patient: {
     lastName: string;
     firstName: string;
@@ -110,6 +112,8 @@ export function validate837(input: Edi837Input): string[] {
     if (!c.patient.dateOfBirth) problems.push(`${who}: patient date of birth missing`);
     if (!c.diagnosisCodes.length) problems.push(`${who}: no diagnosis codes`);
     if (!c.lines.length) problems.push(`${who}: no lines`);
+    if ((c.frequencyCode === '7' || c.frequencyCode === '8') && !clean(c.originalReference))
+      problems.push(`${who}: a corrected claim needs the payer's claim number of the original`);
     if (c.lines.length > 50) problems.push(`${who}: more than 50 lines (837P limit)`);
     if (c.diagnosisCodes.length > 12) problems.push(`${who}: more than 12 diagnoses`);
   }
@@ -290,6 +294,7 @@ export function build837(input: Edi837Input): string {
     );
     if (claim.priorAuthorization)
       st.push(segment('REF', 'G1', clean(claim.priorAuthorization, 50)));
+    if (claim.originalReference) st.push(segment('REF', 'F8', clean(claim.originalReference, 50)));
     st.push(
       segment(
         'HI',

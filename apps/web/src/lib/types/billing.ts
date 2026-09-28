@@ -87,6 +87,21 @@ export interface Claim {
   qaPassed: boolean | null;
   qaErrors: { visitId: string; messages: string[] }[] | null;
   voidReason: string | null;
+  submittedAt: string | null;
+  payerClaimNumber: string | null;
+  originalClaimId: string | null;
+  denial: { code: string | null; reason: string | null; deniedAt: string | null; appealDeadline: string | null } | null;
+  appeals: {
+    id: string;
+    level: number;
+    status: 'filed' | 'won' | 'lost' | 'withdrawn';
+    filedOn: string;
+    reason: string;
+    reference: string | null;
+    outcomeNotes: string | null;
+    decidedOn: string | null;
+    createdBy: { firstName: string; lastName: string };
+  }[];
   /** Institutional (837I) claims only (D-061). */
   institutional: { typeOfBill: string | null; patientStatus: string | null; hippsCode: string | null; cbsaCode: string | null } | null;
   lines: ClaimLine[];

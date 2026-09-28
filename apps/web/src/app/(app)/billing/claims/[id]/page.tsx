@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -70,6 +70,8 @@ export default function ClaimPage() {
             ['Diagnoses', c.diagnosisCodes.join(', ') || '—'],
             ['Total charges', money(c.totalCharges)],
             ['Paid', money(c.totalPaid)],
+            ['Sent to payer', c.submittedAt ? new Date(c.submittedAt).toLocaleDateString() : 'Not yet'],
+            ['Payer claim number', c.payerClaimNumber ?? '—'],
             ['Void reason', c.voidReason],
           ]}
         />
@@ -130,6 +132,8 @@ export default function ClaimPage() {
         </table>
       </Card>
 
+      <WorkflowCard claim={c} />
+
       {c.institutional && (
         <InstitutionalCard claimId={c.id} fields={c.institutional} editable={open && can('billing:update')} medicare={c.payer.payerType === 'medicare'} />
       )}
@@ -170,7 +174,9 @@ export default function ClaimPage() {
               </>
             )}
           </div>
-          <p className="text-xs text-slate-500">Sending to the payer arrives with electronic claims (EDI 837).</p>
+          <p className="text-xs text-slate-500">
+            Until the clearinghouse is connected, download the claim file, send it through their portal, then mark it as sent.
+          </p>
         </Card>
       )}
     </div>
@@ -218,6 +224,140 @@ function InstitutionalCard({
           </div>
         )}
       </form>
+    </Card>
+  );
+}
+
+/** Sending, denials, appeals and corrected claims (D-063). */
+function WorkflowCard({ claim: c }: { claim: Claim }) {
+  const { request, can } = useAuth();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['billing'] });
+  const act = useMutation({
+    mutationFn: async ({ path, body }: { path: string; body?: unknown }) =>
+      (await request<Claim>(`/billing/claims/${c.id}/${path}`, { method: 'POST', body: body ?? {} })).data,
+    onSuccess: refresh,
+  });
+  const rebill = useMutation({
+    mutationFn: async (reason: string) =>
+      (await request<Claim>(`/billing/claims/${c.id}/rebill`, { method: 'POST', body: { reason } })).data,
+    onSuccess: async (created) => {
+      await refresh();
+      router.push(`/billing/claims/${created.id}`);
+    },
+  });
+  const fileAppeal = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    act.mutate(
+      {
+        path: 'appeals',
+        body: {
+          reason: String(f.get('reason') ?? '').trim(),
+          reference: String(f.get('reference') ?? '').trim() || undefined,
+        },
+      },
+      { onSuccess: () => form.reset() },
+    );
+  };
+  const pending = c.appeals.find((a) => a.status === 'filed');
+  const canSubmit = c.status === 'ready' && can('billing:submit');
+  const canAppeal = (c.status === 'denied' || c.status === 'partially_paid') && can('billing:update');
+  const canRebill =
+    ['submitted', 'acknowledged', 'denied', 'partially_paid', 'paid'].includes(c.status) && can('billing:create');
+  if (!canSubmit && !c.denial && !c.appeals.length && !canRebill && !c.originalClaimId) return null;
+
+  const badge = (status: string) =>
+    status === 'won' ? 'approved' : status === 'lost' ? 'denied' : status === 'filed' ? 'pending' : 'cancelled';
+  return (
+    <Card className="flex flex-col gap-3 p-4">
+      <h2 className="font-semibold text-slate-900">Payer follow-up</h2>
+      <ErrorAlert error={act.error ?? rebill.error} />
+      {c.originalClaimId && (
+        <p className="text-sm text-slate-700">
+          Corrected claim replacing{' '}
+          <Link href={`/billing/claims/${c.originalClaimId}`} className="text-teal-800 underline">
+            the original
+          </Link>
+          .
+        </p>
+      )}
+      {canSubmit && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={() => act.mutate({ path: 'submit' })} disabled={act.isPending}>
+            Mark as sent to payer
+          </Button>
+          <span className="text-xs text-slate-500">Starts the aging clock.</span>
+        </div>
+      )}
+      {c.denial && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+          <p>
+            <strong>Denied</strong>
+            {c.denial.reason && ` — reason ${c.denial.reason}`}
+            {c.denial.deniedAt && ` on ${new Date(c.denial.deniedAt).toLocaleDateString()}`}
+          </p>
+          {c.denial.appealDeadline && <p>Appeal by {formatDate(c.denial.appealDeadline)}.</p>}
+        </div>
+      )}
+      {c.appeals.length > 0 && (
+        <ul aria-label="Appeals" className="flex flex-col gap-2 text-sm">
+          {c.appeals.map((a) => (
+            <li key={a.id} className="rounded-md border border-slate-200 p-2">
+              <span className="font-medium">Appeal level {a.level}</span> · filed {formatDate(a.filedOn)}
+              {a.reference && ` · ref ${a.reference}`} · <StatusBadge status={badge(a.status)} />
+              <p className="text-slate-700">{a.reason}</p>
+              {a.outcomeNotes && <p className="text-xs text-slate-600">Outcome: {a.outcomeNotes}</p>}
+              {a.status === 'filed' && can('billing:update') && (
+                <div className="mt-1 flex gap-3 text-xs">
+                  {(['won', 'lost', 'withdrawn'] as const).map((outcome) => (
+                    <button
+                      key={outcome}
+                      type="button"
+                      className="underline"
+                      onClick={() => {
+                        const notes = window.prompt(`Appeal ${outcome}. Notes (optional):`);
+                        if (notes !== null)
+                          act.mutate({
+                            path: `appeals/${a.id}/decision`,
+                            body: { outcome, notes: notes.trim() || undefined },
+                          });
+                      }}
+                    >
+                      {outcome === 'won' ? 'Won' : outcome === 'lost' ? 'Lost' : 'Withdrawn'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {canAppeal && !pending && (
+        <form onSubmit={fileAppeal} className="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-3">
+          <Field label="Appeal reason" name="reason" required className="min-w-72 flex-1" />
+          <Field label="Payer reference" name="reference" className="w-40" />
+          <Button type="submit" variant="secondary" disabled={act.isPending}>
+            File appeal
+          </Button>
+        </form>
+      )}
+      {canRebill && (
+        <div>
+          <Button
+            variant="secondary"
+            disabled={rebill.isPending}
+            onClick={() => {
+              const reason = window.prompt('What was corrected? A new claim (frequency 7) will replace this one.');
+              if (reason?.trim()) rebill.mutate(reason.trim());
+            }}
+          >
+            Create corrected claim
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }

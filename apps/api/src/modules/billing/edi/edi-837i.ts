@@ -28,6 +28,8 @@ export interface Edi837IClaim {
   patientStatus: string;
   diagnosisCodes: string[];
   priorAuthorization: string | null;
+  /** The payer's claim number of the claim being corrected or voided (frequency 7/8) — REF*F8. */
+  originalReference?: string | null;
   medicalRecordNumber: string | null;
   /** Medicare home health (PDGM): the HIPPS code from the grouper, billed on a 0023 line. */
   hippsCode: string | null;
@@ -94,6 +96,8 @@ export function validate837I(input: Edi837IInput): string[] {
     if (!c.diagnosisCodes.length) problems.push(`${who}: no diagnosis codes`);
     if (c.diagnosisCodes.length > 25) problems.push(`${who}: more than 25 diagnoses`);
     if (!c.lines.length) problems.push(`${who}: no lines`);
+    if (/[78]$/.test(c.typeOfBill) && !clean(c.originalReference))
+      problems.push(`${who}: a corrected claim needs the payer's claim number of the original`);
     if (c.lines.length > 999) problems.push(`${who}: more than 999 lines`);
     for (const l of c.lines) {
       if (!/^\d{4}$/.test(l.revenueCode))
@@ -156,6 +160,7 @@ export function build837I(input: Edi837IInput): string {
     // CL1: admission type 9 (information not available — usual for home health), source 1, patient status.
     st.push(segment('CL1', '9', '1', c.patientStatus));
     if (c.priorAuthorization) st.push(segment('REF', 'G1', clean(c.priorAuthorization, 50)));
+    if (c.originalReference) st.push(segment('REF', 'F8', clean(c.originalReference, 50)));
     if (c.medicalRecordNumber) st.push(segment('REF', 'EA', clean(c.medicalRecordNumber, 50)));
     const [principal, ...others] = c.diagnosisCodes.map((d) => d.replace('.', '').toUpperCase());
     st.push(segment('HI', composite('ABK', principal!)));

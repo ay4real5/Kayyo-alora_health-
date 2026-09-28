@@ -133,6 +133,7 @@ model User {
   eligibilityChecks    EligibilityCheck[]        @relation("EligibilityRequestedBy")
   incidentsReported    IncidentReport[]          @relation("IncidentReportedBy")
   incidentsResolved    IncidentReport[]          @relation("IncidentResolvedBy")
+  claimAppeals         ClaimAppeal[]             @relation("ClaimAppealCreatedBy")
 
   @@index([agencyId])
   @@map("users")
@@ -404,6 +405,8 @@ model Payer {
   ediSubmitterId        String?   @map("edi_submitter_id") @db.VarChar(50)
   ediReceiverId         String?   @map("edi_receiver_id") @db.VarChar(50)
   timelyFilingDays      Int       @default(365) @map("timely_filing_days")
+  /// Days after a denial to file an appeal (sets claims.appeal_deadline, D-063).
+  appealWindowDays      Int       @default(60) @map("appeal_window_days")
   requiresAuthorization Boolean   @default(false) @map("requires_authorization")
   isActive              Boolean   @default(true) @map("is_active")
   settings              Json      @default("{}")
@@ -623,6 +626,8 @@ model Claim {
   payerClaimNumber      String?   @map("payer_claim_number") @db.VarChar(100)
   denialReasonCode      String?   @map("denial_reason_code") @db.VarChar(20)
   denialReason          String?   @map("denial_reason")
+  deniedAt              DateTime? @map("denied_at") @db.Timestamptz(6)
+  appealDeadline        DateTime? @map("appeal_deadline") @db.Date
   qaPassed              Boolean?  @map("qa_passed")
   qaErrors              Json?     @map("qa_errors")
   qaReviewedAt          DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
@@ -640,6 +645,7 @@ model Claim {
   originalClaim  Claim?          @relation("ClaimReplacements", fields: [originalClaimId], references: [id])
   replacements   Claim[]         @relation("ClaimReplacements")
   lines          ClaimLine[]
+  appeals        ClaimAppeal[]
   paymentDetails PaymentDetail[]
 
   @@unique([agencyId, claimNumber])
@@ -1540,4 +1546,28 @@ model IncidentReport {
   @@index([agencyId, status, incidentDate(sort: Desc)])
   @@index([patientId])
   @@map("incident_reports")
+}
+
+/// Appeals of denied claims (DECISIONS D-063). Level 1 = first appeal (e.g. Medicare redetermination), 2, 3…
+model ClaimAppeal {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId      String    @map("claim_id") @db.Uuid
+  level        Int       @default(1)
+  /// filed | won | lost | withdrawn
+  status       String    @default("filed") @db.VarChar(20)
+  filedOn      DateTime  @map("filed_on") @db.Date
+  reason       String
+  /// Payer's appeal / reference number.
+  reference    String?   @db.VarChar(100)
+  outcomeNotes String?   @map("outcome_notes")
+  decidedOn    DateTime? @map("decided_on") @db.Date
+  createdById  String    @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  claim     Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  createdBy User  @relation("ClaimAppealCreatedBy", fields: [createdById], references: [id])
+
+  @@index([claimId])
+  @@map("claim_appeals")
 }
