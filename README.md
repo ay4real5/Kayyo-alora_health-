@@ -9,7 +9,7 @@ EDI 837/835, payroll, compliance and reporting.
 | API | `apps/api` | NestJS 12, PostgreSQL 17, Prisma 7 | Phase 1 complete |
 | Admin dashboard | `apps/web` | Next.js 16, React 19, Tailwind 4 | Phase 1 complete |
 | Shared types/rules | `packages/shared` | TypeScript | In use by both |
-| Caregiver app | `apps/mobile` | React Native + Expo | Phase 2 |
+| Caregiver app | `apps/mobile` | Expo SDK 57 + React Native | Sign-in, lock, today's visits (Phase 2 in progress) |
 | Patient portal | Base44 (outside this repo) | docs in `docs/base44-portal/` | Phase 3 (see OPEN_QUESTIONS Q-002) |
 
 ## What works today (Phase 1)
@@ -90,3 +90,18 @@ Authenticator, Microsoft Authenticator…) as "Alora demo": `JBSWY3DPEHPK3PXPJBS
 Tests: `npm run test` (unit), `npm run test:e2e -w @alora/api` (API, needs a database),
 `npm run test:e2e -w @alora/web` (browser, needs the API and dashboard running). More commands:
 [AGENTS.md §7](AGENTS.md).
+
+## Try the caregiver app on a phone
+
+1. Install **Expo Go** from the App Store / Play Store.
+2. Find your computer's local network address (e.g. `ipconfig` → IPv4 address, like `192.168.1.20`).
+3. Start the API (above), then in another terminal:
+
+   ```bash
+   # PowerShell: $env:EXPO_PUBLIC_API_URL="http://192.168.1.20:3001/api/v1"; npm run start -w @alora/mobile
+   EXPO_PUBLIC_API_URL=http://192.168.1.20:3001/api/v1 npm run start -w @alora/mobile
+   ```
+
+4. Scan the QR code with the phone (same Wi-Fi). Sign in as a caregiver, e.g. `hha@demo.alora.test`.
+
+The phone must be on the same network as the computer, and Windows Firewall may ask to allow Node on port 3001.

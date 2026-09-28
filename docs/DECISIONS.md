@@ -685,3 +685,26 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   the seed refuses production). Tests: API suites sign admins in through `test/login-helper.ts`, which performs the
   real setup; browser tests compute codes from the demo key (`e2e/two-factor.ts`) and wait for the next code when a
   second sign-in in the same 30 s is refused as a replay.
+
+### D-043 — Caregiver app foundation (P2-06)
+2026-09-28 · Claude Code
+- `apps/mobile`: **Expo SDK 57**, React Native 0.86, Expo Router (routes in `src/app`), TypeScript. Expo's Metro config
+  handles the monorepo automatically (no custom metro.config.js). **One React for the whole repo** (19.2.8, root
+  `overrides`; React Native accepts ^19.2.3) — duplicate React in one app breaks at runtime. Verified by bundling
+  (`npx expo export --platform android`, 1,275 modules). `ios/`/`android/` are generated (never committed).
+- **Session** (`src/lib/session.ts`, unit-tested): body tokens (never cookies); access token in memory; refresh
+  token in the Keychain/Keystore with `WHEN_PASSCODE_SET_THIS_DEVICE_ONLY` — a phone without a passcode can't store
+  it, so the session lives in memory only and the caregiver signs in with the password next launch. Renewal is
+  single-flight; being offline never discards the session, the API refusing it does.
+- **Lock instead of a custom PIN**: after 5 minutes in the background, and on every relaunch, the app locks (access
+  token dropped, nothing shown) and unlocks with Face ID / fingerprint / the phone's own passcode
+  (expo-local-authentication). Stronger than a 4-digit app PIN and nothing extra to remember. Server-side the
+  30-minute idle refresh limit still applies.
+- Accounts with 2FA enter the code at sign-in. Admins who still must set up 2FA are told to do it on the web (the app
+  doesn't do 2FA setup). Forced password change works in the app.
+- Screens so far: sign-in, unlock, change password, today's visits. Clock-in/out, visit detail (P2-07),
+  documentation (P2-08), offline queue (P2-09) and background location (P2-10) build on this.
+- Checks: `typecheck` (tsc), `lint` (oxlint), `test` (vitest on plain-TS logic) run in turbo/CI like the other apps.
+- Audit: 3 moderate findings from `decode-uri-component` (via expo-router → query-string 7); the fixed version is
+  ESM-only and can't be forced safely. Risk: slow parsing of a malformed deep link on the user's own phone. Revisit
+  on the next Expo update. `uuid` for Expo's `xcode` tool is overridden to ^11.1.1.

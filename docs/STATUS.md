@@ -62,6 +62,9 @@
   shift offer, `/schedule/open-shifts` (offers + swap decisions), live notification bell. 17 browser tests. D-042.
 - **Mandatory 2FA for admins (P1-11c)**: admins without 2FA get a setup-only session until they turn it on; web
   `/setup-two-factor` with QR code; demo admins use the published demo key (README). D-045. Owner answers: D-044.
+- **Caregiver app foundation (P2-06)**: `apps/mobile` (Expo SDK 57) — sign-in with 2FA code, keychain session,
+  biometric/passcode lock after 5 min in background, forced password change, today's visits. README explains running
+  it on a phone with Expo Go. D-043.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -75,12 +78,10 @@ Nothing.
 
 ## Next up
 
-**Phase 2 — mobile.** The API and web parts of Phase 2 are done (P2-01..05). Next: **P2-06** scaffold `apps/mobile`
-(Expo + Expo Router, TypeScript): login with 2FA, secure token storage (expo-secure-store), app PIN/biometric lock,
-talks to the same API. Then P2-07 schedule + clock-in/out with location, P2-08 tasks/vitals/notes/signature,
-P2-09 offline queue, P2-10 background location. P2-12/P2-13 need Twilio/Firebase (P2-11, owner). Mobile can't be
-run on the owner's laptop emulator easily — build with Expo, type-check and unit-test in CI; the owner can try it
-with Expo Go on a phone. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+**P2-07** mobile: visit detail + clock-in/out with location (expo-location; `POST /evv/clock-in|clock-out`), then
+P2-08 tasks/vitals/notes/signature, P2-09 offline queue (expo-sqlite), P2-10 background location. P2-12/P2-13 need
+Twilio/Firebase accounts (P2-11, owner). Then Phase 3. The owner asked for autonomous work: go straight on, check in
+~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -90,6 +91,7 @@ with Expo Go on a phone. The owner asked for autonomous work: go straight on, ch
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P2-06 | Mobile foundation (Expo 57): auth, lock, today's visits; bundles; checks green. |
 | 2026-09-28 | Claude Code | P1-11c | Owner answered Q-002/3/5/8 (D-044); admin-only mandatory 2FA + web setup page (D-045). |
 | 2026-09-28 | Claude Code | P2-03 | Web live monitor, EVV review, visit docs, open shifts/swaps, notification bell; 4 new browser tests. |
 | 2026-09-28 | Claude Code | P2-02 | Socket.IO + live events, visit monitor + recurring jobs, /evv/live; 5 e2e tests. |
