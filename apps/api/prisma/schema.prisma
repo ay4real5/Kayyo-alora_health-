@@ -118,6 +118,8 @@ model User {
   assessmentsDone     Assessment[]     @relation("AssessmentAssessor")
   assessmentsReviewed Assessment[]     @relation("AssessmentQaReviewer")
 
+  documentsDeleted Document[] @relation("DocumentDeletedBy")
+
   @@index([agencyId])
   @@map("users")
 }
@@ -958,42 +960,65 @@ model Authorization {
 // ─────────────────────────────── Documents & notifications (§5.8, core subset) ───────────────────────────────
 
 model Document {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  agencyId      String    @map("agency_id") @db.Uuid
-  patientId     String?   @map("patient_id") @db.Uuid
-  staffId       String?   @map("staff_id") @db.Uuid
-  visitId       String?   @map("visit_id") @db.Uuid
-  uploadedById  String    @map("uploaded_by") @db.Uuid
-  documentType  String    @map("document_type") @db.VarChar(50)
-  title         String    @db.VarChar(255)
-  description   String?
-  fileName      String    @map("file_name") @db.VarChar(255)
-  fileSize      Int?      @map("file_size")
-  mimeType      String?   @map("mime_type") @db.VarChar(100)
-  s3Key         String    @map("s3_key") @db.VarChar(500)
-  s3VersionId   String?   @map("s3_version_id") @db.VarChar(100)
-  isSigned      Boolean   @default(false) @map("is_signed")
-  signatureData Json?     @map("signature_data")
-  isFaxed       Boolean   @default(false) @map("is_faxed")
-  faxedTo       String?   @map("faxed_to") @db.VarChar(20)
-  faxedAt       DateTime? @map("faxed_at") @db.Timestamptz(6)
-  tags          String[]
-  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId          String    @map("agency_id") @db.Uuid
+  patientId         String?   @map("patient_id") @db.Uuid
+  staffId           String?   @map("staff_id") @db.Uuid
+  visitId           String?   @map("visit_id") @db.Uuid
+  uploadedById      String    @map("uploaded_by") @db.Uuid
+  documentType      String    @map("document_type") @db.VarChar(50)
+  title             String    @db.VarChar(255)
+  description       String?
+  fileName          String    @map("file_name") @db.VarChar(255)
+  fileSize          Int?      @map("file_size")
+  mimeType          String?   @map("mime_type") @db.VarChar(100)
+  s3Key             String    @map("s3_key") @db.VarChar(500)
+  s3VersionId       String?   @map("s3_version_id") @db.VarChar(100)
+  isSigned          Boolean   @default(false) @map("is_signed")
+  signatureData     Json?     @map("signature_data")
+  isFaxed           Boolean   @default(false) @map("is_faxed")
+  faxedTo           String?   @map("faxed_to") @db.VarChar(20)
+  faxedAt           DateTime? @map("faxed_at") @db.Timestamptz(6)
+  tags              String[]
+  /// SHA-256 of the file as uploaded (tamper evidence; recorded in e-signatures).
+  contentHash       String?   @map("content_hash") @db.VarChar(64)
+  /// 1 for the first upload; a new version points at the one it replaces (D-056).
+  version           Int       @default(1)
+  previousVersionId String?   @unique @map("previous_version_id") @db.Uuid
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedById       String?   @map("deleted_by") @db.Uuid
+  deleteReason      String?   @map("delete_reason")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency      Agency            @relation(fields: [agencyId], references: [id])
-  patient     Patient?          @relation(fields: [patientId], references: [id])
-  staff       StaffProfile?     @relation(fields: [staffId], references: [id])
-  visit       Visit?            @relation(fields: [visitId], references: [id])
-  uploadedBy  User              @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
-  credentials StaffCredential[]
+  agency          Agency            @relation(fields: [agencyId], references: [id])
+  patient         Patient?          @relation(fields: [patientId], references: [id])
+  staff           StaffProfile?     @relation(fields: [staffId], references: [id])
+  visit           Visit?            @relation(fields: [visitId], references: [id])
+  uploadedBy      User              @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+  credentials     StaffCredential[]
+  blob            DocumentBlob?
+  previousVersion Document?         @relation("DocumentVersions", fields: [previousVersionId], references: [id])
+  nextVersion     Document?         @relation("DocumentVersions")
+  deletedBy       User?             @relation("DocumentDeletedBy", fields: [deletedById], references: [id])
 
   @@index([patientId])
   @@index([agencyId, documentType])
   @@index([staffId])
   @@index([visitId])
   @@map("documents")
+}
+
+/// A document's file, encrypted (AES-256-GCM, bound to the document id) — the database storage driver (D-056).
+/// Replaced by object storage (S3 + BAA) at go-live; the storage interface hides which one is used.
+model DocumentBlob {
+  documentId String   @id @map("document_id") @db.Uuid
+  content    Bytes
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("document_blobs")
 }
 
 model Notification {

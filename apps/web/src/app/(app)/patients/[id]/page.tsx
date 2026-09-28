@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { AuthorizationsPanel } from '@/components/patients/authorizations-panel';
 import { ClinicalPanels } from '@/components/patients/clinical-panels';
+import { DocumentsPanel } from '@/components/patients/documents-panel';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -104,6 +105,8 @@ export default function PatientDetailPage() {
       </div>
 
       <ClinicalPanels patientId={p.id} />
+
+      {can('documents:read') && <DocumentsPanel patientId={p.id} />}
 
       <AuthorizationsPanel patientId={p.id} />
 

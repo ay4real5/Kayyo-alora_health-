@@ -654,6 +654,7 @@ export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   await prisma.ediFile.deleteMany({ where });
   await prisma.claim.deleteMany({ where }); // lines cascade
   await prisma.evvRecord.deleteMany({ where }); // EVV exceptions cascade
+  await prisma.document.deleteMany({ where }); // stored files cascade; version links are cleared
   await prisma.visit.deleteMany({ where }); // notes, vitals, tasks cascade
   await prisma.recurrenceRule.deleteMany({ where });
   await prisma.patient.deleteMany({ where }); // diagnoses, allergies, authorizations cascade

@@ -48,18 +48,28 @@ export function assertValidVersion(version: number): void {
 }
 
 export function encryptPhi(plaintext: string, context: string, keyring: PhiKeyring): Buffer {
+  return encryptPhiBytes(Buffer.from(plaintext, 'utf8'), context, keyring);
+}
+
+/** Same format as `encryptPhi`, for binary content (documents). */
+export function encryptPhiBytes(plaintext: Uint8Array, context: string, keyring: PhiKeyring): Buffer {
   const key = keyring.keys.get(keyring.currentVersion);
   if (!key) throw new Error(`No PHI key for current version ${keyring.currentVersion}`);
 
   const iv = randomBytes(IV_BYTES);
   const cipher = createCipheriv(ALGORITHM, key, iv);
   cipher.setAAD(Buffer.from(context, 'utf8'));
-  const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+  const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
 
   return Buffer.concat([Buffer.from([keyring.currentVersion]), iv, cipher.getAuthTag(), ciphertext]);
 }
 
 export function decryptPhi(blob: Uint8Array, context: string, keyring: PhiKeyring): string {
+  return decryptPhiBytes(blob, context, keyring).toString('utf8');
+}
+
+/** Same format as `decryptPhi`, for binary content (documents). */
+export function decryptPhiBytes(blob: Uint8Array, context: string, keyring: PhiKeyring): Buffer {
   const data = Buffer.from(blob.buffer, blob.byteOffset, blob.byteLength);
   if (data.length < HEADER_BYTES) throw new PhiDecryptionError('value is too short');
 
@@ -75,7 +85,7 @@ export function decryptPhi(blob: Uint8Array, context: string, keyring: PhiKeyrin
     const decipher = createDecipheriv(ALGORITHM, key, iv);
     decipher.setAAD(Buffer.from(context, 'utf8'));
     decipher.setAuthTag(tag);
-    return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   } catch {
     throw new PhiDecryptionError('value was tampered with, or the key/context does not match');
   }
