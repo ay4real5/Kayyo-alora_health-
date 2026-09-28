@@ -65,6 +65,7 @@
 - **Caregiver app foundation (P2-06)**: `apps/mobile` (Expo SDK 57) — sign-in with 2FA code, keychain session,
   biometric/passcode lock after 5 min in background, forced password change, today's visits. README explains running
   it on a phone with Expo Go. D-043.
+- **Mobile clock-in/out (P2-07)**: visit screen with directions/call and GPS clock in/out; flags explained. D-046.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -78,10 +79,10 @@ Nothing.
 
 ## Next up
 
-**P2-07** mobile: visit detail + clock-in/out with location (expo-location; `POST /evv/clock-in|clock-out`), then
-P2-08 tasks/vitals/notes/signature, P2-09 offline queue (expo-sqlite), P2-10 background location. P2-12/P2-13 need
-Twilio/Firebase accounts (P2-11, owner). Then Phase 3. The owner asked for autonomous work: go straight on, check in
-~every 4 hours.
+**P2-08** mobile: task checklist, vitals, notes (draft/submit/sign), patient signature (store the image via the
+documents module or defer signatures until S3 exists — decide and record). Then P2-09 offline queue (expo-sqlite),
+P2-10 background location. P2-12/P2-13 need Twilio/Firebase (P2-11, owner). The owner asked for autonomous work:
+go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -91,6 +92,7 @@ Twilio/Firebase accounts (P2-11, owner). Then Phase 3. The owner asked for auton
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P2-07 | Mobile visit screen + GPS clock in/out; 13 unit tests; bundles. |
 | 2026-09-28 | Claude Code | P2-06 | Mobile foundation (Expo 57): auth, lock, today's visits; bundles; checks green. |
 | 2026-09-28 | Claude Code | P1-11c | Owner answered Q-002/3/5/8 (D-044); admin-only mandatory 2FA + web setup page (D-045). |
 | 2026-09-28 | Claude Code | P2-03 | Web live monitor, EVV review, visit docs, open shifts/swaps, notification bell; 4 new browser tests. |

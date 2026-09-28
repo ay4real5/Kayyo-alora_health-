@@ -27,6 +27,7 @@ function Routes() {
       </Stack.Protected>
       <Stack.Protected guard={signedIn && !mustChangePassword}>
         <Stack.Screen name="index" options={{ title: 'Today' }} />
+        <Stack.Screen name="visit/[id]" options={{ title: 'Visit' }} />
       </Stack.Protected>
     </Stack>
   );
