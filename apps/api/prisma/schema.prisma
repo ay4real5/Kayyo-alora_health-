@@ -49,6 +49,8 @@ model Agency {
   recurrenceRules RecurrenceRule[]
   documents       Document[]
   evvRecords      EvvRecord[]
+  openShifts      OpenShift[]
+  swapRequests    ShiftSwapRequest[]
   notifications   Notification[]
 
   @@map("agencies")
@@ -85,6 +87,9 @@ model User {
   evvVerified          EvvRecord[]         @relation("EvvVerifiedBy")
   evvExceptionsFiled   EvvException[]      @relation("EvvExceptionRequestedBy")
   evvExceptionsDecided EvvException[]      @relation("EvvExceptionDecidedBy")
+  openShiftsAssigned   OpenShift[]         @relation("OpenShiftAssignedBy")
+  openShiftsCreated    OpenShift[]         @relation("OpenShiftCreatedBy")
+  swapsDecided         ShiftSwapRequest[]  @relation("SwapDecidedBy")
   visitNotesAuthored   VisitNote[]         @relation("VisitNoteAuthor")
   visitNotesSigned     VisitNote[]         @relation("VisitNoteSignedBy")
   visitNotesQaReviewed VisitNote[]         @relation("VisitNoteQaReviewedBy")
@@ -397,16 +402,19 @@ model StaffProfile {
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agency          Agency              @relation(fields: [agencyId], references: [id])
-  credentials     StaffCredential[]
-  availability    StaffAvailability[]
-  timeOff         StaffTimeOff[]
-  visits          Visit[]
-  recurrenceRules RecurrenceRule[]
-  documents       Document[]
-  evvRecords      EvvRecord[]
-  visitNotes      VisitNote[]
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agency            Agency              @relation(fields: [agencyId], references: [id])
+  credentials       StaffCredential[]
+  availability      StaffAvailability[]
+  timeOff           StaffTimeOff[]
+  visits            Visit[]
+  recurrenceRules   RecurrenceRule[]
+  documents         Document[]
+  evvRecords        EvvRecord[]
+  openShiftsClaimed OpenShift[]
+  swapsRequested    ShiftSwapRequest[]  @relation("SwapRequesting")
+  swapsTargeted     ShiftSwapRequest[]  @relation("SwapTarget")
+  visitNotes        VisitNote[]
 
   @@unique([agencyId, employeeId])
   @@index([agencyId])
@@ -503,14 +511,16 @@ model Visit {
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency         Agency          @relation(fields: [agencyId], references: [id])
-  patient        Patient         @relation(fields: [patientId], references: [id])
-  staff          StaffProfile?   @relation(fields: [staffId], references: [id])
-  authorization  Authorization?  @relation(fields: [authorizationId], references: [id])
-  recurrenceRule RecurrenceRule? @relation(fields: [recurrenceRuleId], references: [id])
-  createdBy      User?           @relation("VisitCreatedBy", fields: [createdById], references: [id])
+  agency         Agency             @relation(fields: [agencyId], references: [id])
+  patient        Patient            @relation(fields: [patientId], references: [id])
+  staff          StaffProfile?      @relation(fields: [staffId], references: [id])
+  authorization  Authorization?     @relation(fields: [authorizationId], references: [id])
+  recurrenceRule RecurrenceRule?    @relation(fields: [recurrenceRuleId], references: [id])
+  createdBy      User?              @relation("VisitCreatedBy", fields: [createdById], references: [id])
   documents      Document[]
   evvRecords     EvvRecord[]
+  openShifts     OpenShift[]
+  swapRequests   ShiftSwapRequest[]
   visitNotes     VisitNote[]
   vitals         VisitVital[]
   tasks          VisitTask[]
@@ -742,6 +752,66 @@ model VisitTask {
 
   @@index([visitId, sortOrder])
   @@map("visit_tasks")
+}
+
+// ─────────────────────────────── Open shifts & swaps (§5.4, DECISIONS D-040) ───────────────────────────────
+
+/// An unassigned visit offered to eligible caregivers. The visit holds the date, time, type and patient.
+model OpenShift {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String    @map("agency_id") @db.Uuid
+  visitId      String    @map("visit_id") @db.Uuid
+  /// open | filled | cancelled
+  status       String    @default("open") @db.VarChar(20)
+  notes        String?
+  claimedById  String?   @map("claimed_by") @db.Uuid
+  claimedAt    DateTime? @map("claimed_at") @db.Timestamptz(6)
+  assignedById String?   @map("assigned_by") @db.Uuid
+  assignedAt   DateTime? @map("assigned_at") @db.Timestamptz(6)
+  broadcastAt  DateTime? @map("broadcast_at") @db.Timestamptz(6)
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdById  String    @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency        @relation(fields: [agencyId], references: [id])
+  visit      Visit         @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  claimedBy  StaffProfile? @relation(fields: [claimedById], references: [id])
+  assignedBy User?         @relation("OpenShiftAssignedBy", fields: [assignedById], references: [id])
+  createdBy  User          @relation("OpenShiftCreatedBy", fields: [createdById], references: [id])
+
+  /// At most one open offer per visit.
+  @@unique([visitId], map: "open_shifts_one_open_per_visit", where: raw("status = 'open'"))
+  @@index([agencyId, status])
+  @@map("open_shifts")
+}
+
+/// A caregiver asks to hand off one of their visits — to a named colleague, or back to the pool (open shift).
+model ShiftSwapRequest {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId          String    @map("agency_id") @db.Uuid
+  visitId           String    @map("visit_id") @db.Uuid
+  requestingStaffId String    @map("requesting_staff_id") @db.Uuid
+  targetStaffId     String?   @map("target_staff_id") @db.Uuid
+  /// pending | approved | denied | cancelled
+  status            String    @default("pending") @db.VarChar(20)
+  reason            String?
+  decisionNote      String?   @map("decision_note")
+  decidedById       String?   @map("approved_by") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency        @relation(fields: [agencyId], references: [id])
+  visit      Visit         @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  requesting StaffProfile  @relation("SwapRequesting", fields: [requestingStaffId], references: [id])
+  target     StaffProfile? @relation("SwapTarget", fields: [targetStaffId], references: [id])
+  decidedBy  User?         @relation("SwapDecidedBy", fields: [decidedById], references: [id])
+
+  /// At most one pending request per visit.
+  @@unique([visitId], map: "shift_swaps_one_pending_per_visit", where: raw("status = 'pending'"))
+  @@index([agencyId, status])
+  @@map("shift_swap_requests")
 }
 
 /// location, start/end times — plus how each was captured.
