@@ -1094,3 +1094,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   Periods can't overlap and are at most 31 days.
 - **Privacy**: stub lines show the patient as "First L." only; the CSV has no patient data at all. Staff see only
   their own stubs, and only once approved ("My pay").
+
+### D-065 — Reports and dashboards (P4-01, P4-02)
+2026-09-28 · Claude Code
+- **Endpoints** (`/reports/*`, `reports:read` — admins, supervisor, billing): census (active by payer, admissions,
+  discharges), visit utilization (daily and by visit type; completion rate = completed ÷ (completed + missed)), EVV
+  compliance (verified / awaiting review / rejected / no EVV, clock-in methods), staff productivity (visits, missed,
+  EVV hours, average visit), missed & cancelled visits (with reasons; audited — it lists patients), and the
+  financial summary (billed = claims + invoices created in range, collected = posted 835 payments + invoice payments,
+  denials by reason and rate, outstanding from the AR aging) which **also requires `billing:read`**. Range defaults to
+  the last 30 days, at most a year. List reports take `format=csv` and return `{ fileName, content }`.
+- **Materialized view** `mv_daily_visit_summary` (raw-SQL migration; Prisma doesn't model views and the CI drift check
+  ignores them — verified) with a unique index so it refreshes `CONCURRENTLY` every 15 minutes (`JOBS_ENABLED`) and on
+  "Refresh numbers" (`POST /reports/refresh`). Everything else is a direct query; add views only where the P4-09 load
+  test shows a need. DESIGN.md's `mv_claims_aging` isn't needed — aging is computed from open claims (D-063).
+- **Dashboard** (`/reports`): presets 7/30/90 days or custom, in one row; stat tiles for headline numbers; one
+  stacked column chart (visits per day by outcome) using the reference categorical slots 1–4 in fixed order —
+  validated with the dataviz validator (CVD ΔE ≥ 9.1, normal ≥ 22.9 on white); aqua/yellow are under 3:1 so the chart
+  always has a legend, a hover tooltip and a table view. Payer bars are single-series with values at the tips. Later:
+  PDF export, custom reports, authorization utilization and clinical/OASIS timeliness reports.

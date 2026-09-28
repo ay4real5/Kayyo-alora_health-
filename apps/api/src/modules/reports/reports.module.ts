@@ -127,6 +127,8 @@ export class ReportsController {
     };
   }
 
+  /** Money: also needs billing access (supervisors see reports but not billing). */
+  @Permissions('reports:read', 'billing:read')
   @Get('financial-summary')
   async financialSummary(@CurrentUser() caller: AuthUser, @Query() q: ReportQueryDto) {
     return this.reports.financialSummary(caller, await this.reports.range(caller, q.from, q.to));

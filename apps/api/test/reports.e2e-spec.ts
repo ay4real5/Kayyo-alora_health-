@@ -143,6 +143,7 @@ describe.skipIf(!hasDb)('Reports (e2e)', () => {
   });
 
   it('financial summary: billed, collected, denials by reason, outstanding', async () => {
+    await http().get(`/api/v1/reports/financial-summary?${q}`).set(supervisor).expect(403); // no billing access
     const r = (await http().get(`/api/v1/reports/financial-summary?${q}`).set(billing).expect(200)).body.data;
     expect(r).toMatchObject({ billed: 100, claimsBilled: 1, collected: 40, denied: { claims: 1, amount: 100, rate: 100, byReason: [{ reason: '197', claims: 1, amount: 100 }] }, outstanding: 100 });
     await http().get(`/api/v1/reports/financial-summary?from=${today}&to=${addDays(today, -1)}`).set(billing).expect(400);
