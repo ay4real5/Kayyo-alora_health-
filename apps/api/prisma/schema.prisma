@@ -34,6 +34,9 @@ model Agency {
   medicareProviderNumber String?  @map("medicare_provider_number") @db.VarChar(20)
   medicaidProviderNumber String?  @map("medicaid_provider_number") @db.VarChar(20)
   evvStateConfig         Json?    @map("evv_state_config")
+  /// Payroll (D-064): default mileage reimbursement per mile, and the day FLSA workweeks start (0 = Sunday).
+  payrollMileageRate     Decimal  @default(0.70) @map("payroll_mileage_rate") @db.Decimal(6, 4)
+  workweekStartDay       Int      @default(0) @map("workweek_start_day")
   settings               Json     @default("{}")
   isActive               Boolean  @default(true) @map("is_active")
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -61,6 +64,7 @@ model Agency {
   invoices          Invoice[]
   eligibilityChecks EligibilityCheck[]
   incidentReports   IncidentReport[]
+  payPeriods        PayPeriod[]
 
   @@map("agencies")
 }
@@ -134,6 +138,8 @@ model User {
   incidentsReported    IncidentReport[]          @relation("IncidentReportedBy")
   incidentsResolved    IncidentReport[]          @relation("IncidentResolvedBy")
   claimAppeals         ClaimAppeal[]             @relation("ClaimAppealCreatedBy")
+  payPeriodsApproved   PayPeriod[]               @relation("PayPeriodApprovedBy")
+  mileageDecided       MileageLog[]              @relation("MileageDecidedBy")
 
   @@index([agencyId])
   @@map("users")
@@ -460,6 +466,8 @@ model StaffProfile {
   agency            Agency              @relation(fields: [agencyId], references: [id])
   credentials       StaffCredential[]
   incidentReports   IncidentReport[]
+  payStubs          PayStub[]
+  mileageLogs       MileageLog[]
   availability      StaffAvailability[]
   timeOff           StaffTimeOff[]
   visits            Visit[]
@@ -934,6 +942,8 @@ model Visit {
 
   invoiceLines    InvoiceLine[]
   incidentReports IncidentReport[]
+  payStubLines    PayStubLine[]
+  mileageLogs     MileageLog[]
 
   @@unique([recurrenceRuleId, scheduledDate])
   @@index([agencyId, scheduledDate])
@@ -1570,4 +1580,102 @@ model ClaimAppeal {
 
   @@index([claimId])
   @@map("claim_appeals")
+}
+
+/// Payroll (DESIGN.md §5.7, DECISIONS D-064). open → calculated → approved → exported.
+model PayPeriod {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String    @map("agency_id") @db.Uuid
+  periodStart  DateTime  @map("period_start") @db.Date
+  periodEnd    DateTime  @map("period_end") @db.Date
+  payDate      DateTime  @map("pay_date") @db.Date
+  /// open | calculated | approved | exported
+  status       String    @default("open") @db.VarChar(20)
+  calculatedAt DateTime? @map("calculated_at") @db.Timestamptz(6)
+  approvedById String?   @map("approved_by") @db.Uuid
+  approvedAt   DateTime? @map("approved_at") @db.Timestamptz(6)
+  exportedAt   DateTime? @map("exported_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency    @relation(fields: [agencyId], references: [id])
+  approvedBy User?     @relation("PayPeriodApprovedBy", fields: [approvedById], references: [id])
+  stubs      PayStub[]
+
+  @@unique([agencyId, periodStart])
+  @@index([agencyId, periodStart(sort: Desc)])
+  @@map("pay_periods")
+}
+
+model PayStub {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payPeriodId    String   @map("pay_period_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  regularHours   Decimal  @default(0) @map("regular_hours") @db.Decimal(8, 2)
+  overtimeHours  Decimal  @default(0) @map("overtime_hours") @db.Decimal(8, 2)
+  visitCount     Int      @default(0) @map("visit_count")
+  regularPay     Decimal  @default(0) @map("regular_pay") @db.Decimal(10, 2)
+  overtimePay    Decimal  @default(0) @map("overtime_pay") @db.Decimal(10, 2)
+  perVisitPay    Decimal  @default(0) @map("per_visit_pay") @db.Decimal(10, 2)
+  mileageMiles   Decimal  @default(0) @map("mileage_miles") @db.Decimal(8, 2)
+  mileageAmount  Decimal  @default(0) @map("mileage_amount") @db.Decimal(10, 2)
+  bonusAmount    Decimal  @default(0) @map("bonus_amount") @db.Decimal(10, 2)
+  deductions     Decimal  @default(0) @db.Decimal(10, 2)
+  /// Taxable earnings: regular + overtime + per-visit + bonus − deductions (mileage is a separate, non-taxable reimbursement).
+  grossPay       Decimal  @default(0) @map("gross_pay") @db.Decimal(10, 2)
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  payPeriod    PayPeriod     @relation(fields: [payPeriodId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile  @relation(fields: [staffProfileId], references: [id])
+  lines        PayStubLine[]
+
+  @@unique([payPeriodId, staffProfileId])
+  @@index([staffProfileId])
+  @@map("pay_stubs")
+}
+
+model PayStubLine {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payStubId    String   @map("pay_stub_id") @db.Uuid
+  visitId      String?  @map("visit_id") @db.Uuid
+  serviceDate  DateTime @map("service_date") @db.Date
+  /// First name and last initial only — enough for the caregiver to recognise the visit (minimum necessary).
+  patientLabel String?  @map("patient_label") @db.VarChar(100)
+  hours        Decimal? @db.Decimal(6, 2)
+  rate         Decimal? @db.Decimal(10, 2)
+  amount       Decimal  @db.Decimal(10, 2)
+  /// hourly | overtime | per_visit | mileage
+  payType      String   @map("pay_type") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payStub PayStub @relation(fields: [payStubId], references: [id], onDelete: Cascade)
+  visit   Visit?  @relation(fields: [visitId], references: [id])
+
+  @@index([payStubId])
+  @@map("pay_stub_lines")
+}
+
+model MileageLog {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffProfileId String    @map("staff_profile_id") @db.Uuid
+  visitId        String?   @map("visit_id") @db.Uuid
+  travelDate     DateTime  @map("travel_date") @db.Date
+  /// Free text — no patient addresses needed; "Office to client visit" is enough.
+  description    String?   @db.VarChar(255)
+  miles          Decimal   @db.Decimal(8, 2)
+  /// pending | approved | rejected
+  status         String    @default("pending") @db.VarChar(20)
+  decidedById    String?   @map("decided_by") @db.Uuid
+  decidedAt      DateTime? @map("decided_at") @db.Timestamptz(6)
+  rejectReason   String?   @map("reject_reason")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  visit        Visit?       @relation(fields: [visitId], references: [id])
+  decidedBy    User?        @relation("MileageDecidedBy", fields: [decidedById], references: [id])
+
+  @@index([staffProfileId, travelDate])
+  @@map("mileage_logs")
 }
