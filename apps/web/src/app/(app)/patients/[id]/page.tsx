@@ -4,6 +4,7 @@ import { ALLERGY_SEVERITIES } from '@alora/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { AuthorizationsPanel } from '@/components/patients/authorizations-panel';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -100,6 +101,8 @@ export default function PatientDetailPage() {
         <DiagnosesPanel patient={p} canEdit={canEdit} onAct={run} />
         <AllergiesPanel patient={p} canEdit={canEdit} onAct={run} />
       </div>
+
+      <AuthorizationsPanel patientId={p.id} />
 
       {p.notes && (
         <Card className="p-5">

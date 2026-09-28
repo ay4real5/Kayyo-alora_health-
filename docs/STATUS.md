@@ -71,6 +71,8 @@
 - **Mobile offline (P2-09)**: encrypted (SQLCipher) queue + read cache; clock/tasks/vitals/notes work offline and sync
   in order; refused items shown; wiped at sign-out. D-048.
 - **Clock-out reminders (P2-10)**: no background tracking (D-049, Q-009); local "remember to clock out" reminder.
+- **Billing setup + authorizations (P3-01)**: payers, service codes, non-overlapping rates; authorizations with usage
+  from linked visits; scheduling warns when missing/used up; web billing setup + patient panel. D-050.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -84,10 +86,9 @@ Nothing.
 
 ## Next up
 
-**Phase 2 is done** except P2-11..13 (Twilio/Firebase accounts — owner). **Phase 3** next: P3-01 authorizations
-(payer + authorized units per service, tracked against visits), then P3-02 pre-billing QA and the billing tasks.
-Check DESIGN §5/§6 billing sections and Virginia Medicaid (D-044) before modelling payers. The owner asked for
-autonomous work: go straight on, check in ~every 4 hours.
+**P3-02** pre-billing QA engine (which completed visits are ready to bill: EVV verified, notes finalised, authorization
+covers it, rate exists, payer/patient IDs present — a checklist per visit with reasons), then P3-03 claims from verified
+visits. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -98,6 +99,7 @@ autonomous work: go straight on, check in ~every 4 hours.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P3-01 | Payers/codes/rates/authorizations API + web; 4 API + 2 browser tests; 19 browser tests pass. |
 | 2026-09-28 | Claude Code | P2-10 | No background tracking (Q-009); local clock-out reminders; 26 unit tests; bundles. |
 | 2026-09-28 | Claude Code | P2-09 | Mobile offline queue + encrypted cache; 23 unit tests; bundles. |
 | 2026-09-28 | Claude Code | P2-08 | Mobile tasks/vitals/notes screens; 17 unit tests; bundles. Signatures deferred (D-047). |

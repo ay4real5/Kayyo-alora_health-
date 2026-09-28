@@ -61,7 +61,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 
 ## Phase 3 — Billing, claims, clinical, portal
 
-- [ ] **P3-01** `agent` Payers, service codes, payer rates; patient authorizations (moved from P1-12, needs payers). deps: P1-12
+- [x] **P3-01** `agent` Payers, service codes, payer rates; patient authorizations (moved from P1-12, needs payers). deps: P1-12
 - [ ] **P3-02** `agent` Pre-billing QA engine. deps: P3-01, P2-01
 - [ ] **P3-03** `agent` Claim creation from verified visits + claim lines. deps: P3-02
 - [ ] **P3-04** `agent` X12 utils + EDI 837P generator with golden-file tests. deps: P3-03

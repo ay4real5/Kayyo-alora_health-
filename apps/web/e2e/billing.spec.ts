@@ -1,0 +1,55 @@
+import { expect, test, type Page } from '@playwright/test';
+
+const PASSWORD = 'Demo-Password-1!';
+
+async function signIn(page: Page, email: string) {
+  await page.goto('/login');
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Password').fill(PASSWORD);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+}
+
+async function openPatient(page: Page, mrn: string) {
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Patients' })
+    .click();
+  await page.getByLabel('Search').fill(mrn);
+  const row = page.getByRole('row').filter({ hasText: mrn });
+  await expect(row).toHaveCount(1); // the search has settled on this patient
+  await row.getByRole('link').first().click();
+  await expect(page.getByText(`MRN ${mrn}`)).toBeVisible();
+}
+
+test('billing staff see the payers, service codes and rates', async ({ page }) => {
+  await signIn(page, 'billing.staff@demo.alora.test');
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Billing setup' })
+    .click();
+  await expect(page.getByRole('cell', { name: 'Demo Medicaid (FAKE)' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'G0156' })).toBeVisible();
+  await page.getByLabel('Payer', { exact: true }).selectOption({ label: 'Demo Medicaid (FAKE)' });
+  await expect(page.getByRole('cell', { name: 'T1019' })).toBeVisible();
+});
+
+test('the office sees authorization usage and adds an authorization', async ({ page }) => {
+  await signIn(page, 'office.staff@demo.alora.test');
+  // The first recurring aide patient has a 40-visit authorization with its visits linked.
+  await openPatient(page, 'DEMO-0001');
+  const auths = page.getByRole('list', { name: 'Authorizations' });
+  await expect(auths).toContainText('DEMO-AUTH-1000');
+  await expect(auths).toContainText(/booked of 40 visits/);
+
+  await page.getByRole('button', { name: 'Add authorization' }).click();
+  await page.getByLabel('Payer', { exact: true }).selectOption({ label: 'Demo Medicaid (FAKE)' });
+  await page.getByLabel('Service code').selectOption('T1019');
+  await page.getByLabel('Authorization number').fill('PW-NEW-1');
+  const end = new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
+  await page.getByLabel('End', { exact: true }).fill(end);
+  await page.getByLabel('Authorized hours').fill('20');
+  await page.getByRole('button', { name: 'Save authorization' }).click();
+  await expect(auths).toContainText('PW-NEW-1');
+  await expect(auths).toContainText('0 used + 0 booked of 20 hours');
+});

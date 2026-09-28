@@ -769,3 +769,28 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   else. Sign-out cancels all reminders. `expo-notifications`, local only — push comes with P2-12 (Firebase).
 - If the owner wants mid-visit location checks, the cheaper middle ground is a single location ping at the scheduled
   end, not continuous tracking.
+
+### D-050 — Payers, service codes, rates, authorizations (P3-01)
+2026-09-28 · Claude Code
+- **Service codes** (`service_codes`: HCPCS/CPT/revenue, unit visit|hour|15-min|day, default rate, needs-authorization)
+  unique per agency; **payer rates** (`payer_rates`) per payer + code (+ modifiers) over date ranges that **never
+  overlap** — 409 names the open rate to end first. Rates are ended, never edited (claims keep the rate they were
+  billed at). `BillingSetupService.rateOn(payer, code, date, modifier)` answers "the rate on a date" for claims.
+- **Authorizations** keep the design's table but **usage is computed from the visits linked to them** (completed/in
+  progress = used, with actual times when known; scheduled = booked). The design's `used_visits/used_hours`
+  counters are left unused (they would drift). States: active, upcoming, expired, exhausted, cancelled; "ends soon"
+  within 14 days. Either visits, hours, or both.
+- **Linking**: booking or changing a visit with a service code links it to the matching authorization (active,
+  covering the date, same code or "any service", soonest-ending with room first); recurring generation does the same.
+  Cancelling an authorization releases its booked visits (history of done visits stays).
+- **Scheduling warnings** (not blocks — the office may be awaiting a renewal): `authorization_missing` when the
+  patient's primary payer or the service code requires authorization and none covers the visit;
+  `authorization_exhausted` when the visit goes past the authorized visits/hours.
+- **Permissions**: new `authorizations:read|manage` (office, billing, supervisor; admins). Payers and service codes are
+  readable with `authorizations:read` (to pick them) and changed with `billing:update`; rates (money) need
+  `billing:read`/`billing:update`. The design's "admin" for payers became billing staff — they maintain payer setup.
+- Web: **Billing setup** page (payers, codes, rates with "end it"), **Authorizations** panel on the patient page.
+  Demo data: fake Medicaid (requires authorization), Medicare and private pay; G0156/G0299/G0151/T1019 with rates;
+  all patients on demo Medicaid; authorizations for the recurring aide patients (visits linked) and one ending soon.
+- Virginia specifics (DMAS/MCO rules, which codes and modifiers) are still to be confirmed against current DMAS
+  guidance before real billing (D-044).
