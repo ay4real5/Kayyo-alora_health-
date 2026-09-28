@@ -179,6 +179,16 @@ export class TokenService {
     return { userId: claims.sub, agencyId: claims.agencyId };
   }
 
+  /** For long-lived connections (Socket.IO): the user plus when the token stops being valid. */
+  async verifyAccessTokenWithExpiry(token: string): Promise<AuthUser & { expiresAt: Date }> {
+    const claims = await this.jwt.verifyAsync<AccessTokenClaims & { exp: number }>(token, {
+      algorithms: ['HS256'],
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    });
+    return { userId: claims.sub, agencyId: claims.agencyId, expiresAt: new Date(claims.exp * 1000) };
+  }
+
   private async issue(user: AuthUser, expiresAt: Date, client: ClientInfo): Promise<TokenPair> {
     const refreshToken = randomBytes(32).toString('base64url');
     await this.prisma.refreshToken.create({

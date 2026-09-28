@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 
 // DB-backed e2e tests use the repo-root .env locally (CI sets DATABASE_URL itself; existing vars win).
 config({ path: '../../.env', quiet: true });
+// Background jobs would change test data mid-test (e.g. mark yesterday's test visits missed). Tests call them directly.
+process.env.JOBS_ENABLED = 'false';
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },

@@ -8,6 +8,9 @@ import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { RealtimeModule } from './modules/realtime/realtime.module.js';
+import { JobsModule } from './modules/jobs/jobs.module.js';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PatientsModule } from './modules/patients/patients.module.js';
 import { PhysiciansModule } from './modules/physicians/physicians.module.js';
 import { RbacModule } from './modules/rbac/rbac.module.js';
@@ -35,6 +38,9 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
     EvvModule,
     VisitDocsModule,
     NotificationsModule,
+    RealtimeModule,
+    ScheduleModule.forRoot(),
+    JobsModule,
     HealthModule,
   ],
   providers: [

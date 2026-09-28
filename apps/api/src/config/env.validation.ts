@@ -126,6 +126,16 @@ export class EnvironmentVariables {
   @Max(255)
   PHI_ENCRYPTION_KEY_VERSION: number = 1;
 
+  /**
+   * Background jobs (late/no-show monitor, nightly recurring-visit extension; DECISIONS D-041). On by default; the API
+   * e2e tests turn them off so a job can't change test data mid-test. With several API instances, all may run them —
+   * every job is idempotent.
+   */
+  @Transform(({ value }) => (value === undefined || value === '' ? undefined : value === 'true' || value === true))
+  @IsOptional()
+  @IsBoolean()
+  JOBS_ENABLED: boolean = true;
+
   /** Retired keys still needed to read old values: "1:<base64>,2:<base64>". */
   @Transform(blankToUndefined)
   @IsOptional()

@@ -51,6 +51,14 @@ export class EvvController {
     return this.evv.clockOut(caller, dto);
   }
 
+  /** Today's live picture for the monitor: active visits (with map points), late/no-show, unassigned, counts. */
+  @Permissions('evv:read')
+  @Audit({ action: 'VIEW_LIVE_MONITOR', resourceType: 'evv' })
+  @Get('live')
+  live(@CurrentUser() caller: AuthUser) {
+    return this.evv.live(caller);
+  }
+
   @Permissions('evv:read')
   @Get('records')
   list(@CurrentUser() caller: AuthUser, @Query() query: ListEvvQueryDto) {

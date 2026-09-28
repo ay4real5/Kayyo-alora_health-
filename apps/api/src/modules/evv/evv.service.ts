@@ -13,6 +13,7 @@ import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { RealtimeService } from '../realtime/realtime.service.js';
 import type { ClockDto, CreateEvvExceptionDto, ListEvvQueryDto } from './dto/evv.dto.js';
 
 const MINUTE = 60_000;
@@ -88,6 +89,43 @@ interface ClockView {
   distanceMeters: number | null;
 }
 
+type PersonRef = { id: string; firstName: string; lastName: string };
+
+export interface LiveSnapshot {
+  date: string;
+  counts: {
+    scheduled: number;
+    inProgress: number;
+    completed: number;
+    missed: number;
+    late: number;
+    noShow: number;
+    unassigned: number;
+    needsReview: number;
+  };
+  active: {
+    visitId: string;
+    evvRecordId: string;
+    clockInTime: Date | null;
+    scheduledEnd: string;
+    flags: string[];
+    withinGeofence: boolean | null;
+    clockIn: { latitude: number | null; longitude: number | null };
+    home: { latitude: number | null; longitude: number | null };
+    staff: PersonRef & { discipline: string };
+    patient: PersonRef;
+  }[];
+  late: {
+    visitId: string;
+    scheduledStart: string;
+    minutesLate: number;
+    noShow: boolean;
+    staff: PersonRef;
+    patient: PersonRef;
+  }[];
+  unassigned: { visitId: string; visitType: string; scheduledStart: string; patient: PersonRef }[];
+}
+
 /** What a caregiver gets back after clocking in or out: enough to show "you're clocked in" and any warnings. */
 export interface ClockResult {
   /** The EVV record id. */
@@ -112,6 +150,7 @@ export class EvvService {
     private readonly prisma: PrismaService,
     private readonly clock: AgencyClockService,
     private readonly notifications: NotificationsService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   async clockIn(caller: AuthUser, dto: ClockDto): Promise<ClockResult> {
@@ -172,6 +211,10 @@ export class EvvService {
         },
       });
     });
+    this.emit(caller.agencyId, 'visit:clock-in', visit, record, geo, {
+      latitude: dto.latitude,
+      longitude: dto.longitude,
+    });
     return toClockResult(record, geo);
   }
 
@@ -220,6 +263,11 @@ export class EvvService {
       });
       return tx.evvRecord.findUniqueOrThrow({ where: { id: record.id } });
     });
+    this.emit(caller.agencyId, 'visit:clock-out', visit, updated, geo, {
+      latitude: dto.latitude,
+      longitude: dto.longitude,
+      durationMinutes: Math.round((at.getTime() - record.clockInTime.getTime()) / 60_000),
+    });
     return toClockResult(updated, geo);
   }
 
@@ -249,6 +297,99 @@ export class EvvService {
       this.prisma.evvRecord.count({ where }),
     ]);
     return Paginated.of(rows.map(toView), total, query);
+  }
+
+  /**
+   * The live monitor's snapshot for the agency's today (D-041): who is on a visit now, who is late, what's unassigned,
+   * and the day's counts. Socket events say "something changed"; clients refetch this.
+   */
+  async live(caller: AuthUser): Promise<LiveSnapshot> {
+    const today = await this.clock.todayString(caller.agencyId);
+    const zone = await this.clock.timezone(caller.agencyId);
+    const now = Date.now();
+    const [active, todays, needsReview] = await Promise.all([
+      this.prisma.evvRecord.findMany({
+        where: { agencyId: caller.agencyId, status: 'in_progress' },
+        include: {
+          patient: { select: { id: true, firstName: true, lastName: true, latitude: true, longitude: true } },
+          staff: { select: { id: true, discipline: true, user: { select: { firstName: true, lastName: true } } } },
+          visit: { select: { scheduledEnd: true } },
+        },
+        orderBy: { clockInTime: 'asc' },
+        take: 500,
+      }),
+      this.prisma.visit.findMany({
+        where: { agencyId: caller.agencyId, scheduledDate: toDate(today) },
+        select: {
+          id: true,
+          status: true,
+          staffId: true,
+          visitType: true,
+          scheduledStart: true,
+          scheduledEnd: true,
+          patient: { select: { id: true, firstName: true, lastName: true } },
+          staff: { select: { id: true, user: { select: { firstName: true, lastName: true } } } },
+        },
+        orderBy: { scheduledStart: 'asc' },
+        take: 2000,
+      }),
+      this.prisma.evvRecord.count({ where: { agencyId: caller.agencyId, status: 'exception' } }),
+    ]);
+
+    const late: LiveSnapshot['late'] = [];
+    const unassigned: LiveSnapshot['unassigned'] = [];
+    for (const v of todays) {
+      if (v.status !== 'scheduled') continue;
+      const start = fromTime(v.scheduledStart);
+      if (!v.staff) {
+        unassigned.push({ visitId: v.id, visitType: v.visitType, scheduledStart: start, patient: v.patient });
+        continue;
+      }
+      const minutesLate = Math.floor((now - zonedTimeToUtc(today, start, zone).getTime()) / MINUTE);
+      if (minutesLate >= 15) {
+        late.push({
+          visitId: v.id,
+          scheduledStart: start,
+          minutesLate,
+          noShow: minutesLate >= 30,
+          staff: { id: v.staff.id, firstName: v.staff.user.firstName, lastName: v.staff.user.lastName },
+          patient: v.patient,
+        });
+      }
+    }
+    const count = (status: string) => todays.filter((v) => v.status === status).length;
+    return {
+      date: today,
+      counts: {
+        scheduled: todays.filter((v) => v.status !== 'cancelled').length,
+        inProgress: active.length,
+        completed: count('completed'),
+        missed: count('missed'),
+        late: late.filter((l) => !l.noShow).length,
+        noShow: late.filter((l) => l.noShow).length,
+        unassigned: unassigned.length,
+        needsReview,
+      },
+      active: active.map((r) => ({
+        visitId: r.visitId,
+        evvRecordId: r.id,
+        clockInTime: r.clockInTime,
+        scheduledEnd: fromTime(r.visit.scheduledEnd),
+        flags: r.flags,
+        withinGeofence: r.clockInWithinGeofence,
+        clockIn: { latitude: num(r.clockInLatitude), longitude: num(r.clockInLongitude) },
+        home: { latitude: num(r.patient.latitude), longitude: num(r.patient.longitude) },
+        staff: {
+          id: r.staff.id,
+          firstName: r.staff.user.firstName,
+          lastName: r.staff.user.lastName,
+          discipline: r.staff.discipline,
+        },
+        patient: { id: r.patient.id, firstName: r.patient.firstName, lastName: r.patient.lastName },
+      })),
+      late,
+      unassigned,
+    };
   }
 
   async get(caller: AuthUser, id: string): Promise<EvvRecordView> {
@@ -373,6 +514,38 @@ export class EvvService {
     return this.get(caller, record.id);
   }
 
+  /** Live monitor events (D-041): the clock event, plus a geofence violation when it was away from the home. */
+  private emit(
+    agencyId: string,
+    event: 'visit:clock-in' | 'visit:clock-out',
+    visit: { id: string; patient: { firstName: string; lastName: string }; staff: { user: { firstName: string; lastName: string } } | null },
+    record: { id: string; status: string; flags: string[] },
+    geo: { distance: number | null; within: boolean | null },
+    extra: Record<string, unknown>,
+  ): void {
+    const payload = {
+      visitId: visit.id,
+      evvRecordId: record.id,
+      status: record.status,
+      flags: record.flags,
+      staffName: visit.staff ? `${visit.staff.user.firstName} ${visit.staff.user.lastName}` : null,
+      patientName: `${visit.patient.firstName} ${visit.patient.lastName}`,
+      withinGeofence: geo.within,
+      distanceMeters: geo.distance,
+      ...extra,
+    };
+    this.realtime.toMonitor(agencyId, event, payload);
+    if (geo.within === false) {
+      this.realtime.toMonitor(agencyId, 'visit:geofence-violation', {
+        visitId: visit.id,
+        evvRecordId: record.id,
+        stage: event === 'visit:clock-in' ? 'clock-in' : 'clock-out',
+        distanceMeters: geo.distance,
+        staffName: payload.staffName,
+      });
+    }
+  }
+
   private async review(
     caller: AuthUser,
     id: string,
@@ -414,7 +587,10 @@ export class EvvService {
     const visit = await this.prisma.visit.findFirst({
       where: { id: visitId, agencyId: caller.agencyId, staff: { userId: caller.userId } },
       include: {
-        patient: { select: { latitude: true, longitude: true, geoFenceRadiusMeters: true } },
+        patient: {
+          select: { firstName: true, lastName: true, latitude: true, longitude: true, geoFenceRadiusMeters: true },
+        },
+        staff: { select: { user: { select: { firstName: true, lastName: true } } } },
       },
     });
     if (!visit || !visit.staffId) throw new NotFoundException('Visit not found');

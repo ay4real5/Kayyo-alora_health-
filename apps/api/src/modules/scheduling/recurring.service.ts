@@ -201,7 +201,26 @@ export class RecurringService {
     return this.generateFor(caller, rule, until);
   }
 
-  private async generateFor(caller: AuthUser, rule: RuleRow, until?: string): Promise<GenerationResult> {
+  /**
+   * Nightly (D-041): keeps every active series booked 28 days ahead. Idempotent (unique rule+date), so a re-run or
+   * a second API instance running it at the same time only skips dates that already exist.
+   */
+  async extendAllActive(agencyIds?: string[]): Promise<{ rules: number; created: number; skipped: number }> {
+    const rules = await this.prisma.recurrenceRule.findMany({
+      where: { isActive: true, ...(agencyIds ? { agencyId: { in: agencyIds } } : {}) },
+      include: RULE_INCLUDE,
+    });
+    let created = 0;
+    let skipped = 0;
+    for (const rule of rules) {
+      const result = await this.generateFor({ agencyId: rule.agencyId, userId: null }, rule);
+      created += result.created.length;
+      skipped += result.skipped.length;
+    }
+    return { rules: rules.length, created, skipped };
+  }
+
+  private async generateFor(caller: JobCaller, rule: RuleRow, until?: string): Promise<GenerationResult> {
     const today = await this.agencyToday(caller);
     const dates = recurrenceDates(
       {
@@ -297,11 +316,14 @@ export class RecurringService {
     if (!exists) throw new BadRequestException('staffId does not match a staff member in this agency');
   }
 
-  private async agencyToday(caller: AuthUser): Promise<string> {
+  private async agencyToday(caller: Pick<AuthUser, 'agencyId'>): Promise<string> {
     const agency = await this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: { timezone: true } });
     return todayInTimeZone(agency.timezone);
   }
 }
+
+/** Who a generation run is for: a signed-in user, or the nightly job (no user). */
+type JobCaller = Pick<AuthUser, 'agencyId'> & { userId: string | null };
 
 function assertPattern(p: { startTime: string; endTime: string; startDate: string; endDate?: string }): void {
   if (p.endTime <= p.startTime) throw new BadRequestException('endTime must be after startTime');

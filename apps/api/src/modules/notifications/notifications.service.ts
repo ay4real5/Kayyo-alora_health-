@@ -3,6 +3,7 @@ import type { NotificationType } from '@alora/shared';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Paginated, type PaginationQueryDto } from '../../common/dto/pagination.dto.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { RealtimeService } from '../realtime/realtime.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 
 export interface NewNotification {
@@ -39,7 +40,10 @@ export interface NotificationView {
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtime: RealtimeService,
+  ) {}
 
   /** Never throws: a failed notification must not fail the action that triggered it. */
   async notify(notification: NewNotification): Promise<void> {
@@ -48,7 +52,7 @@ export class NotificationsService {
     );
     if (!recipients.length) return;
     try {
-      await this.prisma.notification.createMany({
+      const created = await this.prisma.notification.createManyAndReturn({
         data: recipients.map((userId) => ({
           agencyId: notification.agencyId,
           userId,
@@ -59,6 +63,8 @@ export class NotificationsService {
           channels: ['in_app'],
         })),
       });
+      // Live delivery to open apps (D-041); the inbox API remains the source of truth.
+      for (const row of created) this.realtime.toUser(row.userId, 'notification:new', toView(row));
     } catch (error) {
       this.logger.error(`Failed to create ${notification.type} notification`, (error as Error).stack);
     }
