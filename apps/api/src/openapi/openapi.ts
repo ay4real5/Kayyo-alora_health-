@@ -4,7 +4,6 @@ import { IS_PUBLIC_EXTENSION } from '../common/decorators/public.decorator.js';
 import { API_PREFIX } from '../config/api.constants.js';
 
 export const DOCS_PATH = `${API_PREFIX}/docs`;
-export const PORTAL_PATH_PREFIX = `/${API_PREFIX}/portal`;
 
 /**
  * The OpenAPI description of the API, generated from controllers and DTOs (the Nest Swagger compiler
@@ -44,20 +43,6 @@ function markPublicOperations(document: OpenAPIObject): void {
       }
     }
   }
-}
-
-/** Only the patient-portal endpoints — what the Base44 portal imports (DESIGN.md §3.3). */
-export function portalSubset(document: OpenAPIObject): OpenAPIObject {
-  const paths = Object.fromEntries(
-    Object.entries(document.paths).filter(
-      ([path]) => path.startsWith(PORTAL_PATH_PREFIX) || path === `/${API_PREFIX}/auth/login`,
-    ),
-  );
-  return {
-    ...document,
-    info: { ...document.info, title: 'Alora Health Patient Portal API' },
-    paths,
-  };
 }
 
 export function setupSwagger(app: INestApplication): void {

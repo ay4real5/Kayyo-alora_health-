@@ -104,7 +104,7 @@ Nothing.
 
 ## Next up
 
-**P3-15** retire `docs/base44-portal/` + the portal spec export, **P3-10** private-pay invoices, **P3-07** eligibility,
+**P3-10** private-pay invoices, **P3-07** eligibility,
 **P3-05** 837I, then Phase 4 (reports, payroll, compliance, EVV aggregator for Virginia after DMAS research). The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
@@ -117,6 +117,7 @@ Nothing.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P3-15 | Retired docs/base44-portal and the portal-only OpenAPI export. |
 | 2026-09-28 | Claude Code | P3-14, P3-16 | Portal API (7 e2e) + staff access panel + portal screens (browser test); fixed login race skipping forced password change. P3-13 merged. |
 | 2026-09-28 | Claude Code | P3-13 | Messaging API (7 e2e) + web page + demo threads; 25 browser tests pass. P3-12 merged. |
 | 2026-09-28 | Claude Code | P3-12 | Documents API (6 e2e) + web panel (1 browser test); P3-11 merged to main. |

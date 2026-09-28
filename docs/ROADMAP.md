@@ -75,7 +75,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-12** `agent` Documents: S3 upload/download (pre-signed), versions, e-sign. deps: P1-12
 - [x] **P3-13** `agent` Secure messaging API + `/messages` socket namespace. deps: P2-02
 - [x] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13
-- [ ] **P3-15** `agent` ~~Base44 docs~~ Not needed after D-044; instead retire `docs/base44-portal/` and the portal spec export once P3-16 ships. deps: P3-16
+- [x] **P3-15** `agent` ~~Base44 docs~~ Not needed after D-044; instead retire `docs/base44-portal/` and the portal spec export once P3-16 ships. deps: P3-16
 - [x] **P3-16** `agent` Build the patient portal screens in `apps/web` (own layout, `portal_user` only) — replaces the Base44 plan (D-044). deps: P3-14
 - [ ] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03
 - [ ] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12

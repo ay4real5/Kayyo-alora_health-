@@ -10,7 +10,7 @@ EDI 837/835, payroll, compliance and reporting.
 | Admin dashboard | `apps/web` | Next.js 16, React 19, Tailwind 4 | Phase 1 complete |
 | Shared types/rules | `packages/shared` | TypeScript | In use by both |
 | Caregiver app | `apps/mobile` | Expo SDK 57 + React Native | Sign-in, lock, today's visits (Phase 2 in progress) |
-| Patient portal | Base44 (outside this repo) | docs in `docs/base44-portal/` | Phase 3 (see OPEN_QUESTIONS Q-002) |
+| Patient portal | `apps/web` (`/portal`) | Next.js, own layout, `portal_user` only | Built (DECISIONS D-058) |
 
 ## What works today (Phase 1)
 
