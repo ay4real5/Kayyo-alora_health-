@@ -93,6 +93,11 @@ test('billing creates claims from ready visits, opens one and voids it', async (
     page.getByRole('table', { name: 'Claim lines' }).getByText('G0156').first(),
   ).toBeVisible();
 
+  // The demo agency and payer are complete, so the electronic claim file downloads.
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download 837P (preview)' }).click();
+  expect((await download).suggestedFilename()).toBe(`837P-${claimNumber}-preview.edi`);
+
   await page.getByLabel('Void reason').fill('Playwright test');
   page.once('dialog', (d) => void d.accept());
   await page.getByRole('button', { name: 'Void claim' }).click();

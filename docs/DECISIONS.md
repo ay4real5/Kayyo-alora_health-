@@ -831,3 +831,27 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   re-billing. Voiding/replacing a claim already sent (frequency 8/7) comes with submission (P3-09).
 - Web: **Create claims for ready visits** on Ready to bill, **Claims** list and claim page (lines, QA problems,
   re-check, void).
+
+### D-053 — EDI 837P generator, claim file preview, agency settings (P3-04)
+2026-09-28 · Claude Code
+- **Generator** (`billing/edi/edi-837p.ts`, ASC X12 005010X222A1) is pure: input object → text. Separators `*` `:`
+  `^` `~`, one segment per line. Loops: ISA/GS/ST, BHT, 1000A submitter + PER, 1000B receiver, 2000A/2010AA billing
+  provider (agency: NPI `XX`, N3/N4 with **ZIP+4**, `REF*EI` EIN), 2000B/2010BA subscriber = patient (SBR09 filing
+  indicator by payer type: Medicaid/MCO `MC`, Medicare `MB`, commercial `CI`, VA `VA`; member ID `MI`; DMG), 2010BB
+  payer (`PI`), 2300 `CLM` (place of service 12 home, qualifier B, frequency code; Y/A/Y/Y), `REF*G1` prior
+  authorization, `HI` ABK/ABF (ICD-10 without the dot), 2400 `LX`/`SV1` (HC:code:modifiers, charge, UN units,
+  diagnosis pointer 1)/`DTP*472`. No 2000C (patient is the subscriber for Medicaid/Medicare).
+- **Values are sanitised** to the X12 basic character set (upper-case, accents removed, separators replaced).
+- **Golden-file test**: fixed FAKE input → `__fixtures__/837p-basic.edi`, reviewed segment by segment. Re-generate only
+  after review with `UPDATE_GOLDEN=1 npx vitest run src/modules/billing/edi`. Plus SE count, ISA width, control
+  numbers, and validation tests.
+- `validate837` lists everything payers reject before building (NPI, 9-digit EIN, address, ZIP+4, submitter/receiver
+  IDs, payer ID, member ID, DOB, diagnoses, ≤50 lines, ≤12 diagnoses, private pay not e-billed).
+- `GET /billing/claims/:id/837` returns a **preview** — test indicator `T`, control number 1 — never a production
+  interchange; 422 `EDI_INCOMPLETE` with the list otherwise. Real control numbers, file storage, clearinghouse
+  submission and 999/277 acknowledgments come with P3-08/P3-09. 837I (Medicare home health) is not built.
+- **Agency settings** API (`GET/PATCH /agency`, `settings:read|update` — admins): name, NPI (check digit), EIN,
+  phone, address; timezone not editable. Payers gain `ediSubmitterId`/`ediReceiverId`. `IsNpi` moved to
+  `common/validators`. Web: **Agency settings** page; **Download 837P (preview)** on the claim page.
+- Virginia DMAS/MCO companion guides may require extra segments or values — check them with the clearinghouse
+  before production (D-044).

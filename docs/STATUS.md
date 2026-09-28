@@ -77,6 +77,7 @@
   amounts; `GET /billing/ready-to-bill` + web page. D-051.
 - **Claims (P3-03)**: claims from ready visits (per patient + payer, frozen snapshot, never double-billed), QA re-check,
   void; web claims list/detail. D-052.
+- **EDI 837P (P3-04)**: golden-tested generator, claim file preview with validation, agency settings, payer EDI IDs. D-053.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -90,20 +91,23 @@ Nothing.
 
 ## Next up
 
-**P3-04** X12 utilities + EDI 837P generator with golden-file tests (ISA/GS/ST envelopes, loops 2000A/B/C, 2300 CLM,
-2400 SV1; agency as billing provider; separators; segment counts; control numbers). No clearinghouse needed to build
-and test it (P3-08 account is the owner's). Also do P3-10 private-pay invoices and P3-11 clinical records while EDI
-is blocked on the clearinghouse. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+EDI submission needs the owner's clearinghouse account (P3-08). Meanwhile: **P3-06** EDI 835 parser + payment
+posting (golden-file tests, no account needed), **P3-10** private-pay invoices, **P3-11** clinical records (care plans,
+assessments, medications, orders), **P3-12** documents (needs S3 → can use local/dev storage behind an interface),
+P3-13 messaging, then the portal (P3-14/P3-16). The owner asked for autonomous work: go straight on, check in
+~every 4 hours.
 
 ## Blockers / waiting on human
 
 - Q-006 hosting (owner deferred; needed before P4-10). Google Maps key (owner will provide).
 - Q-009 background location during visits — default is no (D-049).
+- P3-08 clearinghouse account (Availity/Waystar etc.) + BAA — needed to actually submit claims.
 
 ## Session log
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P3-04 | 837P generator (golden file), preview endpoint, agency settings; 21 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-03 | Claims API + web; 3 e2e (incl. simultaneous billing) + 1 browser test; 21 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-02 | Pre-billing QA API + page; 6 unit + 1 e2e + 1 browser test; 20 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-01 | Payers/codes/rates/authorizations API + web; 4 API + 2 browser tests; 19 browser tests pass. |
