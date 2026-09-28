@@ -20,6 +20,8 @@ const CLINICAL_BASE: Permission[] = [
   'documents:read',
   'documents:create',
   'messages:use',
+  /** Anyone who sees an incident reports it (D-062); reviewing them needs compliance:read. */
+  'compliance:create',
 ];
 
 export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
@@ -101,6 +103,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'visit_notes:update',
     'vitals:create',
     'messages:use',
+    'compliance:create',
   ],
 
   medical_social_worker: [...CLINICAL_BASE, 'assessments:create', 'assessments:update'],
@@ -150,6 +153,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'documents:create',
     'documents:read',
     'notifications:create',
+    'compliance:create',
   ],
 
   /** Patients/family: only the /portal endpoints, which have their own own-data guard (P3-14). */

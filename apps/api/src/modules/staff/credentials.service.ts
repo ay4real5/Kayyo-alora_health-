@@ -78,7 +78,11 @@ export class CredentialsService {
       if (dto[key] !== undefined) (data as Record<string, unknown>)[key] = dto[key];
     }
     if (dto.issueDate !== undefined) data.issueDate = toDate(dto.issueDate);
-    if (dto.expiryDate !== undefined) data.expiryDate = toDate(dto.expiryDate);
+    if (dto.expiryDate !== undefined) {
+      data.expiryDate = toDate(dto.expiryDate);
+      // A renewed credential starts its expiry alerts again (D-062).
+      if (dto.expiryDate !== fromDate(existing.expiryDate)) data.expiryAlertStage = null;
+    }
     if (dto.verified !== undefined) {
       data.verifiedById = dto.verified ? caller.userId : null;
       data.verifiedAt = dto.verified ? new Date() : null;
