@@ -21,6 +21,8 @@ interface AuthContextValue {
   can(permission: string): boolean;
   /** Takes over the fresh tokens the API issues after a password change. */
   adoptTokens(tokens: SessionTokens): void;
+  /** The current access token, for the Socket.IO handshake only (sockets can't use the request helper). */
+  currentAccessToken(): string | null;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -162,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       request,
       can: (permission) => Boolean(user?.permissions.includes(permission)),
       adoptTokens: (tokens) => session.adopt(tokens),
+      currentAccessToken: () => session.accessToken,
     }),
     [status, user, idleWarning, login, verifyTwoFactor, logout, request, session],
   );

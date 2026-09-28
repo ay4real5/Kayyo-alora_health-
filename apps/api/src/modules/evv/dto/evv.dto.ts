@@ -76,6 +76,10 @@ export class ListEvvQueryDto extends PaginationQueryDto {
   staffId?: string;
 
   @IsOptional()
+  @IsUUID()
+  visitId?: string;
+
+  @IsOptional()
   @IsIn(['in_progress', 'completed', 'exception', 'verified', 'rejected'])
   status?: string;
 

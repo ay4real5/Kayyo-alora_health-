@@ -1,3 +1,5 @@
+import { EVV_FLAG_LABELS, type EvvFlag } from '@alora/shared';
+
 /** Human-readable labels for codes the API returns. */
 
 const ROLE_LABELS: Record<string, string> = {
@@ -35,4 +37,14 @@ export function formatTime(hhmm: string): string {
   const [h, m] = hhmm.split(':').map(Number);
   const suffix = h! >= 12 ? 'PM' : 'AM';
   return `${((h! + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
+/** EVV flag code → plain words ("Clocked in away from the home"). */
+export function flagLabel(flag: string): string {
+  return EVV_FLAG_LABELS[flag as EvvFlag] ?? flag;
+}
+
+/** An ISO instant → local clock time ("4:05 PM"), or a dash. */
+export function clockTime(value: string | null | undefined): string {
+  return value ? new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—';
 }

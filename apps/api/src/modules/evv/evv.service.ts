@@ -280,6 +280,7 @@ export class EvvService {
         query.from ? { serviceDate: { gte: toDate(query.from) } } : {},
         query.to ? { serviceDate: { lte: toDate(query.to) } } : {},
         query.staffId ? { staffId: query.staffId } : {},
+        query.visitId ? { visitId: query.visitId } : {},
         query.status ? { status: query.status } : {},
         query.needsReview
           ? { OR: [{ status: 'exception' }, { exceptions: { some: { status: 'pending' } } }] }
