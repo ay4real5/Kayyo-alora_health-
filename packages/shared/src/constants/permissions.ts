@@ -19,6 +19,8 @@ export const PERMISSION_CATALOGUE = {
   vitals: ['create'],
   evv: ['read', 'update', 'approve', 'export'],
   billing: ['create', 'read', 'update', 'submit', 'void', 'send'],
+  /** Patient service authorizations from payers (D-050): office and billing both manage them. */
+  authorizations: ['read', 'manage'],
   payroll: ['create', 'read', 'update', 'approve', 'export'],
   documents: ['create', 'read', 'delete', 'sign', 'send'],
   notifications: ['create'],

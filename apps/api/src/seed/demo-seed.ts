@@ -361,6 +361,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
     });
   }
   await prisma.visit.createMany({ data: visits });
+  const authorizations = await seedBilling(prisma, { today, patientIds, recurringPatientIds: patientIds.slice(0, 4) });
 
   // A typical aide checklist on every assigned aide visit (P2-04), so the caregiver app has something to tick off.
   const aideVisits = await prisma.visit.findMany({
@@ -392,6 +393,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       visits: visits.length,
       recurringSeries: recurringCount,
       evvRecords,
+      authorizations,
     },
   };
 }
@@ -515,6 +517,83 @@ async function seedEvvHistory(
   return created;
 }
 
+/**
+ * Billing setup for the demo (P3-01, D-050): fake payers (Medicaid requires authorizations), Virginia-style service
+ * codes with rates, every active patient on the demo Medicaid plan, and authorizations for the recurring aide series
+ * (their visits linked) plus one expiring soon.
+ */
+async function seedBilling(
+  prisma: PrismaClient,
+  opts: { today: string; patientIds: string[]; recurringPatientIds: string[] },
+): Promise<number> {
+  const medicaid = await prisma.payer.create({
+    data: { agencyId: DEMO_AGENCY_ID, name: 'Demo Medicaid (FAKE)', payerType: 'medicaid', payerIdCode: 'DEMOMCD', state: 'VA', requiresAuthorization: true },
+  });
+  const medicare = await prisma.payer.create({
+    data: { agencyId: DEMO_AGENCY_ID, name: 'Demo Medicare (FAKE)', payerType: 'medicare', payerIdCode: 'DEMOMCR' },
+  });
+  await prisma.payer.create({ data: { agencyId: DEMO_AGENCY_ID, name: 'Private pay', payerType: 'private_pay' } });
+
+  const codes = [
+    { code: 'G0156', description: 'Home health aide, each 15 minutes', unitType: 'unit_15min', rate: 7.5 },
+    { code: 'G0299', description: 'Skilled nursing (RN), each 15 minutes', unitType: 'unit_15min', rate: 42 },
+    { code: 'G0151', description: 'Physical therapy, each 15 minutes', unitType: 'unit_15min', rate: 45 },
+    { code: 'T1019', description: 'Personal care services, each 15 minutes', unitType: 'unit_15min', rate: 5.25 },
+  ];
+  const yearStart = `${opts.today.slice(0, 4)}-01-01`;
+  for (const c of codes) {
+    const code = await prisma.serviceCode.create({
+      data: { agencyId: DEMO_AGENCY_ID, code: c.code, codeType: 'hcpcs', description: c.description, unitType: c.unitType, defaultRate: c.rate },
+    });
+    for (const payer of [medicaid, medicare]) {
+      await prisma.payerRate.create({
+        data: { payerId: payer.id, serviceCodeId: code.id, rate: payer === medicare ? c.rate * 1.2 : c.rate, effectiveDate: toDate(yearStart)! },
+      });
+    }
+  }
+
+  await prisma.patient.updateMany({ where: { id: { in: opts.patientIds } }, data: { payerPrimaryId: medicaid.id } });
+
+  let created = 0;
+  for (const [n, patientId] of opts.recurringPatientIds.entries()) {
+    const start = addDays(opts.today, -30);
+    const end = addDays(opts.today, 60);
+    const auth = await prisma.authorization.create({
+      data: {
+        patientId,
+        payerId: medicaid.id,
+        authorizationNumber: `DEMO-AUTH-${1000 + n}`,
+        serviceCode: 'G0156',
+        startDate: toDate(start)!,
+        endDate: toDate(end)!,
+        authorizedVisits: 40,
+      },
+    });
+    await prisma.visit.updateMany({
+      where: { patientId, serviceCode: 'G0156', scheduledDate: { gte: toDate(start), lte: toDate(end) } },
+      data: { authorizationId: auth.id },
+    });
+    created++;
+  }
+  const soon = opts.patientIds[4];
+  if (soon) {
+    await prisma.authorization.create({
+      data: {
+        patientId: soon,
+        payerId: medicaid.id,
+        authorizationNumber: 'DEMO-AUTH-2000',
+        serviceCode: 'G0299',
+        startDate: toDate(addDays(opts.today, -80))!,
+        endDate: toDate(addDays(opts.today, 10))!,
+        authorizedHours: 24,
+        notes: 'Renewal requested (demo)',
+      },
+    });
+    created++;
+  }
+  return created;
+}
+
 /** Removes the demo agency and everything in it (children first, respecting foreign keys). */
 export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   const where = { agencyId: DEMO_AGENCY_ID };
@@ -523,7 +602,9 @@ export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   await prisma.evvRecord.deleteMany({ where }); // EVV exceptions cascade
   await prisma.visit.deleteMany({ where }); // notes, vitals, tasks cascade
   await prisma.recurrenceRule.deleteMany({ where });
-  await prisma.patient.deleteMany({ where }); // diagnoses, allergies cascade
+  await prisma.patient.deleteMany({ where }); // diagnoses, allergies, authorizations cascade
+  await prisma.payer.deleteMany({ where }); // rates cascade
+  await prisma.serviceCode.deleteMany({ where });
   await prisma.physician.deleteMany({ where });
   await prisma.user.deleteMany({ where }); // staff profiles, credentials, availability, tokens, roles-links cascade
   await prisma.role.deleteMany({ where });

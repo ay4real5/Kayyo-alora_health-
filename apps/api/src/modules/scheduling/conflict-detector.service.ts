@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { disciplineFits, OCCUPYING_VISIT_STATUSES, todayInTimeZone, type VisitType } from '@alora/shared';
 import { fromDate, fromTime, toDate, toTime } from '../../common/utils/dates.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { AuthorizationsService } from '../billing/authorizations.service.js';
 
 /**
  * blocking — the visit is not booked unless someone with visits:approve overrides.
@@ -20,6 +21,8 @@ export interface Conflict {
     | 'outside_availability'
     | 'discipline_mismatch'
     | 'staff_credentials_expired'
+    | 'authorization_missing'
+    | 'authorization_exhausted'
     | 'in_the_past';
   severity: ConflictSeverity;
   message: string;
@@ -35,6 +38,8 @@ export interface ProposedVisit {
   scheduledDate: string;
   scheduledStart: string;
   scheduledEnd: string;
+  /** Billing code (e.g. G0156); drives the authorization checks (D-050). */
+  serviceCode?: string | null;
   excludeVisitId?: string;
 }
 
@@ -44,7 +49,10 @@ export interface ProposedVisit {
  */
 @Injectable()
 export class ConflictDetectorService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authorizations: AuthorizationsService,
+  ) {}
 
   async check(visit: ProposedVisit): Promise<Conflict[]> {
     const conflicts: Conflict[] = [];
@@ -70,6 +78,24 @@ export class ConflictDetectorService {
         severity: 'warning',
         message: `The visit is before the patient's admission on ${fromDate(patient.admissionDate)}`,
       });
+    }
+
+    if (visit.serviceCode) {
+      // Warnings, not blocks: the office may be waiting on a renewal from the payer (D-050).
+      const auth = await this.authorizations.match(visit);
+      if (auth.required && !auth.authorizationId) {
+        conflicts.push({
+          code: 'authorization_missing',
+          severity: 'warning',
+          message: `No active authorization covers ${visit.serviceCode} on this date`,
+        });
+      } else if (auth.authorizationId && ((auth.remainingVisits ?? 0) < 0 || (auth.remainingHours ?? 0) < 0)) {
+        conflicts.push({
+          code: 'authorization_exhausted',
+          severity: 'warning',
+          message: 'This visit goes beyond the authorized visits or hours',
+        });
+      }
     }
 
     if (visit.staffId) conflicts.push(...(await this.staffConflicts(visit, date)));

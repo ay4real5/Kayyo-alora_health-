@@ -1430,6 +1430,310 @@
           "status"
         ]
       },
+      "PayerDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "payerType": {
+            "type": "string",
+            "enum": [
+              "medicare",
+              "medicaid",
+              "medicaid_mco",
+              "commercial",
+              "va",
+              "private_pay",
+              "other"
+            ]
+          },
+          "payerIdCode": {
+            "type": "string",
+            "description": "The payer's ID for electronic claims (clearinghouse payer ID).",
+            "maxLength": 50
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "timelyFilingDays": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 3650
+          },
+          "requiresAuthorization": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "payerType"
+        ]
+      },
+      "UpdatePayerDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "payerType": {
+            "type": "string",
+            "enum": [
+              "medicare",
+              "medicaid",
+              "medicaid_mco",
+              "commercial",
+              "va",
+              "private_pay",
+              "other"
+            ]
+          },
+          "payerIdCode": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "timelyFilingDays": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 3650
+          },
+          "requiresAuthorization": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PayerRateDto": {
+        "type": "object",
+        "properties": {
+          "serviceCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "effectiveDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "modifier1": {
+            "type": "string"
+          },
+          "modifier2": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "serviceCodeId",
+          "rate",
+          "effectiveDate"
+        ]
+      },
+      "EndPayerRateDto": {
+        "type": "object",
+        "properties": {
+          "endDate": {
+            "type": "string",
+            "description": "Last day the rate applies (a new rate can start the next day)."
+          }
+        },
+        "required": [
+          "endDate"
+        ]
+      },
+      "ServiceCodeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{3,10}$"
+          },
+          "codeType": {
+            "type": "string",
+            "enum": [
+              "hcpcs",
+              "cpt",
+              "revenue"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "defaultRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "unitType": {
+            "type": "string",
+            "enum": [
+              "visit",
+              "hour",
+              "unit_15min",
+              "day"
+            ]
+          },
+          "requiresAuth": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "codeType",
+          "unitType"
+        ]
+      },
+      "UpdateServiceCodeDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "defaultRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "unitType": {
+            "type": "string",
+            "enum": [
+              "visit",
+              "hour",
+              "unit_15min",
+              "day"
+            ]
+          },
+          "requiresAuth": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AuthorizationDto": {
+        "type": "object",
+        "properties": {
+          "payerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorizationNumber": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "serviceCode": {
+            "type": "string",
+            "description": "The service code it covers; leave out for \"any service from this payer\".",
+            "maxLength": 20
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "authorizedVisits": {
+            "type": "number",
+            "description": "Visits allowed; with authorizedHours, either or both.",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "authorizedHours": {
+            "type": "number",
+            "minimum": 0.25,
+            "maximum": 100000
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "payerId",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "UpdateAuthorizationDto": {
+        "type": "object",
+        "properties": {
+          "authorizationNumber": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "authorizedVisits": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "authorizedHours": {
+            "type": "number",
+            "minimum": 0.25,
+            "maximum": 100000
+          },
+          "status": {
+            "type": "string",
+            "description": "Cancelled authorizations are kept for history but no longer cover visits.",
+            "enum": [
+              "active",
+              "cancelled"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
       "ClockDto": {
         "type": "object",
         "properties": {
