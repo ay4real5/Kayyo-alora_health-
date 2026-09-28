@@ -56,6 +56,8 @@ model Agency {
   payments        Payment[]
   swapRequests    ShiftSwapRequest[]
   notifications   Notification[]
+  conversations   Conversation[]
+  messages        Message[]
 
   @@map("agencies")
 }
@@ -119,6 +121,10 @@ model User {
   assessmentsReviewed Assessment[]     @relation("AssessmentQaReviewer")
 
   documentsDeleted Document[] @relation("DocumentDeletedBy")
+
+  conversationsStarted Conversation[]            @relation("ConversationCreatedBy")
+  conversations        ConversationParticipant[]
+  messagesSent         Message[]                 @relation("MessageSender")
 
   @@index([agencyId])
   @@map("users")
@@ -295,6 +301,7 @@ model Patient {
   physicianOrders PhysicianOrder[]
   carePlans       CarePlan[]
   assessments     Assessment[]
+  conversations   Conversation[]
 
   @@unique([agencyId, mrn])
   @@index([agencyId])
@@ -1001,6 +1008,7 @@ model Document {
   previousVersion Document?         @relation("DocumentVersions", fields: [previousVersionId], references: [id])
   nextVersion     Document?         @relation("DocumentVersions")
   deletedBy       User?             @relation("DocumentDeletedBy", fields: [deletedById], references: [id])
+  messages        Message[]
 
   @@index([patientId])
   @@index([agencyId, documentType])
@@ -1284,4 +1292,66 @@ model EvvException {
 
   @@index([evvRecordId])
   @@map("evv_exceptions")
+}
+
+/// Secure messaging (DECISIONS D-057). A conversation between agency users, optionally about one patient.
+model Conversation {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId      String    @map("agency_id") @db.Uuid
+  /// direct (two people) | group
+  type          String    @default("direct") @db.VarChar(20)
+  subject       String?   @db.VarChar(255)
+  patientId     String?   @map("patient_id") @db.Uuid
+  createdById   String    @map("created_by") @db.Uuid
+  lastMessageAt DateTime? @map("last_message_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency       Agency                    @relation(fields: [agencyId], references: [id])
+  patient      Patient?                  @relation(fields: [patientId], references: [id])
+  createdBy    User                      @relation("ConversationCreatedBy", fields: [createdById], references: [id])
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([agencyId, lastMessageAt(sort: Desc)])
+  @@index([patientId])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId String    @map("conversation_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  joinedAt       DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  lastReadAt     DateTime? @map("last_read_at") @db.Timestamptz(6)
+  /// Set when the person leaves a group; they keep read access to what was said before.
+  leftAt         DateTime? @map("left_at") @db.Timestamptz(6)
+  isMuted        Boolean   @default(false) @map("is_muted")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+/// Message text is PHI: stored encrypted, bound to the message ID (PhiCryptoService.encryptBytes).
+model Message {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId         String   @map("agency_id") @db.Uuid
+  conversationId   String   @map("conversation_id") @db.Uuid
+  senderId         String   @map("sender_id") @db.Uuid
+  contentEncrypted Bytes    @map("content_encrypted")
+  isUrgent         Boolean  @default(false) @map("is_urgent")
+  /// An attached document (already uploaded through /documents).
+  documentId       String?  @map("document_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency       Agency       @relation(fields: [agencyId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id])
+  document     Document?    @relation(fields: [documentId], references: [id])
+
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@map("messages")
 }
