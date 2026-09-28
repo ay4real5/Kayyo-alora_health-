@@ -53,3 +53,20 @@ test('the office sees authorization usage and adds an authorization', async ({ p
   await expect(auths).toContainText('PW-NEW-1');
   await expect(auths).toContainText('0 used + 0 booked of 20 hours');
 });
+
+test('pre-billing QA shows ready visits and what blocks the rest', async ({ page }) => {
+  await signIn(page, 'billing.staff@demo.alora.test');
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Ready to bill' })
+    .click();
+  const summary = page.getByRole('region', { name: 'Summary' });
+  await expect(summary).toBeVisible();
+  // Demo data: verified EVV + submitted notes two days ago are ready; the flagged ones from yesterday aren't.
+  const table = page.getByRole('table');
+  await expect(table.getByText('Ready', { exact: true }).first()).toBeVisible();
+  await expect(table.getByText('EVV needs a supervisor to verify it').first()).toBeVisible();
+  await page.getByLabel('Show').selectOption('true');
+  await expect(table.getByText('Blocked', { exact: true })).toHaveCount(0);
+  await expect(table.getByText('Ready', { exact: true }).first()).toBeVisible();
+});

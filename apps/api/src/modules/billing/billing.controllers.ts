@@ -4,6 +4,7 @@ import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { AuthorizationsService } from './authorizations.service.js';
+import { BillingReadinessService } from './billing-readiness.service.js';
 import { BillingSetupService } from './billing-setup.service.js';
 import {
   AuthorizationDto,
@@ -11,6 +12,7 @@ import {
   ListActiveQueryDto,
   PayerDto,
   PayerRateDto,
+  ReadinessQueryDto,
   ServiceCodeDto,
   UpdateAuthorizationDto,
   UpdatePayerDto,
@@ -26,7 +28,10 @@ const uuid = () => new ParseUUIDPipe();
 @ApiTags('billing')
 @Controller('billing')
 export class BillingSetupController {
-  constructor(private readonly setup: BillingSetupService) {}
+  constructor(
+    private readonly setup: BillingSetupService,
+    private readonly readiness: BillingReadinessService,
+  ) {}
 
   @Permissions('authorizations:read')
   @Get('payers')
@@ -86,6 +91,17 @@ export class BillingSetupController {
     @Body() dto: EndPayerRateDto,
   ) {
     return this.setup.endRate(caller, id, dto);
+  }
+
+  /**
+   * Pre-billing QA: completed visits with every check (EVV verified, note final, authorization, rate, IDs…), units,
+   * rate and amount, plus a summary of what blocks the rest (D-051).
+   */
+  @Permissions('billing:read')
+  @Audit({ action: 'VIEW_BILLING_READINESS', resourceType: 'billing' })
+  @Get('ready-to-bill')
+  readyToBill(@CurrentUser() caller: AuthUser, @Query() query: ReadinessQueryDto) {
+    return this.readiness.list(caller, query);
   }
 
   @Permissions('authorizations:read')

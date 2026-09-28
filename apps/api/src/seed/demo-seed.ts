@@ -117,6 +117,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
     data: {
       id: DEMO_AGENCY_ID,
       name: 'Demo Home Health (FAKE DATA)',
+      npi: makeNpi(188_888_888),
       phone: '555-010-0100',
       email: `office@${DEMO_EMAIL_DOMAIN}`,
       addressLine1: '100 Demo Plaza',
@@ -246,6 +247,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       data: {
         agencyId: DEMO_AGENCY_ID,
         mrn: `DEMO-${String(i).padStart(4, '0')}`,
+        medicaidId: `DEMO${String(i).padStart(8, '0')}`,
         firstName: rand.pick(FIRST),
         lastName: rand.pick(LAST),
         dateOfBirth: toDate(`19${rand.int(28, 60)}-${String(rand.int(1, 12)).padStart(2, '0')}-${String(rand.int(1, 28)).padStart(2, '0')}`)!,
@@ -361,7 +363,12 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
     });
   }
   await prisma.visit.createMany({ data: visits });
-  const authorizations = await seedBilling(prisma, { today, patientIds, recurringPatientIds: patientIds.slice(0, 4) });
+  const authorizations = await seedBilling(prisma, {
+    today,
+    patientIds,
+    recurringPatientIds: patientIds.slice(0, 4),
+    evvPatientIds: patientIds.slice(14, 20),
+  });
 
   // A typical aide checklist on every assigned aide visit (P2-04), so the caregiver app has something to tick off.
   const aideVisits = await prisma.visit.findMany({
@@ -430,11 +437,16 @@ async function seedEvvHistory(
     const home = { lat: Number(p.patient.latitude), lng: Number(p.patient.longitude) };
     const lat = home.lat + (p.offsetLat ?? 0.0001);
     const distance = Math.round(Math.abs(lat - home.lat) * 111_195);
+    const authorization = await prisma.authorization.findFirst({
+      where: { patientId: p.patient.id, serviceCode: 'G0156', status: 'active' },
+      select: { id: true },
+    });
     const visit = await prisma.visit.create({
       data: {
         agencyId: DEMO_AGENCY_ID,
         patientId: p.patient.id,
         staffId: p.staffId,
+        authorizationId: authorization?.id ?? null,
         visitType: 'home_health_aide',
         serviceCode: 'G0156',
         status: p.clockOut ? 'completed' : 'in_progress',
@@ -471,6 +483,20 @@ async function seedEvvHistory(
         deviceId: 'demo-device',
       },
     });
+    if (p.clockOut) {
+      const author = await prisma.staffProfile.findUniqueOrThrow({ where: { id: p.staffId }, select: { userId: true } });
+      await prisma.visitNote.create({
+        data: {
+          visitId: visit.id,
+          staffId: p.staffId,
+          authorId: author.userId,
+          noteType: 'aide_activity',
+          narrative: 'Assisted with bathing and lunch; patient in good spirits. (demo)',
+          status: 'submitted',
+          submittedAt: p.clockOut,
+        },
+      });
+    }
     created++;
   };
 
@@ -524,7 +550,7 @@ async function seedEvvHistory(
  */
 async function seedBilling(
   prisma: PrismaClient,
-  opts: { today: string; patientIds: string[]; recurringPatientIds: string[] },
+  opts: { today: string; patientIds: string[]; recurringPatientIds: string[]; evvPatientIds: string[] },
 ): Promise<number> {
   const medicaid = await prisma.payer.create({
     data: { agencyId: DEMO_AGENCY_ID, name: 'Demo Medicaid (FAKE)', payerType: 'medicaid', payerIdCode: 'DEMOMCD', state: 'VA', requiresAuthorization: true },
@@ -572,6 +598,21 @@ async function seedBilling(
     await prisma.visit.updateMany({
       where: { patientId, serviceCode: 'G0156', scheduledDate: { gte: toDate(start), lte: toDate(end) } },
       data: { authorizationId: auth.id },
+    });
+    created++;
+  }
+  // The EVV-history patients (seedEvvHistory links their visits) — so some past visits are ready to bill.
+  for (const [n, patientId] of opts.evvPatientIds.entries()) {
+    await prisma.authorization.create({
+      data: {
+        patientId,
+        payerId: medicaid.id,
+        authorizationNumber: `DEMO-AUTH-${3000 + n}`,
+        serviceCode: 'G0156',
+        startDate: toDate(addDays(opts.today, -14))!,
+        endDate: toDate(addDays(opts.today, 45))!,
+        authorizedVisits: 30,
+      },
     });
     created++;
   }

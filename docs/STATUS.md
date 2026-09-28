@@ -73,6 +73,8 @@
 - **Clock-out reminders (P2-10)**: no background tracking (D-049, Q-009); local "remember to clock out" reminder.
 - **Billing setup + authorizations (P3-01)**: payers, service codes, non-overlapping rates; authorizations with usage
   from linked visits; scheduling warns when missing/used up; web billing setup + patient panel. D-050.
+- **Pre-billing QA (P3-02)**: per-visit readiness (EVV, note, authorization, rate, IDs, NPI, timely filing), units and
+  amounts; `GET /billing/ready-to-bill` + web page. D-051.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -86,9 +88,10 @@ Nothing.
 
 ## Next up
 
-**P3-02** pre-billing QA engine (which completed visits are ready to bill: EVV verified, notes finalised, authorization
-covers it, rate exists, payer/patient IDs present — a checklist per visit with reasons), then P3-03 claims from verified
-visits. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+**P3-03** claims from ready visits: group ready visits per patient + payer + billing period into a draft claim with
+lines (units, charges from D-051), claim number, statuses draft → ready → submitted…; a visit is billed once (claim
+line references the visit); void/rebill later. Then P3-04 X12 837P generator with golden-file tests. The owner asked
+for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -99,6 +102,7 @@ visits. The owner asked for autonomous work: go straight on, check in ~every 4 h
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P3-02 | Pre-billing QA API + page; 6 unit + 1 e2e + 1 browser test; 20 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-01 | Payers/codes/rates/authorizations API + web; 4 API + 2 browser tests; 19 browser tests pass. |
 | 2026-09-28 | Claude Code | P2-10 | No background tracking (Q-009); local clock-out reminders; 26 unit tests; bundles. |
 | 2026-09-28 | Claude Code | P2-09 | Mobile offline queue + encrypted cache; 23 unit tests; bundles. |

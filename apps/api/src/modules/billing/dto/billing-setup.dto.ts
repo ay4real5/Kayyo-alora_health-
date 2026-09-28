@@ -340,3 +340,25 @@ export class UpdateAuthorizationDto {
   @MaxLength(2000)
   notes?: string;
 }
+
+export class ReadinessQueryDto extends PaginationQueryDto {
+  /** Service dates from (default: 30 days before `to`). */
+  @IsOptional()
+  @IsDateOnly()
+  from?: string;
+
+  /** Service dates to (default: today). */
+  @IsOptional()
+  @IsDateOnly()
+  to?: string;
+
+  @IsOptional()
+  @IsUUID()
+  payerId?: string;
+
+  /** true = only ready visits, false = only blocked ones; leave out for both. */
+  @IsOptional()
+  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+  @IsBoolean()
+  readyOnly?: boolean;
+}
