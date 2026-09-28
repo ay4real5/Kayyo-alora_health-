@@ -7,6 +7,8 @@ export interface Me {
   firstName: string;
   lastName: string;
   is2faEnabled: boolean;
+  /** The user's role requires 2FA (D-045). */
+  is2faRequired: boolean;
   /** IANA timezone of the agency — use it (not the browser clock) for "today". */
   agencyTimezone: string;
   recoveryCodesRemaining: number | null;
@@ -20,6 +22,8 @@ export interface SessionTokens {
   accessTokenExpiresIn: number;
   refreshTokenExpiresAt: string;
   mustChangePassword?: boolean;
+  /** 2FA is required for this role and not on yet: only setup works until it is (D-045). */
+  mustEnable2fa?: boolean;
 }
 
 export interface TwoFactorChallenge {
@@ -29,5 +33,5 @@ export interface TwoFactorChallenge {
 }
 
 export type LoginOutcome =
-  | { kind: 'signed-in'; mustChangePassword: boolean }
+  | { kind: 'signed-in'; mustChangePassword: boolean; mustEnable2fa: boolean }
   | { kind: 'two-factor'; twoFactorToken: string };

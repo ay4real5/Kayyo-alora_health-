@@ -13,6 +13,7 @@ import { VisitMonitorService } from '../src/modules/jobs/visit-monitor.service.j
 import { NotificationsService } from '../src/modules/notifications/notifications.service.js';
 import { RecurringService } from '../src/modules/scheduling/recurring.service.js';
 import { setupApp } from '../src/setup-app.js';
+import { loginForTests } from './login-helper.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const PASSWORD = 'Correct-Horse-9!';
@@ -97,9 +98,7 @@ describe.skipIf(!hasDb)('Real-time and background jobs (e2e)', () => {
         userRoles: { create: { roleId: role.id } },
       },
     });
-    const { accessToken } = (
-      await http().post('/api/v1/auth/login').send({ email, password: PASSWORD })
-    ).body.data;
+    const accessToken = await loginForTests(http(), email, PASSWORD);
     return { id: user.id, token: accessToken as string };
   }
 

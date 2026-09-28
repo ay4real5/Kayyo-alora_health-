@@ -29,7 +29,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P1-10** `agent` Swagger/OpenAPI at `/api/v1/docs` + script exporting portal-only spec to `docs/base44-portal/openapi-portal-spec.json`. deps: P1-04
 - [x] **P1-11** `agent` Users module: admin CRUD, deactivate/reactivate, unlock, admin 2FA reset, role assignment without privilege escalation, user activity. deps: P1-08, P1-09
 - [x] **P1-11b** `agent` 2FA recovery codes (one-time, hashed, usable at login). deps: P1-11
-- [ ] **P1-11c** `agent` Enforce mandatory 2FA for the roles the owner picks (Q-008). deps: Q-008
+- [x] **P1-11c** `agent` Enforce mandatory 2FA for the roles the owner picks (Q-008). deps: Q-008
 - [x] **P1-12** `agent` Patients module: list/search, admit, get, update, discharge/readmit, diagnoses, allergies; encrypted SSN; record-level access (field staff see only their patients). deps: P1-08, P1-09
 - [x] **P1-12b** `agent` Physicians directory (CRUD, NPI validation) — referenced by patients, orders, care plans. deps: P1-12
 - [x] **P1-13** `agent` Staff module: CRUD, credentials, availability, time-off, expiring-credentials. deps: P1-08, P1-09
@@ -75,8 +75,8 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P3-12** `agent` Documents: S3 upload/download (pre-signed), versions, e-sign. deps: P1-12
 - [ ] **P3-13** `agent` Secure messaging API + `/messages` socket namespace. deps: P2-02
 - [ ] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13
-- [ ] **P3-15** `agent` Write `docs/base44-portal/` (screen prompts, integration notes, regenerated spec). deps: P3-14
-- [ ] **P3-16** `base44` Build the 7 portal screens in Base44 using `docs/base44-portal/`. deps: P3-15, Q-002 resolved
+- [ ] **P3-15** `agent` ~~Base44 docs~~ Not needed after D-044; instead retire `docs/base44-portal/` and the portal spec export once P3-16 ships. deps: P3-16
+- [ ] **P3-16** `agent` Build the patient portal screens in `apps/web` (own layout, `portal_user` only) — replaces the Base44 plan (D-044). deps: P3-14
 - [ ] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03
 - [ ] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12
 - [ ] **P3-19** `agent` Email channel (SendGrid). deps: P2-12

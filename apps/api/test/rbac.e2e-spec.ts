@@ -12,6 +12,7 @@ import { PasswordService } from '../src/modules/auth/password.service.js';
 import { PermissionsService } from '../src/modules/rbac/permissions.service.js';
 import { RbacSyncService } from '../src/modules/rbac/rbac-sync.service.js';
 import { setupApp } from '../src/setup-app.js';
+import { loginForTests } from './login-helper.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const PASSWORD = 'Correct-Horse-9!';
@@ -94,7 +95,7 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
         userRoles: { create: roleIds.map((roleId) => ({ roleId })) },
       },
     });
-    const { accessToken } = (await http().post('/api/v1/auth/login').send({ email, password: PASSWORD })).body.data;
+    const accessToken = await loginForTests(http(), email, PASSWORD);
     return { id: user.id, auth: { Authorization: `Bearer ${accessToken}` } };
   }
 

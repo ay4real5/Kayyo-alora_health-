@@ -6,7 +6,8 @@ import { AppModule } from '../src/app.module.js';
 import { PhiContext, PhiCryptoService } from '../src/common/crypto/phi-crypto.service.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { RbacSyncService } from '../src/modules/rbac/rbac-sync.service.js';
-import { DEFAULT_DEMO_PASSWORD, DEMO_AGENCY_ID, runDemoSeed } from '../src/seed/demo-seed.js';
+import { base32Decode, timeStep, totpAt } from '../src/modules/auth/two-factor/totp.js';
+import { DEFAULT_DEMO_PASSWORD, DEMO_AGENCY_ID, DEMO_TOTP_SECRET, runDemoSeed } from '../src/seed/demo-seed.js';
 import { setupApp } from '../src/setup-app.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
@@ -18,10 +19,16 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   const http = () => request(app.getHttpServer());
-  const login = async (email: string) =>
-    ({
-      Authorization: `Bearer ${(await http().post('/api/v1/auth/login').send({ email, password: DEFAULT_DEMO_PASSWORD }).expect(200)).body.data.accessToken}`,
-    });
+  /** Demo admins have 2FA on with the demo key (D-045): answer the code prompt like an authenticator app would. */
+  const login = async (email: string) => {
+    let data = (await http().post('/api/v1/auth/login').send({ email, password: DEFAULT_DEMO_PASSWORD }).expect(200)).body.data;
+    if (data.requires2FA) {
+      const code = totpAt(base32Decode(DEMO_TOTP_SECRET), timeStep());
+      data = (await http().post('/api/v1/auth/2fa/verify').send({ twoFactorToken: data.twoFactorToken, code }).expect(200)).body.data;
+    }
+    expect(data.mustEnable2fa).toBe(false);
+    return { Authorization: `Bearer ${data.accessToken}` };
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -35,6 +42,8 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
     // Re-running over an existing demo agency also proves the seed is idempotent.
     await runDemoSeed(prisma, {
       syncRoles: () => app.get(RbacSyncService).sync(),
+      encryptTwoFaSecret: (base32) =>
+        Buffer.from(crypto.encrypt(base32, PhiContext.UserTwoFaSecret)).toString('base64'),
       encryptSsn: (ssn, kind) => crypto.encrypt(ssn, kind === 'patient' ? PhiContext.PatientSsn : PhiContext.StaffSsn),
     });
   }, 300_000);
@@ -78,5 +87,7 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
     expect(rnPatients.body.meta.total).toBeLessThan(30);
 
     await login('billing.staff@demo.alora.test');
+    // Admins have 2FA on; nobody else is forced.
+    expect(await prisma.user.count({ where: { agencyId: DEMO_AGENCY_ID, is2faEnabled: true } })).toBe(2);
   });
 });

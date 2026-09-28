@@ -1,3 +1,4 @@
+import { twoFactorPolicy } from './two-factor/two-factor-policy.js';
 import {
   BadRequestException,
   ForbiddenException,
@@ -40,6 +41,8 @@ export interface MeResult {
   firstName: string;
   lastName: string;
   is2faEnabled: boolean;
+  /** The user's role requires 2FA (D-045); if it's off, only 2FA setup works until it's on. */
+  is2faRequired: boolean;
   /** IANA timezone of the user's agency, e.g. America/Chicago — clients use it for "today". */
   agencyTimezone: string;
   /** Unused backup codes, when 2FA is on — clients should warn when this gets low. */
@@ -221,6 +224,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       is2faEnabled: user.is2faEnabled,
+      is2faRequired: (await twoFactorPolicy(this.prisma, user.id)).mandatory,
       agencyTimezone: user.agency.timezone,
       recoveryCodesRemaining: user.is2faEnabled ? await this.twoFactor.remainingRecoveryCodes(user.id) : null,
       roles: access.roles,

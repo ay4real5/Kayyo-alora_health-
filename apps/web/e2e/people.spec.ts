@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { answerTwoFactor } from './two-factor';
 
 const PASSWORD = 'Demo-Password-1!';
 
@@ -7,6 +8,7 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
+  if (email.startsWith('agency.admin@')) await answerTwoFactor(page); // admins must use 2FA (D-045)
   await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
 }
 
