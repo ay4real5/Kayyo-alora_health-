@@ -64,7 +64,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-01** `agent` Payers, service codes, payer rates; patient authorizations (moved from P1-12, needs payers). deps: P1-12
 - [x] **P3-02** `agent` Pre-billing QA engine. deps: P3-01, P2-01
 - [x] **P3-03** `agent` Claim creation from verified visits + claim lines. deps: P3-02
-- [ ] **P3-04** `agent` X12 utils + EDI 837P generator with golden-file tests. deps: P3-03
+- [x] **P3-04** `agent` X12 utils + EDI 837P generator with golden-file tests. deps: P3-03
 - [ ] **P3-05** `agent` EDI 837I generator. deps: P3-04
 - [ ] **P3-06** `agent` EDI 835 parser + payment posting/reconciliation. deps: P3-04
 - [ ] **P3-07** `agent` EDI 270/271 eligibility. deps: P3-04

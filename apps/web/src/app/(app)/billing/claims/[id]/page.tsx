@@ -25,6 +25,18 @@ export default function ClaimPage() {
   });
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['billing'] });
   const qa = useMutation({ mutationFn: () => request(`/billing/claims/${id}/qa`, { method: 'POST' }), onSuccess: refresh });
+  const edi = useMutation({
+    mutationFn: async () => (await request<{ fileName: string; content: string }>(`/billing/claims/${id}/837`)).data,
+    onSuccess: (file) => {
+      // Built in the browser from the API's text — nothing is stored on a server.
+      const url = URL.createObjectURL(new Blob([file.content], { type: 'text/plain' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  });
   const voidClaim = useMutation({
     mutationFn: () => request(`/billing/claims/${id}/void`, { method: 'POST', body: { reason } }),
     onSuccess: refresh,
@@ -117,6 +129,20 @@ export default function ClaimPage() {
           </tbody>
         </table>
       </Card>
+
+      {c.status !== 'void' && c.claimType === '837P' && (
+        <Card className="flex flex-col gap-2 p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="secondary" onClick={() => edi.mutate()} disabled={edi.isPending}>
+              Download 837P (preview)
+            </Button>
+            <span className="text-xs text-slate-500">
+              Electronic claim file with the test indicator — for checking, or a clearinghouse test channel.
+            </span>
+          </div>
+          <ErrorAlert error={edi.error} />
+        </Card>
+      )}
 
       {open && (
         <Card className="flex flex-col gap-3 p-4">

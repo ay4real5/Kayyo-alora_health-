@@ -78,6 +78,19 @@ export class PayerDto {
   @Matches(PHONE)
   phone?: string;
 
+  /** Interchange IDs agreed with the clearinghouse (ISA06/ISA08) for electronic claims. */
+  @IsOptional()
+  @Transform(upperTrimmed)
+  @IsString()
+  @MaxLength(15)
+  ediSubmitterId?: string;
+
+  @IsOptional()
+  @Transform(upperTrimmed)
+  @IsString()
+  @MaxLength(15)
+  ediReceiverId?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -136,6 +149,19 @@ export class UpdatePayerDto implements Partial<PayerDto> {
   @IsOptional()
   @Matches(PHONE)
   phone?: string;
+
+  /** Interchange IDs agreed with the clearinghouse (ISA06/ISA08) for electronic claims. */
+  @IsOptional()
+  @Transform(upperTrimmed)
+  @IsString()
+  @MaxLength(15)
+  ediSubmitterId?: string;
+
+  @IsOptional()
+  @Transform(upperTrimmed)
+  @IsString()
+  @MaxLength(15)
+  ediReceiverId?: string;
 
   @IsOptional()
   @Type(() => Number)

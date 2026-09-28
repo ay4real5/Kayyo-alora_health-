@@ -118,12 +118,13 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       id: DEMO_AGENCY_ID,
       name: 'Demo Home Health (FAKE DATA)',
       npi: makeNpi(188_888_888),
+      taxId: '99-0000001',
       phone: '555-010-0100',
       email: `office@${DEMO_EMAIL_DOMAIN}`,
       addressLine1: '100 Demo Plaza',
       city: 'Springfield',
       state: 'IL',
-      zip: '62701',
+      zip: '62701-1234',
       timezone,
     },
   });
@@ -553,7 +554,16 @@ async function seedBilling(
   opts: { today: string; patientIds: string[]; recurringPatientIds: string[]; evvPatientIds: string[] },
 ): Promise<number> {
   const medicaid = await prisma.payer.create({
-    data: { agencyId: DEMO_AGENCY_ID, name: 'Demo Medicaid (FAKE)', payerType: 'medicaid', payerIdCode: 'DEMOMCD', state: 'VA', requiresAuthorization: true },
+    data: {
+      agencyId: DEMO_AGENCY_ID,
+      name: 'Demo Medicaid (FAKE)',
+      payerType: 'medicaid',
+      payerIdCode: 'DEMOMCD',
+      ediSubmitterId: 'DEMOSUB01',
+      ediReceiverId: 'DEMOCLEAR',
+      state: 'VA',
+      requiresAuthorization: true,
+    },
   });
   const medicare = await prisma.payer.create({
     data: { agencyId: DEMO_AGENCY_ID, name: 'Demo Medicare (FAKE)', payerType: 'medicare', payerIdCode: 'DEMOMCR' },

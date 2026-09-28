@@ -11,4 +11,5 @@ export const NAVIGATION = [
   { href: '/billing/claims', label: 'Claims', permission: 'billing:read' },
   { href: '/billing/setup', label: 'Billing setup', permission: 'billing:read' },
   { href: '/users', label: 'Users', permission: 'users:read' },
+  { href: '/settings/agency', label: 'Agency settings', permission: 'settings:read' },
 ] as const;

@@ -327,4 +327,68 @@ describe.skipIf(!hasDb)('Claims (e2e)', () => {
     const list = await http().get('/api/v1/billing/claims?status=void').set(billing).expect(200);
     expect(list.body.data.map((c: { id: string }) => c.id)).toContain(claim.id);
   });
+
+  it('makes an 837P preview once the agency and payer details are complete', async () => {
+    const v = await visit(addDays(day, 5), '08:00', '09:00');
+    const claim = (
+      await http()
+        .post('/api/v1/billing/claims')
+        .set(billing)
+        .send({ visitIds: [v] })
+        .expect(201)
+    ).body.data.created[0];
+
+    const incomplete = await http()
+      .get(`/api/v1/billing/claims/${claim.id}/837`)
+      .set(billing)
+      .expect(422);
+    expect(incomplete.body.error.code).toBe('EDI_INCOMPLETE');
+    expect(incomplete.body.error.details).toEqual(
+      expect.arrayContaining([
+        'Agency tax ID (EIN) must be 9 digits',
+        'Agency ZIP must be ZIP+4 (9 digits) for electronic claims',
+        'The payer needs a submitter ID and receiver ID (from the clearinghouse)',
+      ]),
+    );
+
+    // Agency settings: admins only; NPI check digit enforced.
+    const admin = await seedUser('agency_admin');
+    await http().patch('/api/v1/agency').set(billing).send({ taxId: '99-0000001' }).expect(403);
+    await http().patch('/api/v1/agency').set(admin).send({ npi: '1234567890' }).expect(400);
+    const agency = await http()
+      .patch('/api/v1/agency')
+      .set(admin)
+      .send({
+        taxId: '99-0000001',
+        addressLine1: '1 Main St',
+        city: 'Richmond',
+        state: 'va',
+        zip: '23219-0001',
+        phone: '555-010-0199',
+      })
+      .expect(200);
+    expect(agency.body.data).toMatchObject({ state: 'VA', zip: '23219-0001' });
+
+    const payerId = claim.payer.id;
+    await http()
+      .patch(`/api/v1/billing/payers/${payerId}`)
+      .set(billing)
+      .send({ payerIdCode: 'vamcd', ediSubmitterId: 'sub01', ediReceiverId: 'clear01' })
+      .expect(200);
+
+    const file = (
+      await http().get(`/api/v1/billing/claims/${claim.id}/837`).set(billing).expect(200)
+    ).body.data;
+    expect(file.usage).toBe('T');
+    expect(file.fileName).toBe(`837P-${claim.claimNumber}-preview.edi`);
+    const lines = file.content.trim().split('\n');
+    expect(lines[0]).toMatch(/^ISA\*00\*.{10}\*00\*.{10}\*ZZ\*SUB01 {10}\*ZZ\*CLEAR01 {8}\*/);
+    expect(lines[0]).toMatch(/\*T\*:~$/);
+    expect(file.content).toContain(`CLM*${claim.claimNumber}*24***12:B:1*Y*A*Y*Y~`);
+    expect(file.content).toContain('NM1*IL*1*CLAIMANT*CLARA****MI*VA999000~');
+    expect(file.content).toContain('HI*ABK:E119*ABF:I10~');
+    expect(file.content).toContain('SV1*HC:T1019*24*UN*4***1~');
+    expect(file.content).toContain('REF*EI*990000001~');
+    await http().get(`/api/v1/billing/claims/${claim.id}/837`).set(office).expect(403);
+  });
 });

@@ -1471,6 +1471,15 @@
           "phone": {
             "type": "string"
           },
+          "ediSubmitterId": {
+            "type": "string",
+            "description": "Interchange IDs agreed with the clearinghouse (ISA06/ISA08) for electronic claims.",
+            "maxLength": 15
+          },
+          "ediReceiverId": {
+            "type": "string",
+            "maxLength": 15
+          },
           "timelyFilingDays": {
             "type": "number",
             "minimum": 1,
@@ -1527,6 +1536,15 @@
           },
           "phone": {
             "type": "string"
+          },
+          "ediSubmitterId": {
+            "type": "string",
+            "description": "Interchange IDs agreed with the clearinghouse (ISA06/ISA08) for electronic claims.",
+            "maxLength": 15
+          },
+          "ediReceiverId": {
+            "type": "string",
+            "maxLength": 15
           },
           "timelyFilingDays": {
             "type": "number",
@@ -1875,6 +1893,10 @@
         "required": [
           "status"
         ]
+      },
+      "UpdateAgencyDto": {
+        "type": "object",
+        "properties": {}
       },
       "CreateVisitNoteDto": {
         "type": "object",
