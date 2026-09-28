@@ -35,6 +35,7 @@ export interface PayerView {
   ediSubmitterId: string | null;
   ediReceiverId: string | null;
   timelyFilingDays: number;
+  appealWindowDays: number;
   requiresAuthorization: boolean;
   isActive: boolean;
 }
@@ -278,6 +279,7 @@ function toPayerView(p: Prisma.PayerGetPayload<object>): PayerView {
     ediSubmitterId: p.ediSubmitterId,
     ediReceiverId: p.ediReceiverId,
     timelyFilingDays: p.timelyFilingDays,
+    appealWindowDays: p.appealWindowDays,
     requiresAuthorization: p.requiresAuthorization,
     isActive: p.isActive,
   };

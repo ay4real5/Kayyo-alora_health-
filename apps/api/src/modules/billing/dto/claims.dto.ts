@@ -23,6 +23,10 @@ export const CLAIM_STATUSES = [
   'paid',
   'partially_paid',
   'denied',
+  /** An appeal is pending with the payer (D-063). */
+  'appealed',
+  /** Superseded by a corrected claim (frequency 7). */
+  'replaced',
   'void',
 ] as const;
 
@@ -103,4 +107,56 @@ export class InstitutionalClaimDto {
   @IsOptional()
   @Matches(/^(\d{5})?$/, { message: 'cbsaCode is 5 digits' })
   cbsaCode?: string;
+}
+
+export class FileAppealDto {
+  @Transform(trimmed)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5000)
+  reason!: string;
+
+  /** Default: today. */
+  @IsOptional()
+  @IsDateOnly()
+  filedOn?: string;
+
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(100)
+  reference?: string;
+}
+
+export const APPEAL_OUTCOMES = ['won', 'lost', 'withdrawn'] as const;
+
+export class DecideAppealDto {
+  @IsIn(APPEAL_OUTCOMES)
+  outcome!: (typeof APPEAL_OUTCOMES)[number];
+
+  @IsOptional()
+  @IsDateOnly()
+  decidedOn?: string;
+
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(5000)
+  notes?: string;
+}
+
+export class RebillClaimDto {
+  /** What was corrected (kept on the new claim's notes). */
+  @Transform(trimmed)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  reason!: string;
+}
+
+export class AgingQueryDto {
+  /** Age balances as of this date (default today). */
+  @IsOptional()
+  @IsDateOnly()
+  asOf?: string;
 }

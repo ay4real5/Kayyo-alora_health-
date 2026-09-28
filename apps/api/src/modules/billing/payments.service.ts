@@ -7,7 +7,8 @@ import {
 } from '@nestjs/common';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Paginated, type PaginationQueryDto } from '../../common/dto/pagination.dto.js';
-import { fromDate, toDate } from '../../common/utils/dates.js';
+import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
+import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { Edi835Error, parse835, type Adjustment, type RemitClaim } from './edi/edi-835.js';
@@ -72,7 +73,10 @@ const providerAdjustment = (adjs: Adjustment[]) =>
  */
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly clock: AgencyClockService,
+  ) {}
 
   async upload835(caller: AuthUser, fileName: string, content: string): Promise<PaymentView> {
     if (Buffer.byteLength(content) > MAX_FILE)
@@ -171,6 +175,7 @@ export class PaymentsService {
     const payment = await this.find(caller, id);
     if (payment.status !== 'received')
       throw new ConflictException('This payment was already posted');
+    const today = await this.clock.todayString(caller.agencyId);
 
     await this.prisma.$transaction(async (tx) => {
       const claimed = await tx.payment.updateMany({
@@ -183,7 +188,7 @@ export class PaymentsService {
         if (!d.claimId || d.claim?.status === 'void') continue;
         const claim = await tx.claim.findUniqueOrThrow({
           where: { id: d.claimId },
-          include: { lines: { where: { active: true } } },
+          include: { lines: { where: { active: true } }, payer: { select: { appealWindowDays: true } } },
         });
         const totalPaid = money(Number(claim.totalPaid) + Number(d.paidAmount));
         const totalAdjustments = money(Number(claim.totalAdjustments) + Number(d.adjustmentAmount));
@@ -210,6 +215,10 @@ export class PaymentsService {
             patientResponsibility,
             status,
             payerClaimNumber: d.payerClaimNumber ?? claim.payerClaimNumber,
+            // A new denial starts the appeal clock (D-063).
+            ...(status === 'denied' && claim.status !== 'denied'
+              ? { deniedAt: new Date(), appealDeadline: toDate(addDays(today, claim.payer.appealWindowDays)) }
+              : {}),
             ...(status === 'denied' && reasons[0]
               ? {
                   denialReasonCode: reasons[0].reason,

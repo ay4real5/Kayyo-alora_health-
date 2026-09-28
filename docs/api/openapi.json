@@ -3391,6 +3391,8 @@
                 "paid",
                 "partially_paid",
                 "denied",
+                "appealed",
+                "replaced",
                 "void"
               ]
             }
@@ -4085,6 +4087,191 @@
           }
         },
         "summary": "The 270 file, to send through the clearinghouse portal until P3-08 connects it.",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/claims/{id}/submit": {
+      "post": {
+        "operationId": "ClaimWorkflowController_submit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The claim was sent through the clearinghouse portal (until P3-09 automates it).",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/claims/{id}/appeals": {
+      "post": {
+        "operationId": "ClaimWorkflowController_appeal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileAppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/claims/{id}/appeals/{appealId}/decision": {
+      "post": {
+        "operationId": "ClaimWorkflowController_decide",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appealId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/claims/{id}/rebill": {
+      "post": {
+        "operationId": "ClaimWorkflowController_rebill",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RebillClaimDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "A corrected claim (frequency 7) replacing this one.",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/reports/aging": {
+      "get": {
+        "operationId": "BillingReportsController_aging",
+        "parameters": [
+          {
+            "name": "asOf",
+            "required": false,
+            "in": "query",
+            "description": "Age balances as of this date (default today).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Accounts receivable aging: 0–30, 31–60, 61–90, 91–120, 120+ days, per payer and private pay.",
         "tags": [
           "billing"
         ]
@@ -8392,6 +8579,12 @@
             "minimum": 1,
             "maximum": 3650
           },
+          "appealWindowDays": {
+            "type": "number",
+            "description": "Days after a denial to appeal (D-063).",
+            "minimum": 1,
+            "maximum": 3650
+          },
           "requiresAuthorization": {
             "type": "boolean"
           },
@@ -8463,6 +8656,12 @@
           },
           "timelyFilingDays": {
             "type": "number",
+            "minimum": 1,
+            "maximum": 3650
+          },
+          "appealWindowDays": {
+            "type": "number",
+            "description": "Days after a denial to appeal (D-063).",
             "minimum": 1,
             "maximum": 3650
           },
@@ -8846,6 +9045,62 @@
         },
         "required": [
           "content"
+        ]
+      },
+      "FileAppealDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "filedOn": {
+            "type": "string",
+            "description": "Default: today."
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "DecideAppealDto": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "won",
+              "lost",
+              "withdrawn"
+            ]
+          },
+          "decidedOn": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "RebillClaimDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "What was corrected (kept on the new claim's notes).",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "ClockDto": {

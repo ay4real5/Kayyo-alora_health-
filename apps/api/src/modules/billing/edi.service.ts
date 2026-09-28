@@ -116,6 +116,7 @@ export class EdiService {
             patientStatus: claim.patientStatus ?? '30',
             diagnosisCodes: claim.diagnosisCodes,
             priorAuthorization,
+            originalReference: /[78]$/.test(claim.typeOfBill ?? '') ? claim.payerClaimNumber : null,
             medicalRecordNumber: claim.patient.mrn,
             hippsCode: claim.hippsCode,
             valueCodes: claim.cbsaCode ? [{ code: '61', amount: Number(claim.cbsaCode) }] : [],
@@ -152,6 +153,7 @@ export class EdiService {
           totalCharges: Number(claim.totalCharges),
           diagnosisCodes: claim.diagnosisCodes,
           priorAuthorization,
+          originalReference: claim.frequencyCode === '7' || claim.frequencyCode === '8' ? claim.payerClaimNumber : null,
           patient,
           lines: claim.lines.map((l) => ({
             serviceCode: l.serviceCode,

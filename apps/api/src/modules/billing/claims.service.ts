@@ -19,6 +19,7 @@ const CLAIM_INCLUDE = {
   patient: { select: { id: true, firstName: true, lastName: true, mrn: true } },
   payer: { select: { id: true, name: true, payerType: true } },
   lines: { orderBy: { lineNumber: 'asc' } },
+  appeals: { orderBy: { level: 'asc' }, include: { createdBy: { select: { id: true, firstName: true, lastName: true } } } },
 } satisfies Prisma.ClaimInclude;
 type ClaimRow = Prisma.ClaimGetPayload<{ include: typeof CLAIM_INCLUDE }>;
 
@@ -39,6 +40,22 @@ export interface ClaimView {
   qaPassed: boolean | null;
   qaErrors: unknown;
   voidReason: string | null;
+  submittedAt: Date | null;
+  payerClaimNumber: string | null;
+  /** The claim this one replaces (frequency 7 rebill, D-063). */
+  originalClaimId: string | null;
+  denial: { code: string | null; reason: string | null; deniedAt: Date | null; appealDeadline: string | null } | null;
+  appeals: {
+    id: string;
+    level: number;
+    status: string;
+    filedOn: string;
+    reason: string;
+    reference: string | null;
+    outcomeNotes: string | null;
+    decidedOn: string | null;
+    createdBy: { id: string; firstName: string; lastName: string };
+  }[];
   /** Institutional (837I) claims only (D-061). */
   institutional: { typeOfBill: string | null; patientStatus: string | null; hippsCode: string | null; cbsaCode: string | null } | null;
   lines: {
@@ -352,6 +369,24 @@ function toView(c: ClaimRow): ClaimView {
     qaPassed: c.qaPassed,
     qaErrors: c.qaErrors,
     voidReason: c.voidReason,
+    submittedAt: c.submittedAt,
+    payerClaimNumber: c.payerClaimNumber,
+    originalClaimId: c.originalClaimId,
+    denial:
+      c.denialReasonCode || c.deniedAt
+        ? { code: c.denialReasonCode, reason: c.denialReason, deniedAt: c.deniedAt, appealDeadline: fromDate(c.appealDeadline) }
+        : null,
+    appeals: c.appeals.map((a) => ({
+      id: a.id,
+      level: a.level,
+      status: a.status,
+      filedOn: fromDate(a.filedOn)!,
+      reason: a.reason,
+      reference: a.reference,
+      outcomeNotes: a.outcomeNotes,
+      decidedOn: fromDate(a.decidedOn),
+      createdBy: a.createdBy,
+    })),
     institutional:
       c.claimType === '837I'
         ? { typeOfBill: c.typeOfBill, patientStatus: c.patientStatus, hippsCode: c.hippsCode, cbsaCode: c.cbsaCode }
