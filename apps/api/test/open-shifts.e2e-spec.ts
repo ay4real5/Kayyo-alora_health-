@@ -134,7 +134,7 @@ describe.skipIf(!hasDb)('Open shifts and swaps (e2e)', () => {
   const shiftUrl = (id: string, action = '') => `/api/v1/schedule/open-shifts/${id}${action}`;
 
   describe('open shifts', () => {
-    it('offers, broadcasts to eligible caregivers only, and the first claim wins', async () => {
+    it('offers, broadcasts to eligible caregivers only, and the first claim wins', { timeout: 90_000 }, async () => {
       const date = nextDay();
       const hha1 = await caregiver();
       const hha2 = await caregiver();

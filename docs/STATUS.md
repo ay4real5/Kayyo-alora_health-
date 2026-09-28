@@ -56,6 +56,8 @@
   entered-in-error), task checklists (office adds, caregiver records done/not done). D-039.
 - **Open shifts & swaps (P2-05)**: offer a visit (call-outs unassign), PHI-free broadcast to eligible caregivers,
   first-come claim, assign with override; swap requests to a colleague or back to the pool, supervisor-approved. D-040.
+- **Real-time + jobs (P2-02)**: Socket.IO `/notifications` (live inbox) and `/live-monitor` (visit events), token-
+  authenticated; `GET /evv/live` snapshot; every-minute late/no-show/missed monitor; nightly recurring extension. D-041.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -69,12 +71,12 @@ Nothing.
 
 ## Next up
 
-**Phase 2 — EVV & mobile.** P2-01, P2-04, P2-05 are done. Next: **P2-02** real-time (Socket.IO gateway with JWT
-handshake + rooms, live-monitor events) and background jobs (late/no-show detection, nightly recurring-window
-extension, open-shift expiry is computed so needs none). Then P2-03 live monitor page (add a web EVV review screen with
-it, and show notes/vitals/tasks + open shifts/swaps on the web), P2-06+ mobile app. Human-only tasks (P2-11
-Twilio/Firebase) are skipped until the owner acts. The owner asked for autonomous work: go straight on, check in
-~every 4 hours.
+**Phase 2 — EVV & mobile.** P2-01, P2-02, P2-04, P2-05 are done (API). Next: **P2-03** web live monitor page (map +
+feed using `/live-monitor` socket + `GET /evv/live`), and with it web screens for EVV review (records needing review,
+verify/reject, corrections), visit notes/vitals/tasks on the visit page, open shifts and swap requests, and live
+notifications. Map tiles: use OpenStreetMap/Leaflet unless the owner provides a Google Maps key. Then P2-06+ mobile app.
+Human-only tasks (P2-11 Twilio/Firebase) are skipped until the owner acts. The owner asked for autonomous work: go
+straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -85,6 +87,7 @@ Twilio/Firebase) are skipped until the owner acts. The owner asked for autonomou
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P2-02 | Socket.IO + live events, visit monitor + recurring jobs, /evv/live; 5 e2e tests. |
 | 2026-09-28 | Claude Code | P2-05 | Open shifts + shift swaps API, 7 e2e tests (incl. simultaneous claims). |
 | 2026-09-28 | Claude Code | P2-04 | Visit notes/vitals/tasks API, 5 e2e tests; demo aide checklists. |
 | 2026-09-28 | Claude Code | P2-01 | EVV API (clock in/out, flags, verify, corrections), 10 e2e tests. |

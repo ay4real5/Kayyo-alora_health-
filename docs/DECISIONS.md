@@ -587,3 +587,35 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Consistency**: directly reassigning a visit fills its open shift; cancelling it cancels the offer; either
   withdraws pending swap requests.
 - Broadcasting runs the conflict check once per candidate — fine for agency-sized staff lists; batch it if it gets slow.
+
+### D-041 — Real-time (Socket.IO) and background jobs (P2-02)
+2026-09-28 · Claude Code
+- **Socket.IO** on the API server at path `/api/v1/socket.io` (one proxy rule for REST + sockets), same exact-origin
+  CORS as REST, websocket or polling. Namespaces:
+  - `/notifications` — any signed-in user; room `user:{id}`; event `notification:new` (the inbox record, PHI-free).
+    The design's `/shifts` namespace is folded into this: shift assigned/changed/cancelled, open shifts and swap
+    decisions are already notifications, so mobile gets them live without a second channel.
+  - `/live-monitor` — needs `evv:read`; room `agency:{id}`; events `visit:clock-in`, `visit:clock-out`,
+    `visit:geofence-violation`, `visit:late`, `visit:noshow`, `visit:missed`. Payloads include staff/patient names
+    (supervisors only, over an authenticated connection). The design's `dashboard:update` is replaced by
+    `GET /evv/live`: clients refetch the snapshot after any event (simpler, never out of sync).
+  - `/messages` comes with messaging (P3-13).
+- **Auth**: access token in the handshake `auth.token` (never the query string — it gets logged), checked by
+  namespace middleware *before* the connection is accepted (refused → `connect_error` "unauthorized"/"forbidden").
+  Active user required. The server disconnects the socket when the token expires; clients reconnect with a fresh
+  token. Emitting never throws — the database is the source of truth.
+- Single instance for now. Several API instances need the Socket.IO Redis adapter (Upstash) — P4 deployment task.
+- **Jobs** (`@nestjs/schedule`, in-process; BullMQ comes with the notification queue, P2-12), off when
+  `JOBS_ENABLED=false` (the API e2e tests do this; tests call the jobs directly):
+  - **Visit monitor**, every minute, over scheduled visits from 7 days back to tomorrow, in each agency's timezone:
+    +15 min without clock-in → `visit:late` + an in-app nudge to the caregiver; +30 min → `visit:noshow` + a
+    `missed_visit` notification to the caregiver and everyone with `evv:approve`; **scheduled end + 2 h** → visit
+    becomes `missed` (reason "No clock-in" / "No caregiver assigned"), its open shift and pending swaps are cancelled.
+    Not at 30 min: a late caregiver can still clock in until then. Each step is a guarded update on new columns
+    `visits.late_alerted_at` / `no_show_alerted_at` / status, so it fires once even with several instances.
+  - **Recurring extension**, daily 08:15 UTC: every active series booked 28 days ahead (idempotent, D-031).
+- **`GET /evv/live`** (`evv:read`, audited): agency-today snapshot — active visits with clock-in point and home point
+  (for the map), late/no-show list, today's unassigned visits, counts (scheduled, in progress, completed, missed,
+  late, no-show, unassigned, EVV records needing review).
+- socket.io is pinned to the exact version `@nestjs/platform-socket.io` ships (4.8.3) so there's one copy and the
+  types line up.

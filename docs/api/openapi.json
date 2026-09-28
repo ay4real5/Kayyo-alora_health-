@@ -2940,6 +2940,28 @@
         ]
       }
     },
+    "/api/v1/evv/live": {
+      "get": {
+        "operationId": "EvvController_live",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Today's live picture for the monitor: active visits (with map points), late/no-show, unassigned, counts.",
+        "tags": [
+          "evv"
+        ]
+      }
+    },
     "/api/v1/evv/records": {
       "get": {
         "operationId": "EvvController_list",
