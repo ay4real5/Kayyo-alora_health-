@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Paginated, type PaginationQueryDto } from '../../common/dto/pagination.dto.js';
+import { csvRows } from '../../common/utils/csv.js';
 import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
@@ -256,10 +257,6 @@ export class PayrollService {
       'employee_id', 'last_name', 'first_name', 'discipline', 'regular_hours', 'overtime_hours', 'visits',
       'regular_pay', 'overtime_pay', 'per_visit_pay', 'bonus', 'deductions', 'gross_pay', 'mileage_miles', 'mileage_reimbursement',
     ];
-    const csv = (v: string | number | null) => {
-      const text = v === null ? '' : String(v);
-      return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-    };
     const rows = stubs.map((s) => [
       s.staff.employeeId, s.staff.lastName, s.staff.firstName, s.staff.discipline, s.regularHours.toFixed(2), s.overtimeHours.toFixed(2), s.visitCount,
       s.regularPay.toFixed(2), s.overtimePay.toFixed(2), s.perVisitPay.toFixed(2), s.bonusAmount.toFixed(2), s.deductions.toFixed(2), s.grossPay.toFixed(2),
@@ -268,7 +265,7 @@ export class PayrollService {
     await this.prisma.payPeriod.update({ where: { id }, data: { status: 'exported', exportedAt: new Date() } });
     return {
       fileName: `payroll-${fromDate(period.periodStart)}-to-${fromDate(period.periodEnd)}.csv`,
-      content: [header, ...rows].map((r) => r.map(csv).join(',')).join('\r\n') + '\r\n',
+      content: csvRows([header, ...rows]), // formula-safe (D-068): names are typed by people
     };
   }
 
