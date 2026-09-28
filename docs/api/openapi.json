@@ -6814,6 +6814,104 @@
         ]
       }
     },
+    "/api/v1/reports/census": {
+      "get": {
+        "operationId": "ReportsController_census",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/visit-utilization": {
+      "get": {
+        "operationId": "ReportsController_visitUtilization",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/evv-compliance": {
+      "get": {
+        "operationId": "ReportsController_evvCompliance",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/staff-productivity": {
+      "get": {
+        "operationId": "ReportsController_staffProductivity",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/missed-visits": {
+      "get": {
+        "operationId": "ReportsController_missedVisits",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/financial-summary": {
+      "get": {
+        "operationId": "ReportsController_financialSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/refresh": {
+      "post": {
+        "operationId": "ReportsController_refresh",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
     "/api/v1/schedule/visits/{visitId}/notes": {
       "get": {
         "operationId": "VisitDocsController_listNotes",
