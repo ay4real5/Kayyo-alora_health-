@@ -116,11 +116,22 @@
 
 ## In progress
 
-Nothing.
+**P4-07 notification preferences** — branch `task/P4-07-notification-prefs` (up to date with main).
+- Done: `notification_preferences` table + migration (applied to Neon); `GET /notifications/preferences`,
+  `PUT /notifications/preferences/:type`; `notify()` skips users who muted that type in-app; `system` is mandatory
+  (`MANDATORY_NOTIFICATION_TYPES` in `@alora/shared`); 3 API e2e tests pass (`test/notification-preferences.e2e-spec.ts`).
+  Web: `/settings/notifications` page (linked from the notification bell's "Settings").
+- Left: run `e2e/notification-settings.spec.ts` (Playwright). Its first run failed because the checkbox waited for the
+  server ("Clicking the checkbox did not change its state"); fixed with an optimistic update (`onMutate`) but **not
+  re-run yet**. Then: `npm run openapi -w @alora/api` (after build), D-066 is written, tick P4-07 in ROADMAP, push,
+  wait for CI, merge to main.
 
 ## Next up
 
-Phase 4 (reports, payroll, compliance, EVV aggregator for Virginia after DMAS research). The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+P4-08 audit-log monthly partitioning + retention; P4-09 security pass (must include: the API enforcing the forced
+password change like the 2FA-setup restriction, D-045/D-058); P4-04 Virginia EVV aggregator (research DMAS's current
+EVV vendor and format first — don't assume Sandata/HHAeXchange); P4-10 production packaging (hosting still undecided).
+The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -132,6 +143,7 @@ Phase 4 (reports, payroll, compliance, EVV aggregator for Virginia after DMAS re
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P4-07 (in progress) | Preferences API + page; P4-01/P4-02 merged. Owner switched to Devin. |
 | 2026-09-28 | Claude Code | P4-01, P4-02 | Reports API (4 e2e) + dashboard (2 browser tests); P4-03 merged. |
 | 2026-09-28 | Claude Code | P4-03 | Payroll calc (8 unit) + API (6 e2e) + web (browser test); P4-06 merged. |
 | 2026-09-28 | Claude Code | P4-06 | Submit/appeal/rebill/aging API (4 e2e) + web (browser test); P4-05 merged. |

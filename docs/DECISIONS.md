@@ -1113,3 +1113,12 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   validated with the dataviz validator (CVD ΔE ≥ 9.1, normal ≥ 22.9 on white); aqua/yellow are under 3:1 so the chart
   always has a legend, a hover tooltip and a table view. Payer bars are single-series with values at the tips. Later:
   PDF export, custom reports, authorization utilization and clinical/OASIS timeliness reports.
+
+### D-066 — Notification preferences (P4-07)
+2026-09-28 · Claude Code
+- `notification_preferences` rows exist only where a user changed a default; **everything is on by default**.
+  Channels per type: in-app, push, SMS, email. Only **in-app** is delivered today, so it's the one enforced now:
+  `notify()` drops recipients who turned in-app off for that type. Push/SMS/email choices are stored for P2-12/P3-19.
+- **`system` alerts (security, serious incidents) can't be switched off** (`MANDATORY_NOTIFICATION_TYPES`).
+- API: `GET /notifications/preferences` (all types with effective values), `PUT /notifications/preferences/:type`
+  (only the channels sent change). Own preferences only; no permission needed. Web: Notification settings, from the bell.

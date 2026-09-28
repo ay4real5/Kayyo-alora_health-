@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/auth-provider';
@@ -81,6 +82,9 @@ export function NotificationBell() {
         >
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-semibold text-slate-900">Notifications</span>
+            <Link href="/settings/notifications" className="text-xs text-slate-600 underline" onClick={() => setOpen(false)}>
+              Settings
+            </Link>
             {count > 0 && (
               <button
                 type="button"
