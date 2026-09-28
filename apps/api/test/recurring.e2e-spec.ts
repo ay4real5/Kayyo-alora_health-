@@ -7,6 +7,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { addDays } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
 
@@ -44,7 +45,7 @@ describe.skipIf(!hasDb)('Recurring visits (e2e)', () => {
     await prisma.recurrenceRule.deleteMany({ where: { agencyId } });
     await prisma.patient.deleteMany({ where: { agencyId } });
     await prisma.notification.deleteMany({ where: { agencyId } });
-    await prisma.auditLog.deleteMany({ where: { agencyId } });
+    await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } });
     await prisma.agency.delete({ where: { id: agencyId } });
     await app.close();

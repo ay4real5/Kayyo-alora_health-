@@ -5,6 +5,7 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
 import { loginForTests } from './login-helper.js';
@@ -41,7 +42,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
 
   afterAll(async () => {
     for (const id of [agencyId, otherAgencyId]) {
-      await prisma.auditLog.deleteMany({ where: { agencyId: id } });
+      await purgeAuditLogs(prisma, id);
       await prisma.user.deleteMany({ where: { agencyId: id } });
       await prisma.role.deleteMany({ where: { agencyId: id } });
       await prisma.agency.delete({ where: { id } });

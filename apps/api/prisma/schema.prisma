@@ -236,10 +236,12 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-/// HIPAA audit log. Append-only, never deleted. Deliberately has no foreign keys so entries
-/// survive deletion/deactivation of the records they describe.
+/// HIPAA audit log. Append-only. Deliberately has no foreign keys so entries
+/// survive deletion/deactivation of the records they describe. Partitioned monthly by created_at
+/// (raw SQL migration — Prisma cannot express it); a DB trigger refuses UPDATE and DELETE; whole
+/// months are dropped only by the retention job after AUDIT_RETENTION_MONTHS (D-067).
 model AuditLog {
-  id           BigInt   @id @default(autoincrement())
+  id           BigInt   @default(autoincrement())
   agencyId     String   @map("agency_id") @db.Uuid
   userId       String?  @map("user_id") @db.Uuid
   action       String   @db.VarChar(100)
@@ -250,6 +252,7 @@ model AuditLog {
   userAgent    String?  @map("user_agent")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  @@id([id, createdAt])
   @@index([agencyId, createdAt])
   @@index([userId, createdAt])
   @@index([resourceType, resourceId])

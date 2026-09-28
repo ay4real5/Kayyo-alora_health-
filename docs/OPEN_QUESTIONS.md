@@ -29,6 +29,13 @@ Payroll pays verified visit time and FLSA overtime over 40 hours per workweek. P
 4. Which provider do you use (ADP, Gusto, QuickBooks, Paychex)? We can match their import format exactly.
 Default until answered: as described in D-064.
 
+### Q-011 — How long to keep the audit log
+2026-09-28 · Devin · affects P4-08 (D-067)
+HIPAA requires 6 years. The API now permanently deletes audit-log months older than `AUDIT_RETENTION_MONTHS` (default
+72 = 6 years; it refuses anything lower). Do Virginia rules, your payers (Medicaid/MCO contracts) or your lawyer want
+longer (7 or 10 years is common)? Should old months be archived (e.g. to S3 Glacier) instead of deleted?
+Default until answered: keep 6 years, then delete.
+
 ## Resolved
 
 ### Q-002 — Base44 portal authentication

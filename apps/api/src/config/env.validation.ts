@@ -136,6 +136,12 @@ export class EnvironmentVariables {
   @IsBoolean()
   JOBS_ENABLED: boolean = true;
 
+  /** Whole months of audit_logs kept before the retention job drops them (HIPAA: 6 years minimum). */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(72)
+  AUDIT_RETENTION_MONTHS: number = 72;
+
   /** Turns off request rate limits — for the CI browser tests only; refused in production. */
   @Transform(({ value }) => (value === undefined || value === '' ? undefined : value === 'true' || value === true))
   @IsOptional()

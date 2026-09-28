@@ -8,6 +8,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { addDays, toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { VisitMonitorService } from '../src/modules/jobs/visit-monitor.service.js';
 import { NotificationsService } from '../src/modules/notifications/notifications.service.js';
@@ -78,7 +79,7 @@ describe.skipIf(!hasDb)('Real-time and background jobs (e2e)', () => {
     await prisma.recurrenceRule.deleteMany({ where: { agencyId } });
     await prisma.patient.deleteMany({ where: { agencyId } });
     await prisma.notification.deleteMany({ where: { agencyId } });
-    await prisma.auditLog.deleteMany({ where: { agencyId } });
+    await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } });
     await prisma.agency.delete({ where: { id: agencyId } });
     await app.close();

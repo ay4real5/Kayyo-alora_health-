@@ -6,6 +6,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { addDays, toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { workweekStart } from '../src/modules/payroll/payroll-calc.js';
 import { setupApp } from '../src/setup-app.js';
@@ -70,7 +71,7 @@ describe.skipIf(!hasDb)('Payroll (e2e)', () => {
     await prisma.evvRecord.deleteMany({ where: { agencyId } });
     await prisma.visit.deleteMany({ where: { agencyId } });
     await prisma.patient.deleteMany({ where: { agencyId } });
-    await prisma.auditLog.deleteMany({ where: { agencyId } });
+    await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } }); // staff profiles, mileage cascade
     await prisma.agency.delete({ where: { id: agencyId } });
     await app.close();

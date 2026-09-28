@@ -6,6 +6,7 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { INVALID_LOGIN } from '../src/modules/auth/auth.service.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { JWT_AUDIENCE, JWT_ISSUER } from '../src/modules/auth/token.service.js';
@@ -63,7 +64,7 @@ describe.skipIf(!hasDb)('Auth (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.auditLog.deleteMany({ where: { agencyId } });
+    await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } }); // refresh tokens cascade
     await prisma.agency.delete({ where: { id: agencyId } });
     await app.close();

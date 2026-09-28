@@ -18,6 +18,7 @@ import { Audit, SkipAudit } from '../src/common/decorators/audit.decorator.js';
 import { Permissions } from '../src/common/decorators/permissions.decorator.js';
 import { Paginated, PaginationQueryDto } from '../src/common/dto/pagination.dto.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
 
@@ -136,7 +137,7 @@ describe.skipIf(!hasDb)('Audit trail (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.auditLog.deleteMany({ where: { agencyId } });
+    await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } });
     await prisma.agency.delete({ where: { id: agencyId } });
     await app.close();

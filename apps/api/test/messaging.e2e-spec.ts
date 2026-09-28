@@ -6,6 +6,7 @@ import request from 'supertest';
 import { vi } from 'vitest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { RealtimeService } from '../src/modules/realtime/realtime.service.js';
 import { setupApp } from '../src/setup-app.js';
@@ -64,7 +65,7 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
       await prisma.conversation.deleteMany({ where: { agencyId: id } }); // participants, messages cascade
       await prisma.notification.deleteMany({ where: { agencyId: id } });
       await prisma.patient.deleteMany({ where: { agencyId: id } });
-      await prisma.auditLog.deleteMany({ where: { agencyId: id } });
+      await purgeAuditLogs(prisma, id);
       await prisma.user.deleteMany({ where: { agencyId: id } });
       await prisma.agency.delete({ where: { id } });
     }

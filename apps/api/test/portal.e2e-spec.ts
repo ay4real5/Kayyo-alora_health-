@@ -7,6 +7,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { addDays, toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
 import { loginForTests } from './login-helper.js';
@@ -114,7 +115,7 @@ describe.skipIf(!hasDb)('Patient portal (e2e)', () => {
     await prisma.document.deleteMany({ where: { agencyId } });
     await prisma.visit.deleteMany({ where: { agencyId } });
     await prisma.patient.deleteMany({ where: { agencyId } }); // meds, care plans cascade
-    await prisma.auditLog.deleteMany({ where: { agencyId } });
+    await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } });
     await prisma.agency.delete({ where: { id: agencyId } });
     await app.close();
