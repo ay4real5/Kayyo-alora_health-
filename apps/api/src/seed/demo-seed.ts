@@ -1,4 +1,12 @@
-import { isValidNpi, recurrenceDates, todayInTimeZone, zonedTimeToUtc, type Discipline } from '@alora/shared';
+import {
+  isValidNpi,
+  MANDATORY_TWO_FACTOR_ROLES,
+  recurrenceDates,
+  todayInTimeZone,
+  zonedTimeToUtc,
+  type Discipline,
+  type Role,
+} from '@alora/shared';
 import { hash } from '@node-rs/argon2';
 import { addDays, toDate, toTime } from '../common/utils/dates.js';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
@@ -25,9 +33,20 @@ export interface SeedOptions {
   appEnv?: string;
   /** Encrypts demo SSNs when provided (e.g. PhiCryptoService.encrypt). */
   encryptSsn?: (ssn: string, kind: 'patient' | 'staff') => Uint8Array<ArrayBuffer>;
+  /**
+   * Encrypts a base32 TOTP secret the way users.two_fa_secret stores it. When provided, demo admins get 2FA already
+   * on with DEMO_TOTP_SECRET (admins must use 2FA, D-045); otherwise they set it up at first sign-in.
+   */
+  encryptTwoFaSecret?: (base32Secret: string) => string;
   /** Makes sure built-in roles exist (RbacSyncService.sync). */
   syncRoles: () => Promise<void>;
 }
+
+/**
+ * The demo admins' authenticator secret (FAKE data, development only — the seed refuses to run in production).
+ * Add it to an authenticator app as "Alora demo", or compute codes from it in tests.
+ */
+export const DEMO_TOTP_SECRET = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
 
 /** Small deterministic PRNG (mulberry32), so every run produces the same demo agency. */
 function prng(seed: number) {
@@ -125,6 +144,9 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
         lastName,
         phone: `555-010-${String(rand.int(1000, 9999))}`,
         userRoles: { create: { roleId: roles.get(role)! } },
+        ...(MANDATORY_TWO_FACTOR_ROLES.includes(role as Role) && options.encryptTwoFaSecret
+          ? { is2faEnabled: true, twoFaSecret: options.encryptTwoFaSecret(DEMO_TOTP_SECRET) }
+          : {}),
       },
     });
     return user.id;

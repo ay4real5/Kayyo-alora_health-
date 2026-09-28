@@ -17,6 +17,7 @@ import {
   hashRecoveryCode,
   normalizeRecoveryCode,
 } from './recovery-codes.js';
+import { twoFactorPolicy } from './two-factor-policy.js';
 import { base32Decode, base32Encode, generateSecret, otpauthUri, verifyTotp } from './totp.js';
 
 /** Shown as the account name in authenticator apps. Rename when the product name is final (Q-004). */
@@ -84,6 +85,9 @@ export class TwoFactorService {
   /** Needs both the password and a current code, so a stolen session alone can't remove 2FA. */
   async disable(auth: AuthUser, password: string, code: string, client: ClientInfo): Promise<void> {
     const user = await this.requirePasswordAndCode(auth, password, code);
+    if ((await twoFactorPolicy(this.prisma, user.id)).mandatory) {
+      throw new ForbiddenException('Your role requires two-factor authentication; it cannot be turned off');
+    }
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: user.id },

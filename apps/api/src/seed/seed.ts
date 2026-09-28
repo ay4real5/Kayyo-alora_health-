@@ -11,7 +11,7 @@ import { PhiContext } from '../common/crypto/phi-crypto.service.js';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { RbacSyncService } from '../modules/rbac/rbac-sync.service.js';
 import type { PrismaService } from '../database/prisma.service.js';
-import { runDemoSeed } from './demo-seed.js';
+import { DEMO_TOTP_SECRET, runDemoSeed } from './demo-seed.js';
 
 config({ path: resolve(process.cwd(), '../../.env'), quiet: true });
 
@@ -30,6 +30,9 @@ try {
     appEnv: process.env.APP_ENV,
     password: process.env.DEMO_PASSWORD,
     syncRoles: () => new RbacSyncService(prisma as unknown as PrismaService).sync(),
+    encryptTwoFaSecret: keyring
+      ? (base32) => Buffer.from(encryptPhi(base32, PhiContext.UserTwoFaSecret, keyring)).toString('base64')
+      : undefined,
     encryptSsn: keyring
       ? (ssn, kind) =>
           new Uint8Array(encryptPhi(ssn, kind === 'patient' ? PhiContext.PatientSsn : PhiContext.StaffSsn, keyring))
@@ -39,6 +42,8 @@ try {
   console.table(summary.counts);
   console.log(`Password for every demo login: ${summary.password}\n`);
   console.table(summary.logins);
+  if (keyring) console.log(`Admins use two-factor authentication. Authenticator key (demo only): ${DEMO_TOTP_SECRET}
+`);
 } finally {
   await prisma.$disconnect();
 }

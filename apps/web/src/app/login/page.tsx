@@ -34,7 +34,9 @@ function LoginForm() {
       setStep('two-factor');
       return;
     }
-    router.replace(outcome.mustChangePassword ? '/change-password?required=1' : '/');
+    router.replace(
+      outcome.mustChangePassword ? '/change-password?required=1' : outcome.mustEnable2fa ? '/setup-two-factor' : '/',
+    );
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {

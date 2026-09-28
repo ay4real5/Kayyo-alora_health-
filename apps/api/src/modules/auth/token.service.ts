@@ -6,6 +6,7 @@ import type { EnvironmentVariables } from '../../config/env.validation.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { AuditService } from '../audit/audit.service.js';
+import { twoFactorPolicy } from './two-factor/two-factor-policy.js';
 
 export interface TokenPair {
   accessToken: string;
@@ -13,6 +14,8 @@ export interface TokenPair {
   accessTokenExpiresIn: number;
   refreshToken: string;
   refreshTokenExpiresAt: string;
+  /** The user's role requires 2FA and it isn't on yet: only 2FA setup works until it is (D-045). */
+  mustEnable2fa: boolean;
 }
 
 export interface ClientInfo {
@@ -23,6 +26,8 @@ export interface ClientInfo {
 interface AccessTokenClaims {
   sub: string;
   agencyId: string;
+  /** Present (true) while mandatory 2FA isn't set up yet. */
+  tfs?: true;
 }
 
 export const JWT_ISSUER = 'alora-api';
@@ -176,7 +181,11 @@ export class TokenService {
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
     });
-    return { userId: claims.sub, agencyId: claims.agencyId };
+    return {
+      userId: claims.sub,
+      agencyId: claims.agencyId,
+      ...(claims.tfs ? { twoFactorSetupRequired: true } : {}),
+    };
   }
 
   /** For long-lived connections (Socket.IO): the user plus when the token stops being valid. */
@@ -186,7 +195,12 @@ export class TokenService {
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
     });
-    return { userId: claims.sub, agencyId: claims.agencyId, expiresAt: new Date(claims.exp * 1000) };
+    return {
+      userId: claims.sub,
+      agencyId: claims.agencyId,
+      ...(claims.tfs ? { twoFactorSetupRequired: true } : {}),
+      expiresAt: new Date(claims.exp * 1000),
+    };
   }
 
   private async issue(user: AuthUser, expiresAt: Date, client: ClientInfo): Promise<TokenPair> {
@@ -201,7 +215,13 @@ export class TokenService {
       },
     });
 
-    const claims: AccessTokenClaims = { sub: user.userId, agencyId: user.agencyId };
+    const policy = await twoFactorPolicy(this.prisma, user.userId);
+    const mustEnable2fa = policy.mandatory && !policy.enabled;
+    const claims: AccessTokenClaims = {
+      sub: user.userId,
+      agencyId: user.agencyId,
+      ...(mustEnable2fa ? { tfs: true as const } : {}),
+    };
     const accessToken = await this.jwt.signAsync(claims, {
       algorithm: 'HS256',
       expiresIn: this.accessTtlMinutes * 60,
@@ -214,6 +234,7 @@ export class TokenService {
       accessTokenExpiresIn: this.accessTtlMinutes * 60,
       refreshToken,
       refreshTokenExpiresAt: expiresAt.toISOString(),
+      mustEnable2fa,
     };
   }
 }

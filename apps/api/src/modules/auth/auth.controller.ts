@@ -4,6 +4,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AppEnv, type EnvironmentVariables } from '../../config/env.validation.js';
+import { AllowDuringTwoFactorSetup } from '../../common/decorators/allow-during-2fa-setup.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { AuthService } from './auth.service.js';
@@ -80,6 +81,7 @@ export class AuthController {
     clearRefreshCookie(res, this.secureCookies);
   }
 
+  @AllowDuringTwoFactorSetup()
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return this.auth.me(user);
@@ -99,6 +101,7 @@ export class AuthController {
     return deliverTokens(req, res, result, this.secureCookies);
   }
 
+  @AllowDuringTwoFactorSetup()
   @Post('2fa/setup')
   @HttpCode(HttpStatus.OK)
   setupTwoFactor(@CurrentUser() user: AuthUser, @Req() req: Request) {
@@ -107,6 +110,7 @@ export class AuthController {
 
   @Throttle(ACCOUNT_SETTINGS_LIMIT)
   /** Turns 2FA on and returns 10 one-time backup codes — the only time they are shown. */
+  @AllowDuringTwoFactorSetup()
   @Post('2fa/enable')
   @HttpCode(HttpStatus.OK)
   enableTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: TwoFactorCodeDto, @Req() req: Request) {
@@ -133,6 +137,7 @@ export class AuthController {
   }
 
   @Throttle(ACCOUNT_SETTINGS_LIMIT)
+  @AllowDuringTwoFactorSetup()
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
   async changePassword(

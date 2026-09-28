@@ -213,4 +213,61 @@ describe.skipIf(!hasDb)('Two-factor authentication (e2e)', () => {
       await http().post('/api/v1/auth/2fa/verify').send({ twoFactorToken: token2, recoveryCode: fresh[0] }).expect(200);
     });
   });
+
+  describe('mandatory for admins (D-045)', () => {
+    async function userWithRole(roleName: string) {
+      const role = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: roleName } });
+      const email = `role-${randomUUID()}@example.test`;
+      const { id } = await prisma.user.create({
+        data: {
+          agencyId,
+          email,
+          passwordHash: await app.get(PasswordService).hash(PASSWORD),
+          passwordChangedAt: new Date(),
+          firstName: 'Ada',
+          lastName: roleName,
+          userRoles: { create: { roleId: role.id } },
+        },
+      });
+      return { id, email };
+    }
+
+    it('an admin without 2FA can only set it up; enabling it and refreshing lifts the restriction', async () => {
+      const { id, email } = await userWithRole('agency_admin');
+      const session = (await login(email).expect(200)).body.data;
+      expect(session.mustEnable2fa).toBe(true);
+      const auth = { Authorization: `Bearer ${session.accessToken}` };
+
+      const blocked = await http().get('/api/v1/patients').set(auth).expect(403);
+      expect(blocked.body.error.code).toBe('TWO_FACTOR_SETUP_REQUIRED');
+      const me = (await http().get('/api/v1/auth/me').set(auth).expect(200)).body.data;
+      expect(me).toMatchObject({ is2faRequired: true, is2faEnabled: false });
+
+      const { secret } = (await http().post('/api/v1/auth/2fa/setup').set(auth).expect(200)).body.data;
+      await http().post('/api/v1/auth/2fa/enable').set(auth).send({ code: codeFor(secret) }).expect(200);
+      // The old token still carries the restriction; a refresh re-reads the policy.
+      await http().get('/api/v1/patients').set(auth).expect(403);
+      const refreshed = (
+        await http().post('/api/v1/auth/refresh').send({ refreshToken: session.refreshToken }).expect(200)
+      ).body.data;
+      expect(refreshed.mustEnable2fa).toBe(false);
+      await http().get('/api/v1/patients').set({ Authorization: `Bearer ${refreshed.accessToken}` }).expect(200);
+
+      // And it can't be turned off again.
+      await allowCodeReuse(id);
+      await http()
+        .post('/api/v1/auth/2fa/disable')
+        .set({ Authorization: `Bearer ${refreshed.accessToken}` })
+        .send({ password: PASSWORD, code: codeFor(secret) })
+        .expect(403);
+      expect((await prisma.user.findUniqueOrThrow({ where: { id } })).is2faEnabled).toBe(true);
+    });
+
+    it('other roles are not forced', async () => {
+      const { email } = await userWithRole('office_staff');
+      const session = (await login(email).expect(200)).body.data;
+      expect(session.mustEnable2fa).toBe(false);
+      await http().get('/api/v1/patients').set({ Authorization: `Bearer ${session.accessToken}` }).expect(200);
+    });
+  });
 });
