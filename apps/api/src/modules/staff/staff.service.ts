@@ -9,7 +9,8 @@ import type { Permission } from '@alora/shared';
 import { PhiContext, PhiCryptoService } from '../../common/crypto/phi-crypto.service.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Paginated } from '../../common/dto/pagination.dto.js';
-import { fromDate, fromTime, toDate, today, toTime } from '../../common/utils/dates.js';
+import { fromDate, fromTime, toDate, toTime } from '../../common/utils/dates.js';
+import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -94,6 +95,7 @@ export class StaffService {
     private readonly crypto: PhiCryptoService,
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
+    private readonly clock: AgencyClockService,
   ) {}
 
   async list(caller: AuthUser, query: ListStaffQueryDto): Promise<Paginated<StaffSummary>> {
@@ -182,7 +184,7 @@ export class StaffService {
   async terminate(caller: AuthUser, id: string, terminationDate?: string): Promise<StaffDetail> {
     const profile = await this.find(caller, id);
     if (!profile.isActive) throw new ConflictException('Staff member is already inactive');
-    const date = toDate(terminationDate) ?? today();
+    const date = toDate(terminationDate) ?? (await this.clock.today(caller.agencyId));
     if (profile.hireDate && date < profile.hireDate) {
       throw new BadRequestException('Termination date cannot be before the hire date');
     }

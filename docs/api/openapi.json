@@ -1,6 +1,30 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/roles": {
+      "get": {
+        "operationId": "RolesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "roles"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "AuthController_login",
@@ -1359,6 +1383,21 @@
             }
           }
         },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/candidates": {
+      "get": {
+        "operationId": "StaffController_candidates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Users who can be given a staff profile (active, no profile yet).",
         "tags": [
           "staff"
         ]

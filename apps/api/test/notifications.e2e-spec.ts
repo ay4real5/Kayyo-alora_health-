@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
-import { addDays, todayString } from '../src/common/utils/dates.js';
+import { addDays, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
@@ -25,7 +25,7 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
   let admin: { id: string; auth: Auth };
   let patientId: string;
   const http = () => request(app.getHttpServer());
-  const day = addDays(todayString(), 30);
+  const day = addDays(utcTodayString(), 30);
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })

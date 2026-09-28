@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
-import { addDays, todayString } from '../src/common/utils/dates.js';
+import { addDays, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
@@ -26,7 +26,7 @@ describe.skipIf(!hasDb)('Scheduling (e2e)', () => {
   let patientId: string;
   const http = () => request(app.getHttpServer());
   /** A date far enough ahead that nothing is "in the past", with a known weekday offset. */
-  const base = addDays(todayString(), 40);
+  const base = addDays(utcTodayString(), 40);
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -196,7 +196,7 @@ describe.skipIf(!hasDb)('Scheduling (e2e)', () => {
         'staff_credentials_expired',
       ]);
 
-      const past = await book(office, visit(undefined, addDays(todayString(), -3), '09:00', '10:00')).expect(201);
+      const past = await book(office, visit(undefined, addDays(utcTodayString(), -3), '09:00', '10:00')).expect(201);
       expect(past.body.data.warnings.map((w: { code: string }) => w.code)).toEqual(['in_the_past']);
     });
 

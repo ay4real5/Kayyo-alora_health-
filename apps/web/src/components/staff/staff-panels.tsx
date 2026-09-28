@@ -86,8 +86,8 @@ export function CredentialsPanel({ staffId, canEdit }: { staffId: string; canEdi
       </ul>
       {canEdit && (
         <form onSubmit={(e) => void add(e)} className="grid gap-3 sm:grid-cols-2">
-          <Field label="Type" name="credentialType" placeholder="license, cpr, tb_test…" required />
-          <Field label="Name" name="credentialName" placeholder="RN license" required />
+          <Field label="Credential type" name="credentialType" placeholder="license, cpr, tb_test…" required />
+          <Field label="Credential name" name="credentialName" placeholder="RN license" required />
           <Field label="Number" name="credentialNumber" />
           <Field label="Issued by" name="issuingAuthority" />
           <Field label="Issue date" name="issueDate" type="date" />
@@ -231,7 +231,7 @@ export function TimeOffPanel({
         <form onSubmit={(e) => void submit(e)} className="grid gap-3 sm:grid-cols-2">
           <Field label="From" name="startDate" type="date" required />
           <Field label="To" name="endDate" type="date" required />
-          <SelectField label="Type" name="type" defaultValue="vacation">
+          <SelectField label="Time-off type" name="type" defaultValue="vacation">
             {TIME_OFF_TYPES.map((t) => (
               <option key={t} value={t}>
                 {humanize(t)}

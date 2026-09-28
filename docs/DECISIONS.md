@@ -479,3 +479,20 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   date on Earth (UTC+14); `/auth/me` returns `agencyTimezone`, and the web's `useAgencyToday()` uses it instead of
   the browser clock.
 - Browser tests re-seed the demo agency first (`e2e/global-setup.ts`, `SKIP_SEED=1` to skip) so counts are known.
+
+### D-036 — Agency clock; staff/users/physicians screens (P1-20)
+2026-09-28 · Claude Code
+- **All business "today" values come from `AgencyClockService`** (agency timezone, cached per agency): default
+  admission/discharge/readmission dates, employment end, credential expiry state and the expiring list — joining
+  scheduling, which already did this. The UTC helper is now `utcTodayString()` and is for tests only. Found by the
+  browser tests: a Chicago agency admitted a patient "on the 28th" (UTC default) and couldn't discharge them on the
+  agency's 27th.
+- New API: `GET /roles` (users:read — built-in + own custom roles, with permissions) and `GET /staff/candidates`
+  (staff:create — active users without a staff profile, so office staff can create profiles without users:read).
+- Web: Users (list/filters, add with role picker that disables roles you can't grant, user page with role editor,
+  deactivate/reactivate/unlock/reset 2FA, activity), Staff (list/filters, add from candidates, profile with pay only
+  for payroll/self, edit, end employment, credentials with state badges + verify, weekly availability editor, time off
+  request/approve/deny/cancel, credentials-needing-attention page), Physicians (list, add, edit with live NPI check,
+  (de)activate).
+- React pattern: don't copy server data into state in an effect (lint rule); use a child component keyed by the
+  server value (see `RoleEditor`, `AvailabilityForm`).

@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { credentialState, type CredentialState } from '@alora/shared';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
-import { addDays, fromDate, toDate, todayString } from '../../common/utils/dates.js';
+import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
+import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { CreateCredentialDto, UpdateCredentialDto } from './dto/staff.dto.js';
@@ -35,6 +36,7 @@ export class CredentialsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly staff: StaffService,
+    private readonly clock: AgencyClockService,
   ) {}
 
   async list(caller: AuthUser, staffId: string): Promise<CredentialView[]> {
@@ -43,7 +45,7 @@ export class CredentialsService {
       where: { staffProfileId: staffId },
       orderBy: [{ expiryDate: { sort: 'asc', nulls: 'last' } }, { credentialName: 'asc' }],
     });
-    const today = todayString();
+    const today = await this.clock.todayString(caller.agencyId);
     return rows.map((row) => toView(row, today));
   }
 
@@ -63,7 +65,7 @@ export class CredentialsService {
         notes: dto.notes ?? null,
       },
     });
-    return toView(row, todayString());
+    return toView(row, await this.clock.todayString(caller.agencyId));
   }
 
   async update(caller: AuthUser, staffId: string, credentialId: string, dto: UpdateCredentialDto): Promise<CredentialView> {
@@ -81,7 +83,7 @@ export class CredentialsService {
       data.verifiedById = dto.verified ? caller.userId : null;
       data.verifiedAt = dto.verified ? new Date() : null;
     }
-    return toView(await this.prisma.staffCredential.update({ where: { id: credentialId }, data }), todayString());
+    return toView(await this.prisma.staffCredential.update({ where: { id: credentialId }, data }), await this.clock.todayString(caller.agencyId));
   }
 
   async remove(caller: AuthUser, staffId: string, credentialId: string): Promise<void> {
@@ -92,7 +94,7 @@ export class CredentialsService {
 
   /** Active staff's credentials that are expired or expire within `withinDays`, soonest first. */
   async expiring(caller: AuthUser, withinDays: number): Promise<ExpiringCredential[]> {
-    const today = todayString();
+    const today = await this.clock.todayString(caller.agencyId);
     const rows = await this.prisma.staffCredential.findMany({
       where: {
         expiryDate: { lte: toDate(addDays(today, withinDays)) },

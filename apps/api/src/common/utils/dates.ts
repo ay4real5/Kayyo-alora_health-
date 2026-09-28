@@ -1,7 +1,7 @@
 /**
  * Calendar dates travel as 'YYYY-MM-DD' strings and are stored in DATE columns as UTC midnight.
  * Times of day ('HH:MM') are stored in TIME columns on 1970-01-01 UTC.
- * "Today" is UTC for now — switch to the agency's timezone with scheduling (DECISIONS D-027).
+ * Business "today" comes from AgencyClockService (agency timezone), never from UTC (DECISIONS D-036).
  */
 export function toDate(value: string | undefined): Date | undefined {
   return value ? new Date(`${value}T00:00:00Z`) : undefined;
@@ -11,11 +11,8 @@ export function fromDate(value: Date | null): string | null {
   return value ? value.toISOString().slice(0, 10) : null;
 }
 
-export function today(): Date {
-  return toDate(todayString())!;
-}
-
-export function todayString(): string {
+/** Today's date in UTC. NOT for business dates — use AgencyClockService (agency timezone). Tests only. */
+export function utcTodayString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 

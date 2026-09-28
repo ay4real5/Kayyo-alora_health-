@@ -8,7 +8,8 @@ import { normalizeIcd10 } from '@alora/shared';
 import { PhiContext, PhiCryptoService } from '../../common/crypto/phi-crypto.service.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Paginated } from '../../common/dto/pagination.dto.js';
-import { fromDate, toDate, today } from '../../common/utils/dates.js';
+import { fromDate, toDate } from '../../common/utils/dates.js';
+import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
@@ -96,6 +97,7 @@ export class PatientsService {
     private readonly prisma: PrismaService,
     private readonly crypto: PhiCryptoService,
     private readonly permissions: PermissionsService,
+    private readonly clock: AgencyClockService,
   ) {}
 
   async list(caller: AuthUser, query: ListPatientsQueryDto): Promise<Paginated<PatientSummary>> {
@@ -133,13 +135,14 @@ export class PatientsService {
   /** Admit a new patient (status active). */
   async admit(caller: AuthUser, dto: CreatePatientDto): Promise<PatientDetail> {
     await this.assertPhysician(caller, dto.primaryPhysicianId);
+    const admissionDate = toDate(dto.admissionDate) ?? (await this.clock.today(caller.agencyId));
     const patient = await this.saveOrConflict(() =>
       this.prisma.patient.create({
         data: {
           ...this.fields(dto),
           agencyId: caller.agencyId,
           status: 'active',
-          admissionDate: toDate(dto.admissionDate) ?? today(),
+          admissionDate,
         },
         include: DETAIL_INCLUDE,
       }),
@@ -159,7 +162,7 @@ export class PatientsService {
   async discharge(caller: AuthUser, id: string, dischargeDate?: string): Promise<PatientDetail> {
     const patient = await this.find(caller, id);
     if (patient.status === 'discharged') throw new ConflictException('Patient is already discharged');
-    const date = toDate(dischargeDate) ?? today();
+    const date = toDate(dischargeDate) ?? (await this.clock.today(caller.agencyId));
     if (patient.admissionDate && date < patient.admissionDate) {
       throw new BadRequestException('Discharge date cannot be before the admission date');
     }
@@ -178,7 +181,7 @@ export class PatientsService {
     return this.toDetail(
       await this.prisma.patient.update({
         where: { id },
-        data: { status: 'active', admissionDate: toDate(admissionDate) ?? today(), dischargeDate: null },
+        data: { status: 'active', admissionDate: toDate(admissionDate) ?? (await this.clock.today(caller.agencyId)), dischargeDate: null },
         include: DETAIL_INCLUDE,
       }),
     );

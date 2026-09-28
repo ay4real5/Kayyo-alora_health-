@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
-import { addDays, todayString } from '../src/common/utils/dates.js';
+import { addDays, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { setupApp } from '../src/setup-app.js';
@@ -170,11 +170,11 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
     it('tracks expiry state and verification, and lists expiring credentials agency-wide', async () => {
       const cg = await caregiver();
       const add = (body: object) => http().post(`/api/v1/staff/${cg.profileId}/credentials`).set(office.auth).send(body);
-      const today = todayString();
+      const today = utcTodayString();
 
       const cpr = (await add({ credentialType: 'cpr', credentialName: 'CPR/BLS', expiryDate: addDays(today, 10) }).expect(201)).body.data;
       expect(cpr.state).toBe('expiring_soon');
-      const tb = (await add({ credentialType: 'tb_test', credentialName: 'TB test', expiryDate: addDays(today, -1) }).expect(201)).body.data;
+      const tb = (await add({ credentialType: 'tb_test', credentialName: 'TB test', expiryDate: addDays(today, -3) }).expect(201)).body.data;
       expect(tb.state).toBe('expired');
       const license = (
         await add({ credentialType: 'license', credentialName: 'HHA certificate', issueDate: '2024-01-01', expiryDate: addDays(today, 400) }).expect(201)
