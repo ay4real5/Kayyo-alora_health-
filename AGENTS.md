@@ -142,7 +142,7 @@ npm run db:deploy -w @alora/api          # apply migrations to DATABASE_URL
 npm run openapi -w @alora/api            # after build: regenerate docs/api/openapi.json + portal spec (CI checks)
 npm run db:seed -w @alora/api            # after build: wipe + rebuild the FAKE demo agency, prints logins (D-033)
 npm run dev -w @alora/web                # dashboard on http://localhost:3000 (API must be running; CORS_ORIGINS)
-npm run test:e2e -w @alora/web           # Playwright browser tests (API + dashboard running, demo seed loaded)
+npm run test:e2e -w @alora/web           # Playwright browser tests (API + dashboard running; re-seeds the demo agency first; CI runs them too)
 npm run db:migrate -w @alora/api -- --name <name>   # create a migration (needs a database, see D-014)
 docker compose up -d --build             # whole stack incl. API container
 ```

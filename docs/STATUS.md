@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-21 done — Phase 1 API and dashboard screens complete.
+**Phase 1 is complete** on `main` (P1-01 … P1-22), except P1-11c (mandatory 2FA — waits on the owner, Q-008).
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -49,6 +49,7 @@ On `main`: P1-01 to P1-21 done — Phase 1 API and dashboard screens complete.
   agency timezone (`AgencyClockService`). 10 Playwright tests. D-036.
 - Web scheduling (P1-21): week calendar, book with live conflict check + audited override, recurring booking report,
   reschedule/reassign/cancel. 13 Playwright tests. D-037.
+- CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -61,8 +62,12 @@ Nothing.
 
 ## Next up
 
-**P1-22** (in progress on `task/P1-22-e2e-ci`) — browser tests in CI + README refresh; then Phase 2 (EVV & mobile).
-The owner asked for autonomous work: go straight on to the next task, check in ~every 4 hours.
+**Phase 2 — EVV & mobile.** Start with **P2-01** EVV module: GPS clock-in/out (`POST /evv/clock-in`, `/evv/clock-out`),
+geofence check (haversine vs `patients.geo_fence_radius_meters`, needs patient lat/long — add geocoding later, accept
+coordinates set manually for now), EVV records with the 21st Century Cures Act six data points, visit status
+scheduled → in_progress → completed, exceptions + supervisor verification. Then P2-04 visit documentation, P2-05
+open shifts, P2-02 real-time + background jobs, P2-06+ mobile app. Human-only tasks (P2-11 Twilio/Firebase) are skipped
+until the owner acts. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -73,6 +78,7 @@ The owner asked for autonomous work: go straight on to the next task, check in ~
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P1-22 | Browser tests in CI (green), README refresh. Phase 1 complete. |
 | 2026-09-28 | Claude Code | P1-21 | Scheduling calendar screens; CI green, merged. |
 | 2026-09-28 | Claude Code | P1-20 | Staff/users/physicians screens; agency clock; CI green, merged. |
 | 2026-09-28 | Claude Code | P1-19 | Patient screens + timezone bug fix; CI green, merged. |
