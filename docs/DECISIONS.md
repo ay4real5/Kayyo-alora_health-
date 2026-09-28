@@ -1050,3 +1050,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   safeguards the system can check about itself (2FA coverage, idle timeout, audit activity, encryption key, rate
   limits, HTTPS in production) plus reminders for the agency's own obligations (BAAs, risk assessment, training).
 - State EVV rules (`/compliance/evv-state-rules`) wait for P4-04 and the Virginia DMAS research.
+
+### D-063 — Claim follow-up: submission, denials, appeals, corrected claims, AR aging (P4-06)
+2026-09-28 · Claude Code
+- **Submitted**: until the clearinghouse automation (P3-09), billing downloads the 837, sends it through the
+  clearinghouse portal and clicks *Mark as sent* (`POST /billing/claims/:id/submit`, `billing:submit`): ready →
+  submitted with who/when. That date starts the aging clock.
+- **Denials**: posting an 835 that denies a claim now records `denied_at` and `appeal_deadline` = posting date +
+  `payers.appeal_window_days` (default 60; payers vary — Medicare redetermination is 120 days, set it per payer).
+- **Appeals** (`claim_appeals`): one open appeal at a time; levels count up (1 redetermination, 2 reconsideration…).
+  Filing moves the claim to `appealed`; a decision of *won* returns it to `submitted` (waiting for the corrected
+  payment, which arrives as a new 835), *lost*/*withdrawn* back to `denied` (a higher-level appeal can follow).
+- **Corrected claim** (`POST …/rebill`, `billing:create`): a new claim with the same visits and amounts, frequency 7
+  (institutional: type of bill ending in 7), `original_claim_id`, and the payer's claim number, which the 837P/837I
+  now send as REF*F8 (required for frequency 7/8). The original becomes `replaced` and releases its lines.
+- **AR aging** (`GET /billing/reports/aging?asOf=`, `billing:read`): outstanding claims (submitted, acknowledged,
+  partially paid, denied, appealed) by days since submission (creation if never marked sent), per payer, in buckets
+  0–30 / 31–60 / 61–90 / 91–120 / 120+, plus private-pay invoices by days since issue. Balance = charges − paid −
+  adjustments − patient responsibility, **except that denial adjustments stay owed while the denial is open**
+  (denied, appealed, or won and awaiting payment) — they're only written off when the denial is final (future:
+  explicit write-offs).
+- Not yet: 277CA/999 acknowledgments (with P3-09), write-off/adjustment entries, statements to patients for their
+  responsibility.

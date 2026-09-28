@@ -12,6 +12,7 @@ export const NAVIGATION = [
   { href: '/billing/claims', label: 'Claims', permission: 'billing:read' },
   { href: '/billing/invoices', label: 'Invoices', permission: 'billing:read' },
   { href: '/billing/payments', label: 'Payments', permission: 'billing:read' },
+  { href: '/billing/aging', label: 'AR aging', permission: 'billing:read' },
   { href: '/billing/setup', label: 'Billing setup', permission: 'billing:read' },
   { href: '/compliance', label: 'Compliance', permission: 'compliance:create' },
   { href: '/compliance/audit-log', label: 'Audit log', permission: 'audit_logs:read' },
