@@ -23,6 +23,7 @@ import { PaymentsService } from './payments.service.js';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto.js';
 import {
   CreateClaimsDto,
+  InstitutionalClaimDto,
   ListClaimsQueryDto,
   Upload835Dto,
   VoidClaimDto,
@@ -234,6 +235,18 @@ export class ClaimsController {
   @Get(':id/837')
   preview837(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string) {
     return this.edi.preview837(caller, id);
+  }
+
+  /** Type of bill, patient status, HIPPS and CBSA on an unsent institutional (837I) claim (D-061). */
+  @Permissions('billing:update')
+  @Audit({ action: 'UPDATE_CLAIM_INSTITUTIONAL', resourceType: 'claims' })
+  @Patch(':id/institutional')
+  setInstitutional(
+    @CurrentUser() caller: AuthUser,
+    @Param('id', uuid()) id: string,
+    @Body() dto: InstitutionalClaimDto,
+  ) {
+    return this.claims.setInstitutional(caller, id, dto);
   }
 
   /** Voids an unsent claim; its visits can be billed again. */

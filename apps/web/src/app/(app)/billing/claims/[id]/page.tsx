@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -130,11 +130,15 @@ export default function ClaimPage() {
         </table>
       </Card>
 
-      {c.status !== 'void' && c.claimType === '837P' && (
+      {c.institutional && (
+        <InstitutionalCard claimId={c.id} fields={c.institutional} editable={open && can('billing:update')} medicare={c.payer.payerType === 'medicare'} />
+      )}
+
+      {c.status !== 'void' && (c.claimType === '837P' || c.claimType === '837I') && (
         <Card className="flex flex-col gap-2 p-4">
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="secondary" onClick={() => edi.mutate()} disabled={edi.isPending}>
-              Download 837P (preview)
+              Download {c.claimType} (preview)
             </Button>
             <span className="text-xs text-slate-500">
               Electronic claim file with the test indicator — for checking, or a clearinghouse test channel.
@@ -170,5 +174,50 @@ export default function ClaimPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+/** Type of bill, patient status, HIPPS and CBSA for an institutional (UB-04 / 837I) claim (D-061). */
+function InstitutionalCard({
+  claimId,
+  fields,
+  editable,
+  medicare,
+}: {
+  claimId: string;
+  fields: NonNullable<Claim['institutional']>;
+  editable: boolean;
+  medicare: boolean;
+}) {
+  const { request } = useAuth();
+  const queryClient = useQueryClient();
+  const save = useMutation({
+    mutationFn: (body: Record<string, string>) =>
+      request(`/billing/claims/${claimId}/institutional`, { method: 'PATCH', body }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['billing'] }),
+  });
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    save.mutate(Object.fromEntries(['typeOfBill', 'patientStatus', 'hippsCode', 'cbsaCode'].map((k) => [k, String(f.get(k) ?? '').trim()])));
+  };
+  return (
+    <Card className="flex flex-col gap-3 p-4">
+      <h2 className="text-base font-semibold text-slate-900">Institutional claim (UB-04)</h2>
+      <ErrorAlert error={save.error} />
+      <form onSubmit={submit} className="grid gap-3 sm:grid-cols-4">
+        <Field label="Type of bill" name="typeOfBill" defaultValue={fields.typeOfBill ?? ''} disabled={!editable} hint="0329 = final claim" />
+        <Field label="Patient status" name="patientStatus" defaultValue={fields.patientStatus ?? ''} disabled={!editable} hint="30 = still a patient" />
+        <Field label="HIPPS code" name="hippsCode" defaultValue={fields.hippsCode ?? ''} disabled={!editable} hint={medicare ? 'Required by Medicare' : 'Medicare only'} />
+        <Field label="CBSA code" name="cbsaCode" defaultValue={fields.cbsaCode ?? ''} disabled={!editable} hint={medicare ? 'Where care was given' : 'Medicare only'} />
+        {editable && (
+          <div>
+            <Button type="submit" variant="secondary" disabled={save.isPending}>
+              Save claim details
+            </Button>
+          </div>
+        )}
+      </form>
+    </Card>
   );
 }

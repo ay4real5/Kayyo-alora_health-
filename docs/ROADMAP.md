@@ -65,7 +65,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-02** `agent` Pre-billing QA engine. deps: P3-01, P2-01
 - [x] **P3-03** `agent` Claim creation from verified visits + claim lines. deps: P3-02
 - [x] **P3-04** `agent` X12 utils + EDI 837P generator with golden-file tests. deps: P3-03
-- [ ] **P3-05** `agent` EDI 837I generator. deps: P3-04
+- [x] **P3-05** `agent` EDI 837I generator. deps: P3-04
 - [x] **P3-06** `agent` EDI 835 parser + payment posting/reconciliation. deps: P3-04
 - [x] **P3-07** `agent` EDI 270/271 eligibility. deps: P3-04
 - [ ] **P3-08** `human` Clearinghouse account (Availity/Waystar), SFTP creds, BAA
@@ -77,8 +77,8 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13
 - [x] **P3-15** `agent` ~~Base44 docs~~ Not needed after D-044; instead retire `docs/base44-portal/` and the portal spec export once P3-16 ships. deps: P3-16
 - [x] **P3-16** `agent` Build the patient portal screens in `apps/web` (own layout, `portal_user` only) — replaces the Base44 plan (D-044). deps: P3-14
-- [ ] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03
-- [ ] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12
+- [x] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03 — done within P3-03…P3-10 (Billing menu + eligibility panel on the patient page)
+- [x] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12 — done within P3-11/P3-12 (panels on the patient page)
 - [ ] **P3-19** `agent` Email channel (SendGrid). deps: P2-12
 
 ## Phase 4 — Analytics, compliance, hardening

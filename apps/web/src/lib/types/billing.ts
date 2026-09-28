@@ -4,6 +4,8 @@ export interface Payer {
   id: string;
   name: string;
   payerType: string;
+  /** 837P / 837I; null = 837I for Medicare, else 837P (D-061). */
+  claimFormat: string | null;
   payerIdCode: string | null;
   state: string | null;
   phone: string | null;
@@ -19,6 +21,7 @@ export interface ServiceCode {
   description: string | null;
   defaultRate: number | null;
   unitType: string;
+  revenueCode: string | null;
   requiresAuth: boolean;
   isActive: boolean;
 }
@@ -84,6 +87,8 @@ export interface Claim {
   qaPassed: boolean | null;
   qaErrors: { visitId: string; messages: string[] }[] | null;
   voidReason: string | null;
+  /** Institutional (837I) claims only (D-061). */
+  institutional: { typeOfBill: string | null; patientStatus: string | null; hippsCode: string | null; cbsaCode: string | null } | null;
   lines: ClaimLine[];
   createdAt: string;
 }

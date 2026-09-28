@@ -52,6 +52,12 @@ function PayersCard() {
       request('/billing/payers', { method: 'POST', body }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['billing', 'payers'] }),
   });
+  // Empty = back to the default for the payer type (sent as null).
+  const setFormat = useMutation({
+    mutationFn: ({ id, claimFormat }: { id: string; claimFormat: string }) =>
+      request(`/billing/payers/${id}`, { method: 'PATCH', body: { claimFormat: claimFormat || null } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['billing', 'payers'] }),
+  });
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -60,6 +66,7 @@ function PayersCard() {
       {
         name: text(f, 'name'),
         payerType: text(f, 'payerType'),
+        ...(text(f, 'claimFormat') ? { claimFormat: text(f, 'claimFormat') } : {}),
         ...(text(f, 'payerIdCode') ? { payerIdCode: text(f, 'payerIdCode') } : {}),
         ...(text(f, 'state') ? { state: text(f, 'state') } : {}),
         requiresAuthorization: f.get('requiresAuthorization') === 'on',
@@ -70,13 +77,14 @@ function PayersCard() {
   return (
     <Card className="flex flex-col gap-3 p-4">
       <h2 className="text-base font-semibold text-slate-900">Payers</h2>
-      <ErrorAlert error={payers.error} />
+      <ErrorAlert error={payers.error ?? setFormat.error} />
       <table className="w-full text-left text-sm">
         <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="py-2 pr-4 font-medium">Name</th>
             <th className="py-2 pr-4 font-medium">Type</th>
             <th className="py-2 pr-4 font-medium">Payer ID</th>
+            <th className="py-2 pr-4 font-medium">Claim form</th>
             <th className="py-2 pr-4 font-medium">Needs authorization</th>
             <th className="py-2 font-medium">Timely filing</th>
           </tr>
@@ -87,6 +95,22 @@ function PayersCard() {
               <td className="py-2 pr-4">{p.name}</td>
               <td className="py-2 pr-4">{humanize(p.payerType)}</td>
               <td className="py-2 pr-4">{p.payerIdCode ?? '—'}</td>
+              <td className="py-2 pr-4">
+                {can('billing:update') && p.payerType !== 'private_pay' ? (
+                  <select
+                    aria-label={`Claim form for ${p.name}`}
+                    value={p.claimFormat ?? ''}
+                    onChange={(e) => setFormat.mutate({ id: p.id, claimFormat: e.target.value })}
+                    className="rounded border border-slate-300 bg-white px-1 py-0.5 text-sm"
+                  >
+                    <option value="">Default ({p.payerType === 'medicare' ? '837I' : '837P'})</option>
+                    <option value="837P">837P (professional)</option>
+                    <option value="837I">837I (institutional / UB-04)</option>
+                  </select>
+                ) : (
+                  (p.claimFormat ?? (p.payerType === 'medicare' ? '837I' : '837P'))
+                )}
+              </td>
               <td className="py-2 pr-4">{p.requiresAuthorization ? 'Yes' : 'No'}</td>
               <td className="py-2">{p.timelyFilingDays} days</td>
             </tr>
@@ -107,6 +131,11 @@ function PayersCard() {
             ))}
           </SelectField>
           <Field label="Payer ID" name="payerIdCode" maxLength={50} />
+          <SelectField label="Claim form" name="claimFormat" defaultValue="">
+            <option value="">Default</option>
+            <option value="837P">837P</option>
+            <option value="837I">837I (UB-04)</option>
+          </SelectField>
           <Field label="State" name="state" maxLength={2} className="w-20" />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="requiresAuthorization" /> Needs authorization
@@ -142,6 +171,7 @@ function ServiceCodesCard() {
         code: text(f, 'code'),
         codeType: 'hcpcs',
         unitType: text(f, 'unitType'),
+        ...(text(f, 'revenueCode') ? { revenueCode: text(f, 'revenueCode') } : {}),
         ...(text(f, 'description') ? { description: text(f, 'description') } : {}),
         ...(text(f, 'defaultRate') ? { defaultRate: Number(text(f, 'defaultRate')) } : {}),
         requiresAuth: f.get('requiresAuth') === 'on',
@@ -159,6 +189,7 @@ function ServiceCodesCard() {
             <th className="py-2 pr-4 font-medium">Code</th>
             <th className="py-2 pr-4 font-medium">Description</th>
             <th className="py-2 pr-4 font-medium">Unit</th>
+            <th className="py-2 pr-4 font-medium">Revenue code</th>
             <th className="py-2 pr-4 font-medium">Default rate</th>
             <th className="py-2 font-medium">Needs authorization</th>
           </tr>
@@ -169,6 +200,7 @@ function ServiceCodesCard() {
               <td className="py-2 pr-4 font-mono">{c.code}</td>
               <td className="py-2 pr-4">{c.description}</td>
               <td className="py-2 pr-4">{humanize(c.unitType)}</td>
+              <td className="py-2 pr-4 font-mono">{c.revenueCode ?? '—'}</td>
               <td className="py-2 pr-4">{money(c.defaultRate)}</td>
               <td className="py-2">{c.requiresAuth ? 'Yes' : 'No'}</td>
             </tr>
@@ -182,6 +214,7 @@ function ServiceCodesCard() {
         >
           <Field label="Code (HCPCS)" name="code" required className="w-32" />
           <Field label="Description" name="description" className="min-w-56" />
+          <Field label="Revenue code" name="revenueCode" maxLength={4} className="w-28" hint="UB-04, e.g. 0571" />
           <SelectField label="Unit" name="unitType" defaultValue="unit_15min">
             {UNIT_TYPES.map((t) => (
               <option key={t} value={t}>

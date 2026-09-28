@@ -35,6 +35,7 @@ export const PAYER_TYPES = [
 ] as const;
 export const CODE_TYPES = ['hcpcs', 'cpt', 'revenue'] as const;
 export const UNIT_TYPES = ['visit', 'hour', 'unit_15min', 'day'] as const;
+export const CLAIM_FORMATS = ['837P', '837I'] as const;
 
 export class PayerDto {
   @Transform(trimmed)
@@ -45,6 +46,11 @@ export class PayerDto {
 
   @IsIn(PAYER_TYPES)
   payerType!: (typeof PAYER_TYPES)[number];
+
+  /** 837P (professional) or 837I (institutional / UB-04). Empty: 837I for Medicare, 837P otherwise (D-061). */
+  @IsOptional()
+  @IsIn(CLAIM_FORMATS)
+  claimFormat?: (typeof CLAIM_FORMATS)[number];
 
   /** The payer's ID for electronic claims (clearinghouse payer ID). */
   @IsOptional()
@@ -118,6 +124,11 @@ export class UpdatePayerDto implements Partial<PayerDto> {
   @IsOptional()
   @IsIn(PAYER_TYPES)
   payerType?: (typeof PAYER_TYPES)[number];
+
+  /** 837P (professional) or 837I (institutional / UB-04). Empty: 837I for Medicare, 837P otherwise (D-061). */
+  @IsOptional()
+  @IsIn(CLAIM_FORMATS)
+  claimFormat?: (typeof CLAIM_FORMATS)[number];
 
   @IsOptional()
   @Transform(upperTrimmed)
@@ -213,6 +224,11 @@ export class ServiceCodeDto {
   @IsIn(UNIT_TYPES)
   unitType!: (typeof UNIT_TYPES)[number];
 
+  /** UB-04 revenue code for institutional claims, e.g. 0571 (aide), 0551 (nursing), 0421 (PT). */
+  @IsOptional()
+  @Matches(/^\d{4}$/, { message: 'revenueCode must be 4 digits, e.g. 0571' })
+  revenueCode?: string;
+
   @IsOptional()
   @IsBoolean()
   requiresAuth?: boolean;
@@ -235,6 +251,11 @@ export class UpdateServiceCodeDto {
   @IsOptional()
   @IsIn(UNIT_TYPES)
   unitType?: (typeof UNIT_TYPES)[number];
+
+  /** UB-04 revenue code for institutional claims, e.g. 0571 (aide), 0551 (nursing), 0421 (PT). */
+  @IsOptional()
+  @Matches(/^\d{4}$/, { message: 'revenueCode must be 4 digits, e.g. 0571' })
+  revenueCode?: string;
 
   @IsOptional()
   @IsBoolean()
