@@ -1,4 +1,4 @@
-import { disciplineFits, todayInTimeZone, VISIT_TYPES } from './scheduling.js';
+import { disciplineFits, todayInTimeZone, VISIT_TYPES, zonedTimeToUtc } from './scheduling.js';
 
 describe('scheduling constants', () => {
   it('knows which disciplines fit a visit type', () => {
@@ -15,3 +15,15 @@ describe('scheduling constants', () => {
     expect(todayInTimeZone('America/Los_Angeles', lateEveningInNewYork)).toBe('2026-09-27');
   });
 });
+
+describe('zonedTimeToUtc', () => {
+  it('converts local wall-clock time to UTC, across daylight saving', () => {
+    // Chicago: CDT (UTC-5) in summer, CST (UTC-6) in winter; the switch was 2026-11-01.
+    expect(zonedTimeToUtc('2026-10-05', '09:00', 'America/Chicago').toISOString()).toBe('2026-10-05T14:00:00.000Z');
+    expect(zonedTimeToUtc('2026-12-05', '09:00', 'America/Chicago').toISOString()).toBe('2026-12-05T15:00:00.000Z');
+    expect(zonedTimeToUtc('2026-07-01', '23:30', 'America/New_York').toISOString()).toBe('2026-07-02T03:30:00.000Z');
+    expect(zonedTimeToUtc('2026-07-01', '08:00', 'UTC').toISOString()).toBe('2026-07-01T08:00:00.000Z');
+    expect(zonedTimeToUtc('2026-07-01', '08:00', 'Asia/Kolkata').toISOString()).toBe('2026-07-01T02:30:00.000Z');
+  });
+});
+
