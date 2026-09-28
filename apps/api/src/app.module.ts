@@ -14,6 +14,7 @@ import { RbacModule } from './modules/rbac/rbac.module.js';
 import { SchedulingModule } from './modules/scheduling/scheduling.module.js';
 import { StaffModule } from './modules/staff/staff.module.js';
 import { UsersModule } from './modules/users/users.module.js';
+import { EvvModule } from './modules/evv/evv.module.js';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsersModule } from './modules/users/users.module.js';
     PhysiciansModule,
     StaffModule,
     SchedulingModule,
+    EvvModule,
     NotificationsModule,
     HealthModule,
   ],
