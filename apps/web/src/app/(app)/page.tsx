@@ -60,7 +60,7 @@ export default function DashboardPage() {
             label="Credentials expired or expiring (30 days)"
             value={credentialAlerts.data}
             loading={credentialAlerts.isLoading}
-            href="/staff"
+            href="/staff/credentials"
           />
         )}
         <StatCard label="Unread notifications" value={unread.data} loading={unread.isLoading} />
