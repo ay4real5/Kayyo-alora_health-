@@ -78,6 +78,7 @@
 - **Claims (P3-03)**: claims from ready visits (per patient + payer, frozen snapshot, never double-billed), QA re-check,
   void; web claims list/detail. D-052.
 - **EDI 837P (P3-04)**: golden-tested generator, claim file preview with validation, agency settings, payer EDI IDs. D-053.
+- **835 payments (P3-06)**: parser, upload (dedup, claim matching), posting (paid/partial/denied); web Payments. D-054.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -91,11 +92,10 @@ Nothing.
 
 ## Next up
 
-EDI submission needs the owner's clearinghouse account (P3-08). Meanwhile: **P3-06** EDI 835 parser + payment
-posting (golden-file tests, no account needed), **P3-10** private-pay invoices, **P3-11** clinical records (care plans,
-assessments, medications, orders), **P3-12** documents (needs S3 → can use local/dev storage behind an interface),
-P3-13 messaging, then the portal (P3-14/P3-16). The owner asked for autonomous work: go straight on, check in
-~every 4 hours.
+**P3-10** private-pay invoices (PDF), **P3-11** clinical records (care plans CMS-485, assessments, medications,
+physician orders), **P3-12** documents (storage behind an interface; local/dev driver until S3 + BAA), P3-13 secure
+messaging, then the portal (P3-14/P3-16). P3-07 eligibility (270/271) can be built and tested like the 837/835.
+The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -107,6 +107,7 @@ P3-13 messaging, then the portal (P3-14/P3-16). The owner asked for autonomous w
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P3-06 | 835 parser + upload + posting API and web; 22 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-04 | 837P generator (golden file), preview endpoint, agency settings; 21 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-03 | Claims API + web; 3 e2e (incl. simultaneous billing) + 1 browser test; 21 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-02 | Pre-billing QA API + page; 6 unit + 1 e2e + 1 browser test; 20 browser tests pass. |
