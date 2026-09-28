@@ -10,6 +10,14 @@ async function signIn(page: Page, email: string) {
   await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
 }
 
+/** Signing out ends in a full page load; wait for it, or the next page.goto races it (net::ERR_ABORTED). */
+async function signOut(page: Page) {
+  const reloaded = page.waitForEvent('load');
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await reloaded;
+  await expect(page).toHaveURL(/\/login$/);
+}
+
 /** A Wednesday far enough ahead that nothing in the demo data is scheduled on it. */
 function futureWednesday(weeksAhead: number): string {
   const d = new Date();
@@ -50,7 +58,7 @@ test('book, double-book (blocked), override as supervisor, reschedule and cancel
   await expect(page.getByText(/Book anyway/)).toHaveCount(0);
 
   // A supervisor can override; it goes through.
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  await signOut(page);
   await signIn(page, 'supervisor@demo.alora.test');
   await startBooking(page, 'DEMO-0007', date, '12:30', '13:30');
   await expect(page.getByText(/Blocks booking/)).toBeVisible();
@@ -91,7 +99,7 @@ test('the calendar shows the week, and caregivers see only their own visits', as
   const officeCount = await count();
   expect(officeCount).toBeGreaterThan(0); // demo data covers the next two weeks
 
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  await signOut(page);
   await signIn(page, 'hha@demo.alora.test');
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Schedule' }).click();
   await expect(page.getByRole('link', { name: 'Book visit' })).toHaveCount(0);
