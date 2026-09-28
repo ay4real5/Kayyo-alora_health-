@@ -50,20 +50,22 @@ task with a good handoff note is worth more than a finished one nobody can find.
 |---|---|
 | `agent` | Any coding agent (Claude Code, Devin, ...) can do it. |
 | `human` | Needs the owner: accounts, API keys, BAAs, payments, legal/compliance calls. |
-| `base44` | Built in the Base44 web builder by the owner, not in this repo. The repo only holds its docs/spec in `docs/base44-portal/`. |
+| `base44` | (No longer used — the patient portal is built in this repo, DECISIONS D-044.) |
 
 ## 5. Architecture (summary — details in docs/DESIGN.md)
 
 - Modular monolith (NestJS) — each domain is a NestJS module in `apps/api/src/modules/`
 - Shared types/constants in `packages/shared/`
 - Admin dashboard: `apps/web/` (Next.js App Router) — self-hosted, full Socket.IO real-time
-- Patient portal: **Base44 project** (hosted on base44.com, consumes NestJS Portal API via OpenAPI integration)
-- Mobile app: `apps/mobile/` (React Native + Expo Router)
+- Patient portal: built in this repo (`apps/web`, own layout, `portal_user` only) — **not** Base44 (DECISIONS D-044)
+- Mobile app: `apps/mobile/` (Expo SDK 57 + Expo Router; DECISIONS D-043). Add native modules with the SDK-57
+  version (`npm view <pkg> dist-tags` → `sdk-57`), check with `npm run typecheck/test -w @alora/mobile` and
+  `npx expo export --platform android` (bundling proves the monorepo resolution).
 - PostgreSQL + Prisma, Redis + BullMQ, Socket.IO, S3, Twilio, SendGrid
 
 ### API-first
 - NestJS generates OpenAPI/Swagger at `/api/v1/docs`
-- Next.js dashboard and mobile app consume the API; Base44 portal imports the `/portal/*` subset
+- Next.js dashboard, patient portal and mobile app consume the API
 - No business logic in any frontend
 
 ## 6. Conventions
