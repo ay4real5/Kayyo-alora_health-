@@ -39,7 +39,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P1-17** `agent` Seed script with fake agency, users per role, patients, staff, visits. deps: P1-12, P1-13, P1-14
 - [x] **P1-18** `agent` Scaffold `apps/web` (Next.js, Tailwind, shadcn/ui, React Query, Zustand), api-client with refresh, login page, idle-timeout, sidebar layout. deps: P1-06
 - [x] **P1-19** `agent` Web: patients list/detail pages. deps: P1-18, P1-12
-- [ ] **P1-20** `agent` Web: staff list/detail/credentials pages. deps: P1-18, P1-13
+- [x] **P1-20** `agent` Web: staff list/detail/credentials pages. deps: P1-18, P1-13
 - [ ] **P1-21** `agent` Web: scheduling calendar + visit form. deps: P1-18, P1-14
 - [ ] **P1-22** `agent` e2e test pass for Phase 1 flows; update README quick start. deps: all P1
 

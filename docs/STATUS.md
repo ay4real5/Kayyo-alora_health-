@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-19 done — Phase 1 API complete; dashboard has login + patient screens.
+On `main`: P1-01 to P1-20 done — Phase 1 API complete; dashboard has login, patients, staff, users, physicians.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -16,7 +16,7 @@ On `main`: P1-01 to P1-19 done — Phase 1 API complete; dashboard has login + p
 - PHI encryption (P1-05): `PhiCryptoService` (AES-256-GCM, key rotation, column-bound context) — D-017.
 - Auth (P1-06): login (Argon2id, lockout, uniform errors), refresh rotation with theft detection + idle
   timeout, logout, `/auth/me`, change-password; global JWT guard (`@Public()` to opt out), rate limits,
-  `AuditService`. e2e suite (134 tests, ~8 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
+  `AuditService`. e2e suite (136 tests, ~9 min against Neon) passes against Neon and CI Postgres. Details: DECISIONS D-020.
 - 2FA (P1-07, P1-11b): TOTP setup/enable/disable, two-step login with challenge token, replay protection,
   10 one-time recovery codes. Mandatory 2FA per role waits on Q-008. Details: DECISIONS D-021, D-026.
 - RBAC (P1-08): 56 permissions + 11 built-in roles synced from code on every boot; `@Permissions()` +
@@ -45,6 +45,8 @@ On `main`: P1-01 to P1-19 done — Phase 1 API complete; dashboard has login + p
   locally (not in CI yet — P1-22). Auth rate limits relaxed for shared office IPs. D-034.
 - Web patients (P1-19): list/search, detail, admit/edit, discharge/readmit, diagnoses, allergies. Web "today" uses
   the agency timezone (`useAgencyToday`); API future-date checks tolerate UTC+14. 6 Playwright tests (re-seed first). D-035.
+- Web staff/users/physicians (P1-20) + `GET /roles`, `GET /staff/candidates`. All API "today" defaults now use the
+  agency timezone (`AgencyClockService`). 10 Playwright tests. D-036.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -57,10 +59,8 @@ Nothing.
 
 ## Next up
 
-**P1-20** — Web: staff (list with discipline/ZIP filters, profile with pay only for payroll/self, credentials with
-state badges + add/verify/remove, availability editor, time off request/approve), users (list, create with roles,
-deactivate/reactivate/unlock/reset 2FA), physicians (list, add/edit with NPI check). Reuse `components/ui` and the
-patterns in the patients pages. Then **P1-21** scheduling calendar, **P1-22** end-to-end pass + Playwright in CI.
+**P1-21** (in progress on `task/P1-21-web-calendar`) — scheduling calendar screens; then **P1-22** end-to-end pass
+with Playwright in CI. The owner asked for autonomous work: go straight on to the next task, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -71,6 +71,7 @@ patterns in the patients pages. Then **P1-21** scheduling calendar, **P1-22** en
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P1-20 | Staff/users/physicians screens; agency clock; CI green, merged. |
 | 2026-09-28 | Claude Code | P1-19 | Patient screens + timezone bug fix; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-18 | Web dashboard foundation + browser tests; rate-limit fix; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-17 | Demo seed + test; CI green, merged. Phase 1 API complete. |
