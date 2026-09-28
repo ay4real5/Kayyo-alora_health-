@@ -9,7 +9,7 @@ import { fromDate } from '../../common/utils/dates.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { build837I, validate837I, type Edi837IInput } from './edi/edi-837i.js';
 import { build837, validate837, type Edi837Input } from './edi/edi-837p.js';
-import { virginiaEvvForLine, virginiaEvvRequired, type LineEvv } from './edi/evv-virginia.js';
+import { addRepeatModifiers, virginiaEvvForLine, virginiaEvvRequired, type LineEvv } from './edi/evv-virginia.js';
 
 const EVV_SELECT = {
   clockInTime: true,
@@ -221,16 +221,7 @@ export class EdiService {
         },
       ],
     };
-    if (claim.payer.evvClaimProfile === 'va_dmas') {
-      // Virginia: each line is one caregiver's shift; a second line for the same service on the same day carries
-      // modifier 76 so it isn't denied as a duplicate (DMAS EVV FAQ).
-      const seen = new Set<string>();
-      for (const line of input.claims[0]!.lines) {
-        const key = `${line.serviceCode}|${line.serviceDate}`;
-        if (seen.has(key) && !line.modifiers.includes('76') && line.modifiers.length < 4) line.modifiers.push('76');
-        seen.add(key);
-      }
-    }
+    if (claim.payer.evvClaimProfile === 'va_dmas') addRepeatModifiers(input.claims[0]!.lines);
     const problems = [...evvProblems, ...validate837(input)];
     if (problems.length) throw incomplete(problems);
     return {

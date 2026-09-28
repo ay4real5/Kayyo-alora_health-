@@ -198,3 +198,16 @@ export function virginiaEvvForLine(f: EvvLineFacts): { evv: LineEvv | null; prob
   if (problems.length || !times || !address) return { evv: null, problems };
   return { evv: { times, attendant: { lastName, firstName, id }, begin: address, end: address }, problems };
 }
+
+/**
+ * Virginia 837P: each line is one caregiver's shift, so a second line for the same service on the same day gets
+ * modifier 76 (repeat service) to not be denied as a duplicate (DMAS EVV FAQ). Changes the lines in place.
+ */
+export function addRepeatModifiers(lines: { serviceCode: string; serviceDate: string; modifiers: string[] }[]): void {
+  const seen = new Set<string>();
+  for (const line of lines) {
+    const key = `${line.serviceCode}|${line.serviceDate}`;
+    if (seen.has(key) && !line.modifiers.includes('76') && line.modifiers.length < 4) line.modifiers.push('76');
+    seen.add(key);
+  }
+}

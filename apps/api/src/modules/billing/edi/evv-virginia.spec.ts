@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { build837I, type Edi837IInput } from './edi-837i.js';
 import { build837, type Edi837Input } from './edi-837p.js';
-import { localDateTime, splitAtMidnight, virginiaEvvForLine, virginiaEvvRequired, type EvvLineFacts } from './evv-virginia.js';
+import { addRepeatModifiers, localDateTime, splitAtMidnight, virginiaEvvForLine, virginiaEvvRequired, type EvvLineFacts } from './evv-virginia.js';
 
 /** FAKE data only. Times are Eastern (UTC-4 in September). */
 const FACTS: EvvLineFacts = {
@@ -216,5 +216,18 @@ describe('splitAtMidnight', () => {
     // The second piece reads 0000-0600 on its own day.
     expect(virginiaEvvForLine({ ...FACTS, serviceDate: '2026-09-25', window: pieces[1] }).evv?.times).toBe('0000-0600');
     expect(splitAtMidnight(new Date('2026-09-24T12:00:00Z'), new Date('2026-09-24T16:00:00Z'), 'America/New_York')).toHaveLength(1);
+  });
+});
+
+describe('addRepeatModifiers', () => {
+  it('marks the second same-day line for a service with 76', () => {
+    const lines = [
+      { serviceCode: 'T1019', serviceDate: '2026-09-24', modifiers: ['U1'] },
+      { serviceCode: 'T1019', serviceDate: '2026-09-24', modifiers: ['U1'] },
+      { serviceCode: 'T1019', serviceDate: '2026-09-25', modifiers: [] },
+      { serviceCode: 'S5135', serviceDate: '2026-09-24', modifiers: [] },
+    ];
+    addRepeatModifiers(lines);
+    expect(lines.map((l) => l.modifiers)).toEqual([['U1'], ['U1', '76'], [], []]);
   });
 });
