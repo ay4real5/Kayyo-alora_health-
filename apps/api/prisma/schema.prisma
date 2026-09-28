@@ -113,6 +113,11 @@ model User {
   uploadedDocuments    Document[]          @relation("DocumentUploadedBy")
   notifications        Notification[]
 
+  ordersTaken         PhysicianOrder[] @relation("OrderTakenBy")
+  carePlansSigned     CarePlan[]       @relation("CarePlanSignedBy")
+  assessmentsDone     Assessment[]     @relation("AssessmentAssessor")
+  assessmentsReviewed Assessment[]     @relation("AssessmentQaReviewer")
+
   @@index([agencyId])
   @@map("users")
 }
@@ -284,6 +289,11 @@ model Patient {
   /// Medical record numbers are unique within an agency (NULLs allowed — MRN is optional).
   claims Claim[]
 
+  medications     Medication[]
+  physicianOrders PhysicianOrder[]
+  carePlans       CarePlan[]
+  assessments     Assessment[]
+
   @@unique([agencyId, mrn])
   @@index([agencyId])
   @@index([agencyId, status])
@@ -314,6 +324,10 @@ model Physician {
   patients Patient[]
 
   /// One directory entry per NPI within an agency (NULLs allowed — NPI is optional).
+  medications Medication[]
+  orders      PhysicianOrder[]
+  carePlans   CarePlan[]
+
   @@unique([agencyId, npi])
   @@index([agencyId])
   @@map("physicians")
@@ -720,6 +734,116 @@ model PaymentDetail {
   @@map("payment_details")
 }
 
+// ─────────────────────────────── Clinical records (§5.2, DECISIONS D-055) ───────────────────────────────
+
+/// A medication the patient takes. Discontinued, never deleted (the list is a clinical record).
+model Medication {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId              String    @map("patient_id") @db.Uuid
+  drugName               String    @map("drug_name") @db.VarChar(255)
+  ndcCode                String?   @map("ndc_code") @db.VarChar(20)
+  dosage                 String?   @db.VarChar(100)
+  frequency              String?   @db.VarChar(100)
+  route                  String?   @db.VarChar(50)
+  prescribingPhysicianId String?   @map("prescribing_physician_id") @db.Uuid
+  startDate              DateTime? @map("start_date") @db.Date
+  endDate                DateTime? @map("end_date") @db.Date
+  isActive               Boolean   @default(true) @map("is_active")
+  discontinuedReason     String?   @map("discontinued_reason")
+  notes                  String?
+  createdById            String?   @map("created_by") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  physician Physician? @relation(fields: [prescribingPhysicianId], references: [id])
+
+  @@index([patientId])
+  @@map("medications")
+}
+
+/// A physician order (verbal, plan of care, medication change) and whether it came back signed.
+model PhysicianOrder {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId     String    @map("patient_id") @db.Uuid
+  physicianId   String?   @map("physician_id") @db.Uuid
+  /// verbal | plan_of_care | medication | visit_frequency | other
+  orderType     String    @map("order_type") @db.VarChar(50)
+  description   String
+  /// pending | sent | signed | cancelled
+  status        String    @default("pending") @db.VarChar(20)
+  orderedDate   DateTime  @map("ordered_date") @db.Date
+  sentDate      DateTime? @map("sent_date") @db.Date
+  signedDate    DateTime? @map("signed_date") @db.Date
+  effectiveDate DateTime? @map("effective_date") @db.Date
+  expiryDate    DateTime? @map("expiry_date") @db.Date
+  takenById     String?   @map("taken_by") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  physician Physician? @relation(fields: [physicianId], references: [id])
+  takenBy   User?      @relation("OrderTakenBy", fields: [takenById], references: [id])
+
+  @@index([patientId])
+  @@map("physician_orders")
+}
+
+/// Plan of care (CMS-485 style) for one certification period. A new active version supersedes the previous one.
+model CarePlan {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId                String    @map("patient_id") @db.Uuid
+  physicianId              String?   @map("physician_id") @db.Uuid
+  certificationPeriodStart DateTime  @map("certification_period_start") @db.Date
+  certificationPeriodEnd   DateTime  @map("certification_period_end") @db.Date
+  /// draft | active | superseded | ended
+  status                   String    @default("draft") @db.VarChar(20)
+  goals                    Json?
+  interventions            Json?
+  disciplinesRequired      Json?     @map("disciplines_required")
+  visitFrequency           Json?     @map("visit_frequency")
+  physicianSignatureDate   DateTime? @map("physician_signature_date") @db.Date
+  signedById               String?   @map("signed_by") @db.Uuid
+  version                  Int       @default(1)
+  createdById              String?   @map("created_by") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  physician Physician? @relation(fields: [physicianId], references: [id])
+  signedBy  User?      @relation("CarePlanSignedBy", fields: [signedById], references: [id])
+
+  @@index([patientId])
+  @@map("care_plans")
+}
+
+/// A clinical assessment (OASIS, fall risk, Braden). Answers stored as the form JSON; scores computed for known scales.
+model Assessment {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  visitId        String?   @map("visit_id") @db.Uuid
+  assessorId     String    @map("assessor_id") @db.Uuid
+  type           String    @db.VarChar(50)
+  /// draft | completed | approved
+  status         String    @default("draft") @db.VarChar(20)
+  data           Json
+  score          Decimal?  @db.Decimal(8, 2)
+  qaReviewedById String?   @map("qa_reviewed_by") @db.Uuid
+  qaReviewedAt   DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
+  qaNotes        String?   @map("qa_notes")
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient      Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visit        Visit?  @relation(fields: [visitId], references: [id])
+  assessor     User    @relation("AssessmentAssessor", fields: [assessorId], references: [id])
+  qaReviewedBy User?   @relation("AssessmentQaReviewer", fields: [qaReviewedById], references: [id])
+
+  @@index([patientId, type])
+  @@map("assessments")
+}
+
 // ─────────────────────────────── Scheduling (§5.4, core subset) ───────────────────────────────
 
 model Visit {
@@ -765,6 +889,8 @@ model Visit {
   claimLines     ClaimLine[]
 
   /// At most one occurrence per recurring rule per date — generation can be re-run safely (D-031).
+  assessments Assessment[]
+
   @@unique([recurrenceRuleId, scheduledDate])
   @@index([agencyId, scheduledDate])
   @@index([patientId, scheduledDate])

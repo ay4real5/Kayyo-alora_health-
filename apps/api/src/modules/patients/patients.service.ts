@@ -243,6 +243,12 @@ export class PatientsService {
   }
 
   /** The record-level access rule. Every query goes through this. */
+  /** 404 unless the caller may see this patient (used by clinical records, D-055). */
+  async assertAccessible(caller: AuthUser, patientId: string): Promise<void> {
+    const found = await this.prisma.patient.count({ where: { AND: [{ id: patientId }, await this.scope(caller)] } });
+    if (!found) throw new NotFoundException('Patient not found');
+  }
+
   private async scope(caller: AuthUser): Promise<Prisma.PatientWhereInput> {
     const access = await this.permissions.forUser(caller);
     if (access.permissions.has('patients:read_all')) return { agencyId: caller.agencyId };

@@ -873,3 +873,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   `submitted`; else balance ≤ $0.005 → `paid`, otherwise `partially_paid`. Void claims are skipped.
 - Web: **Payments** page — load an 835, review per claim, post.
 - Not yet: 999/277 acknowledgments, PLB application to balances, patient statements for patient responsibility.
+
+### D-055 — Clinical records: medications, orders, plans of care, assessments (P3-11)
+2026-09-28 · Claude Code
+- Routes under `/patients/:patientId/{medications,orders,care-plans,assessments}`. **Reading** needs `patients:read`
+  and patient access (`PatientsService.assertAccessible` — a caregiver sees their own patients'); **writing** needs the
+  clinical permission: new `medications:manage` (supervisor, RN, LPN), `orders:create|update`, `care_plans:create|
+  update`, `assessments:create|update|approve`.
+- **Nothing clinical is deleted**: medications are *discontinued* (reason + end date; a stopped one can't be edited —
+  add it again), orders *cancelled*, plans *superseded* or *ended*, assessments stay.
+- **Physician orders**: `pending → sent → signed` (dates kept), cancel before signed; **overdue** when not signed 30
+  days after the order date (Medicare needs signed plan-of-care orders before final billing).
+- **Plans of care** (CMS-485-style): certification period (≤1 year; Medicare uses 60 days), physician, goals,
+  interventions and visit frequency per discipline (e.g. `HHA 3W8`), disciplines derived. Versioned; only drafts are
+  editable; **activating** (physician signature date, not in the future, physician required) makes it the one active
+  plan and supersedes the previous one. Generating visits from the frequency is a later step.
+- **Assessments**: type (OASIS SOC/ROC/recert/transfer/discharge, nursing, Morse fall, Braden, pain, other), the form's
+  answers as JSON. **Morse** and **Braden** are scored in `@alora/shared` (`scoreAssessment`, unit-tested; bands:
+  Morse <25 low / 25–44 moderate / ≥45 high; Braden ≤9 very high … ≥19 none). Draft → completed by the assessor
+  (scored scales must be complete, else 400 `ASSESSMENT_INCOMPLETE` with the missing items) → **approved by someone
+  else** (`assessments:approve`). Full OASIS forms/validation are future work.
+- Web: clinical section on the patient page (medications, orders, plan of care with physician and activation,
+  assessments with approval). Mobile assessment entry comes with the next mobile pass.

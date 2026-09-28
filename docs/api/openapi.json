@@ -4063,6 +4063,659 @@
         ]
       }
     },
+    "/api/v1/patients/{patientId}/medications": {
+      "get": {
+        "operationId": "ClinicalController_listMedications",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeInactive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      },
+      "post": {
+        "operationId": "ClinicalController_addMedication",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MedicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/medications/{id}": {
+      "patch": {
+        "operationId": "ClinicalController_updateMedication",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMedicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/medications/{id}/discontinue": {
+      "post": {
+        "operationId": "ClinicalController_discontinueMedication",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscontinueMedicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/orders": {
+      "get": {
+        "operationId": "ClinicalController_listOrders",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      },
+      "post": {
+        "operationId": "ClinicalController_createOrder",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhysicianOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/orders/{id}/status": {
+      "post": {
+        "operationId": "ClinicalController_setOrderStatus",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "pending → sent → signed; cancel before signed.",
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/care-plans": {
+      "get": {
+        "operationId": "ClinicalController_listCarePlans",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      },
+      "post": {
+        "operationId": "ClinicalController_createCarePlan",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/care-plans/{id}": {
+      "get": {
+        "operationId": "ClinicalController_getCarePlan",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      },
+      "patch": {
+        "operationId": "ClinicalController_updateCarePlan",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCarePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/care-plans/{id}/activate": {
+      "post": {
+        "operationId": "ClinicalController_activateCarePlan",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateCarePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Physician signed: becomes the active plan (the previous one is superseded).",
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/care-plans/{id}/end": {
+      "post": {
+        "operationId": "ClinicalController_endCarePlan",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/assessments": {
+      "get": {
+        "operationId": "ClinicalController_listAssessments",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "oasis_soc",
+                "oasis_roc",
+                "oasis_recert",
+                "oasis_transfer",
+                "oasis_discharge",
+                "nursing",
+                "morse_fall",
+                "braden",
+                "pain",
+                "other"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      },
+      "post": {
+        "operationId": "ClinicalController_createAssessment",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/assessments/{id}": {
+      "get": {
+        "operationId": "ClinicalController_getAssessment",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      },
+      "patch": {
+        "operationId": "ClinicalController_updateAssessment",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssessmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/assessments/{id}/complete": {
+      "post": {
+        "operationId": "ClinicalController_completeAssessment",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{patientId}/assessments/{id}/approve": {
+      "post": {
+        "operationId": "ClinicalController_approveAssessment",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveAssessmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
     "/api/v1/schedule/visits/{visitId}/notes": {
       "get": {
         "operationId": "VisitDocsController_listNotes",
@@ -6571,6 +7224,342 @@
       "UpdateAgencyDto": {
         "type": "object",
         "properties": {}
+      },
+      "MedicationDto": {
+        "type": "object",
+        "properties": {
+          "drugName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "ndcCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "dosage": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "frequency": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "route": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "prescribingPhysicianId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "drugName"
+        ]
+      },
+      "UpdateMedicationDto": {
+        "type": "object",
+        "properties": {
+          "dosage": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "frequency": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "route": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "DiscontinueMedicationDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Default: today (agency time)."
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "PhysicianOrderDto": {
+        "type": "object",
+        "properties": {
+          "orderType": {
+            "type": "string",
+            "enum": [
+              "verbal",
+              "plan_of_care",
+              "medication",
+              "visit_frequency",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "physicianId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderedDate": {
+            "type": "string",
+            "description": "Default: today (agency time)."
+          },
+          "effectiveDate": {
+            "type": "string"
+          },
+          "expiryDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderType",
+          "description"
+        ]
+      },
+      "OrderStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "signed",
+              "cancelled"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "description": "Date sent or signed (default today)."
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "InterventionDto": {
+        "type": "object",
+        "properties": {
+          "discipline": {
+            "type": "string",
+            "enum": [
+              "RN",
+              "LPN",
+              "PT",
+              "PTA",
+              "OT",
+              "COTA",
+              "SLP",
+              "MSW",
+              "HHA",
+              "CNA",
+              "PCA"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "discipline",
+          "description"
+        ]
+      },
+      "FrequencyDto": {
+        "type": "object",
+        "properties": {
+          "discipline": {
+            "type": "string",
+            "enum": [
+              "RN",
+              "LPN",
+              "PT",
+              "PTA",
+              "OT",
+              "COTA",
+              "SLP",
+              "MSW",
+              "HHA",
+              "CNA",
+              "PCA"
+            ]
+          },
+          "frequency": {
+            "type": "string",
+            "description": "e.g. \"3W8\" (3 visits a week for 8 weeks), \"1W4, 2PRN\".",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "discipline",
+          "frequency"
+        ]
+      },
+      "CarePlanDto": {
+        "type": "object",
+        "properties": {
+          "physicianId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "certificationPeriodStart": {
+            "type": "string"
+          },
+          "certificationPeriodEnd": {
+            "type": "string"
+          },
+          "goals": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          },
+          "interventions": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterventionDto"
+            }
+          },
+          "visitFrequency": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FrequencyDto"
+            }
+          }
+        },
+        "required": [
+          "certificationPeriodStart",
+          "certificationPeriodEnd"
+        ]
+      },
+      "UpdateCarePlanDto": {
+        "type": "object",
+        "properties": {
+          "physicianId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "certificationPeriodStart": {
+            "type": "string"
+          },
+          "certificationPeriodEnd": {
+            "type": "string"
+          },
+          "goals": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          },
+          "interventions": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterventionDto"
+            }
+          },
+          "visitFrequency": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FrequencyDto"
+            }
+          }
+        }
+      },
+      "ActivateCarePlanDto": {
+        "type": "object",
+        "properties": {
+          "physicianSignatureDate": {
+            "type": "string",
+            "description": "When the physician signed the plan of care."
+          }
+        },
+        "required": [
+          "physicianSignatureDate"
+        ]
+      },
+      "AssessmentDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "oasis_soc",
+              "oasis_roc",
+              "oasis_recert",
+              "oasis_transfer",
+              "oasis_discharge",
+              "nursing",
+              "morse_fall",
+              "braden",
+              "pain",
+              "other"
+            ]
+          },
+          "visitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The form's answers (scored for morse_fall and braden)."
+          }
+        },
+        "required": [
+          "type",
+          "data"
+        ]
+      },
+      "UpdateAssessmentDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ApproveAssessmentDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
       },
       "CreateVisitNoteDto": {
         "type": "object",
