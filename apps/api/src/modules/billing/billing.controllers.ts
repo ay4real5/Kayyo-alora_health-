@@ -18,6 +18,7 @@ import { AuthorizationsService } from './authorizations.service.js';
 import { BillingReadinessService } from './billing-readiness.service.js';
 import { BillingSetupService } from './billing-setup.service.js';
 import { ClaimsService } from './claims.service.js';
+import { EdiService } from './edi.service.js';
 import { CreateClaimsDto, ListClaimsQueryDto, VoidClaimDto } from './dto/claims.dto.js';
 import {
   AuthorizationDto,
@@ -183,7 +184,10 @@ export class AuthorizationsController {
 @ApiTags('billing')
 @Controller('billing/claims')
 export class ClaimsController {
-  constructor(private readonly claims: ClaimsService) {}
+  constructor(
+    private readonly claims: ClaimsService,
+    private readonly edi: EdiService,
+  ) {}
 
   @Permissions('billing:read')
   @Get()
@@ -212,6 +216,17 @@ export class ClaimsController {
   @HttpCode(HttpStatus.OK)
   qa(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string) {
     return this.claims.qa(caller, id);
+  }
+
+  /**
+   * The claim as an EDI 837P file — a preview with the test indicator (D-053). 422 EDI_INCOMPLETE lists what's missing
+   * (agency EIN, ZIP+4, payer IDs, member ID…).
+   */
+  @Permissions('billing:read')
+  @Audit({ action: 'PREVIEW_837', resourceType: 'claims' })
+  @Get(':id/837')
+  preview837(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string) {
+    return this.edi.preview837(caller, id);
   }
 
   /** Voids an unsent claim; its visits can be billed again. */

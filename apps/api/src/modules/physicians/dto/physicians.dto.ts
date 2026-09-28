@@ -1,4 +1,3 @@
-import { isValidNpi } from '@alora/shared';
 import { PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -8,27 +7,10 @@ import {
   IsString,
   Matches,
   MaxLength,
-  registerDecorator,
-  type ValidationOptions,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
 import { PHONE, trimmed, upperTrimmed, US_STATE, US_ZIP } from '../../../common/validators/fields.js';
-
-/** 10-digit NPI with a valid check digit (typos are caught here, not at claim time). */
-function IsNpi(options?: ValidationOptions): PropertyDecorator {
-  return (target, propertyName) => {
-    registerDecorator({
-      name: 'isNpi',
-      target: target.constructor,
-      propertyName: propertyName as string,
-      options,
-      validator: {
-        validate: (value: unknown) => typeof value === 'string' && isValidNpi(value),
-        defaultMessage: () => 'npi must be a valid 10-digit National Provider Identifier',
-      },
-    });
-  };
-}
+import { IsNpi } from '../../../common/validators/is-npi.js';
 
 export class CreatePhysicianDto {
   @Transform(trimmed)

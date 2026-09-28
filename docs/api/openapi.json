@@ -3492,6 +3492,29 @@
         ]
       }
     },
+    "/api/v1/billing/claims/{id}/837": {
+      "get": {
+        "operationId": "ClaimsController_preview837",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/api/v1/billing/claims/{id}/void": {
       "post": {
         "operationId": "ClaimsController_void",
@@ -3895,6 +3918,42 @@
         },
         "tags": [
           "evv"
+        ]
+      }
+    },
+    "/api/v1/agency": {
+      "get": {
+        "operationId": "AgencyController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agency"
+        ]
+      },
+      "patch": {
+        "operationId": "AgencyController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgencyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agency"
         ]
       }
     },
@@ -5963,6 +6022,15 @@
           "phone": {
             "type": "string"
           },
+          "ediSubmitterId": {
+            "type": "string",
+            "description": "Interchange IDs agreed with the clearinghouse (ISA06/ISA08) for electronic claims.",
+            "maxLength": 15
+          },
+          "ediReceiverId": {
+            "type": "string",
+            "maxLength": 15
+          },
           "timelyFilingDays": {
             "type": "number",
             "minimum": 1,
@@ -6019,6 +6087,15 @@
           },
           "phone": {
             "type": "string"
+          },
+          "ediSubmitterId": {
+            "type": "string",
+            "description": "Interchange IDs agreed with the clearinghouse (ISA06/ISA08) for electronic claims.",
+            "maxLength": 15
+          },
+          "ediReceiverId": {
+            "type": "string",
+            "maxLength": 15
           },
           "timelyFilingDays": {
             "type": "number",
@@ -6367,6 +6444,10 @@
         "required": [
           "status"
         ]
+      },
+      "UpdateAgencyDto": {
+        "type": "object",
+        "properties": {}
       },
       "CreateVisitNoteDto": {
         "type": "object",
