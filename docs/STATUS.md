@@ -5,7 +5,7 @@
 
 ## Current state
 
-On `main`: P1-01 to P1-20 done — Phase 1 API complete; dashboard has login, patients, staff, users, physicians.
+On `main`: P1-01 to P1-21 done — Phase 1 API and dashboard screens complete.
 - `packages/shared` — roles, permission catalogue, API response types.
 - `apps/api` — NestJS 12, `/api/v1/health`; Prisma 7 schema for 22 core tables + initial migration;
   `DatabaseModule` wired in; 5 migrations applied to the Neon dev DB. The API refuses to boot on an
@@ -47,6 +47,8 @@ On `main`: P1-01 to P1-20 done — Phase 1 API complete; dashboard has login, pa
   the agency timezone (`useAgencyToday`); API future-date checks tolerate UTC+14. 6 Playwright tests (re-seed first). D-035.
 - Web staff/users/physicians (P1-20) + `GET /roles`, `GET /staff/candidates`. All API "today" defaults now use the
   agency timezone (`AgencyClockService`). 10 Playwright tests. D-036.
+- Web scheduling (P1-21): week calendar, book with live conflict check + audited override, recurring booking report,
+  reschedule/reassign/cancel. 13 Playwright tests. D-037.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
 - CI (GitHub Actions) — build/typecheck/lint/unit tests, applies migrations to a real Postgres, fails on
@@ -59,8 +61,8 @@ Nothing.
 
 ## Next up
 
-**P1-21** (in progress on `task/P1-21-web-calendar`) — scheduling calendar screens; then **P1-22** end-to-end pass
-with Playwright in CI. The owner asked for autonomous work: go straight on to the next task, check in ~every 4 hours.
+**P1-22** (in progress on `task/P1-22-e2e-ci`) — browser tests in CI + README refresh; then Phase 2 (EVV & mobile).
+The owner asked for autonomous work: go straight on to the next task, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -71,6 +73,7 @@ with Playwright in CI. The owner asked for autonomous work: go straight on to th
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P1-21 | Scheduling calendar screens; CI green, merged. |
 | 2026-09-28 | Claude Code | P1-20 | Staff/users/physicians screens; agency clock; CI green, merged. |
 | 2026-09-28 | Claude Code | P1-19 | Patient screens + timezone bug fix; CI green, merged. |
 | 2026-09-27 | Claude Code | P1-18 | Web dashboard foundation + browser tests; rate-limit fix; CI green, merged. |
