@@ -20,6 +20,15 @@ clock-out, and continuous tracking is invasive (needs "Always" permission, drain
 background tracking**, plus a phone reminder to clock out (DECISIONS D-049). Do you want tracking anyway (e.g. for
 safety or disputes)?
 
+### Q-010 — Payroll policy details (for the agency's accountant)
+2026-09-28 · Claude Code · affects P4-03 (D-064)
+Payroll pays verified visit time and FLSA overtime over 40 hours per workweek. Please confirm with your accountant:
+1. Is **travel time between clients** paid (it is compensable under FLSA for aides)? At what rate?
+2. Do per-visit clinicians (RN/PT) ever get overtime? (We treat them as fee-basis — no overtime.)
+3. Do bonuses need to be folded into the overtime "regular rate"? (We don't do that yet.)
+4. Which provider do you use (ADP, Gusto, QuickBooks, Paychex)? We can match their import format exactly.
+Default until answered: as described in D-064.
+
 ## Resolved
 
 ### Q-002 — Base44 portal authentication

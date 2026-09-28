@@ -85,7 +85,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 
 - [ ] **P4-01** `agent` Reports module + materialized views + refresh job
 - [ ] **P4-02** `agent` Web: dashboards (Recharts) + report export (CSV/PDF)
-- [ ] **P4-03** `agent` Payroll: pay periods, stubs, calculation, export; mileage
+- [x] **P4-03** `agent` Payroll: pay periods, stubs, calculation, export; mileage
 - [ ] **P4-04** `agent` EVV state aggregator adapter interface + first aggregator. deps: Q-005
 - [x] **P4-05** `agent` Compliance: dashboard, incidents, credential-expiry cron, audit-log query
 - [x] **P4-06** `agent` Claims denial/appeal workflow + aging report
