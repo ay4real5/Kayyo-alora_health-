@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { Button, ErrorText, colors, styles } from '@/components/ui';
@@ -157,6 +157,19 @@ export default function VisitScreen() {
           )}
           {visit.status === 'in_progress' && (
             <Button title="Clock out" onPress={() => void clockAction('out')} busy={busy} />
+          )}
+          {(visit.status === 'in_progress' || visit.status === 'completed') && (
+            <View style={{ gap: 8 }}>
+              <Text style={styles.label}>Document the visit</Text>
+              {(['tasks', 'vitals', 'note'] as const).map((page) => (
+                <Button
+                  key={page}
+                  title={{ tasks: 'Tasks', vitals: 'Vitals', note: 'Visit note' }[page]}
+                  variant="secondary"
+                  onPress={() => router.push({ pathname: `/visit/[id]/${page}`, params: { id } })}
+                />
+              ))}
+            </View>
           )}
           {(visit.status === 'scheduled' || visit.status === 'in_progress') && (
             <Text style={{ color: colors.muted, fontSize: 13 }}>

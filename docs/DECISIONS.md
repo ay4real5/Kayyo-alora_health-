@@ -721,3 +721,15 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   because flags don't block (D-038).
 - Offline clocking (queue + sync within 72 h) comes with P2-09; until then an offline clock-in shows the connection error.
 - Logic in `src/lib/evv.ts` is unit-tested (payload, freshness, messages, directions URL).
+
+### D-047 — Mobile visit documentation (P2-08)
+2026-09-28 · Claude Code
+- From the visit screen (in progress or completed): **Tasks** (done / not done with a reason / tap again to undo),
+  **Vitals** (checked on the phone with the API's ranges — `src/lib/vitals.ts`, unit-tested — earlier readings listed,
+  entered-in-error ones struck through), **Visit note** (aides: "what you did", *Submit*; clinicians with
+  `visit_notes:sign`: SOAP + narrative, *Sign*; a draft can be saved; a finalised note is locked and corrections are
+  addenda).
+- **Patient signatures are deferred**: storing a signature image needs file storage (S3 + a BAA), which doesn't exist
+  yet. The EVV record has the columns (`patient_signature_url`); add capture when documents/S3 land (Phase 3), and
+  record the decision then. States' EVV rules (Virginia) don't require a patient signature for GPS EVV.
+- AGENTS.md updated: the portal is in this repo (D-044); how to add Expo native modules and verify bundling.
