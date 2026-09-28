@@ -20,6 +20,7 @@ import { UsersModule } from './modules/users/users.module.js';
 import { EvvModule } from './modules/evv/evv.module.js';
 import { BillingModule } from './modules/billing/billing.module.js';
 import { AgencyModule } from './modules/agency/agency.module.js';
+import { ClinicalModule } from './modules/clinical/clinical.module.js';
 import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 
 @Module({
@@ -40,6 +41,7 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
     EvvModule,
     BillingModule,
     AgencyModule,
+    ClinicalModule,
     VisitDocsModule,
     NotificationsModule,
     RealtimeModule,
