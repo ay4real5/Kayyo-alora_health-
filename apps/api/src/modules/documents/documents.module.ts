@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Module,
   Param,
+  Patch,
   ParseUUIDPipe,
   Post,
   Query,
@@ -28,6 +29,7 @@ import {
   DeleteDocumentDto,
   ListDocumentsQueryDto,
   SignDocumentDto,
+  UpdateDocumentDto,
   UploadDocumentDto,
 } from './dto/documents.dto.js';
 import { MAX_DOCUMENT_BYTES } from './file-type.js';
@@ -101,6 +103,14 @@ export class DocumentsController {
       ip: req.ip,
       userAgent: req.header('user-agent'),
     });
+  }
+
+  /** Show or hide it in the patient portal (D-058). */
+  @Permissions('documents:create')
+  @Audit({ action: 'UPDATE_DOCUMENT_SHARING', resourceType: 'documents' })
+  @Patch(':id')
+  update(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string, @Body() dto: UpdateDocumentDto) {
+    return this.documents.setSharing(caller, id, dto.sharedWithPatient);
   }
 
   /** Soft delete with a reason; the record and file are kept. */

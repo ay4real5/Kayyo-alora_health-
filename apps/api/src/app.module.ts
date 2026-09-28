@@ -23,6 +23,7 @@ import { AgencyModule } from './modules/agency/agency.module.js';
 import { ClinicalModule } from './modules/clinical/clinical.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { MessagingModule } from './modules/messaging/messaging.module.js';
+import { PortalModule } from './modules/portal/portal.module.js';
 import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 
 @Module({
@@ -46,6 +47,7 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
     ClinicalModule,
     DocumentsModule,
     MessagingModule,
+    PortalModule,
     VisitDocsModule,
     NotificationsModule,
     RealtimeModule,

@@ -32,6 +32,262 @@
         ],
         "security": []
       }
+    },
+    "/api/v1/portal/me": {
+      "get": {
+        "operationId": "PortalController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/patients/{patientId}/profile": {
+      "get": {
+        "operationId": "PortalController_profile",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/patients/{patientId}/visits": {
+      "get": {
+        "operationId": "PortalController_visits",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/patients/{patientId}/care-plan": {
+      "get": {
+        "operationId": "PortalController_carePlan",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/patients/{patientId}/medications": {
+      "get": {
+        "operationId": "PortalController_medications",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/patients/{patientId}/documents": {
+      "get": {
+        "operationId": "PortalController_documents",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/patients/{patientId}/documents/{documentId}/download": {
+      "get": {
+        "operationId": "PortalController_download",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/patients/{patientId}/messages": {
+      "get": {
+        "operationId": "PortalController_messages",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Older than this time (the `createdAt` of the oldest message you have).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      },
+      "post": {
+        "operationId": "PortalController_send",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/patients/{patientId}/messages/read": {
+      "post": {
+        "operationId": "PortalController_read",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "portal"
+        ]
+      }
     }
   },
   "info": {
@@ -2291,8 +2547,12 @@
           },
           "replacesDocumentId": {
             "type": "string",
-            "description": "Upload as a new version of this document (inherits its links and type).",
+            "description": "Upload as a new version of this document (inherits its links, type and portal sharing).",
             "format": "uuid"
+          },
+          "sharedWithPatient": {
+            "type": "boolean",
+            "description": "Show it to the patient/family in the portal (D-058). Needs a patient. Multipart sends \"true\"/\"false\"."
           }
         },
         "required": [
@@ -2311,6 +2571,17 @@
         },
         "required": [
           "typedName"
+        ]
+      },
+      "UpdateDocumentDto": {
+        "type": "object",
+        "properties": {
+          "sharedWithPatient": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sharedWithPatient"
         ]
       },
       "DeleteDocumentDto": {
@@ -2398,6 +2669,41 @@
         },
         "required": [
           "userIds"
+        ]
+      },
+      "GrantPortalAccessDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "email",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "PortalMessageDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "content"
         ]
       },
       "CreateVisitNoteDto": {
