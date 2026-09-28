@@ -3515,6 +3515,39 @@
         ]
       }
     },
+    "/api/v1/billing/claims/{id}/institutional": {
+      "patch": {
+        "operationId": "ClaimsController_setInstitutional",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstitutionalClaimDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/api/v1/billing/claims/{id}/void": {
       "post": {
         "operationId": "ClaimsController_void",
@@ -8062,6 +8095,14 @@
               "other"
             ]
           },
+          "claimFormat": {
+            "type": "string",
+            "description": "837P (professional) or 837I (institutional / UB-04). Empty: 837I for Medicare, 837P otherwise (D-061).",
+            "enum": [
+              "837P",
+              "837I"
+            ]
+          },
           "payerIdCode": {
             "type": "string",
             "description": "The payer's ID for electronic claims (clearinghouse payer ID).",
@@ -8127,6 +8168,14 @@
               "va",
               "private_pay",
               "other"
+            ]
+          },
+          "claimFormat": {
+            "type": "string",
+            "description": "837P (professional) or 837I (institutional / UB-04). Empty: 837I for Medicare, 837P otherwise (D-061).",
+            "enum": [
+              "837P",
+              "837I"
             ]
           },
           "payerIdCode": {
@@ -8248,6 +8297,11 @@
               "day"
             ]
           },
+          "revenueCode": {
+            "type": "string",
+            "description": "UB-04 revenue code for institutional claims, e.g. 0571 (aide), 0551 (nursing), 0421 (PT).",
+            "pattern": "^\\d{4}$"
+          },
           "requiresAuth": {
             "type": "boolean"
           }
@@ -8278,6 +8332,11 @@
               "unit_15min",
               "day"
             ]
+          },
+          "revenueCode": {
+            "type": "string",
+            "description": "UB-04 revenue code for institutional claims, e.g. 0571 (aide), 0551 (nursing), 0421 (PT).",
+            "pattern": "^\\d{4}$"
           },
           "requiresAuth": {
             "type": "boolean"
@@ -8386,6 +8445,29 @@
           "payerId": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "InstitutionalClaimDto": {
+        "type": "object",
+        "properties": {
+          "typeOfBill": {
+            "type": "string",
+            "description": "e.g. 0329 home health final claim, 0322 interim, 0327 replacement.",
+            "pattern": "^0\\d{2}[0-9A-Z]$"
+          },
+          "patientStatus": {
+            "type": "string",
+            "description": "UB-04 patient discharge status: 30 still a patient, 01 home, 02 hospital, 20 expired, …",
+            "pattern": "^\\d{2}$"
+          },
+          "hippsCode": {
+            "type": "string",
+            "pattern": "^([0-9A-Z]{5})?$"
+          },
+          "cbsaCode": {
+            "type": "string",
+            "pattern": "^(\\d{5})?$"
           }
         }
       },

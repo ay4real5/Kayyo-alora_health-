@@ -25,6 +25,7 @@ export interface PayerView {
   id: string;
   name: string;
   payerType: string;
+  claimFormat: string | null;
   payerIdCode: string | null;
   addressLine1: string | null;
   city: string | null;
@@ -45,6 +46,7 @@ export interface ServiceCodeView {
   description: string | null;
   defaultRate: number | null;
   unitType: string;
+  revenueCode: string | null;
   requiresAuth: boolean;
   isActive: boolean;
 }
@@ -266,6 +268,7 @@ function toPayerView(p: Prisma.PayerGetPayload<object>): PayerView {
     id: p.id,
     name: p.name,
     payerType: p.payerType,
+    claimFormat: p.claimFormat,
     payerIdCode: p.payerIdCode,
     addressLine1: p.addressLine1,
     city: p.city,
@@ -288,6 +291,7 @@ function toCodeView(c: Prisma.ServiceCodeGetPayload<object>): ServiceCodeView {
     description: c.description,
     defaultRate: num(c.defaultRate),
     unitType: c.unitType,
+    revenueCode: c.revenueCode,
     requiresAuth: c.requiresAuth,
     isActive: c.isActive,
   };

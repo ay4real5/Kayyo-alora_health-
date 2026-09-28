@@ -645,15 +645,15 @@ async function seedBilling(
   const privatePay = await prisma.payer.create({ data: { agencyId: DEMO_AGENCY_ID, name: 'Private pay', payerType: 'private_pay' } });
 
   const codes = [
-    { code: 'G0156', description: 'Home health aide, each 15 minutes', unitType: 'unit_15min', rate: 7.5 },
-    { code: 'G0299', description: 'Skilled nursing (RN), each 15 minutes', unitType: 'unit_15min', rate: 42 },
-    { code: 'G0151', description: 'Physical therapy, each 15 minutes', unitType: 'unit_15min', rate: 45 },
-    { code: 'T1019', description: 'Personal care services, each 15 minutes', unitType: 'unit_15min', rate: 5.25 },
+    { code: 'G0156', description: 'Home health aide, each 15 minutes', unitType: 'unit_15min', rate: 7.5, revenueCode: '0571' },
+    { code: 'G0299', description: 'Skilled nursing (RN), each 15 minutes', unitType: 'unit_15min', rate: 42, revenueCode: '0551' },
+    { code: 'G0151', description: 'Physical therapy, each 15 minutes', unitType: 'unit_15min', rate: 45, revenueCode: '0421' },
+    { code: 'T1019', description: 'Personal care services, each 15 minutes', unitType: 'unit_15min', rate: 5.25, revenueCode: null },
   ];
   const yearStart = `${opts.today.slice(0, 4)}-01-01`;
   for (const c of codes) {
     const code = await prisma.serviceCode.create({
-      data: { agencyId: DEMO_AGENCY_ID, code: c.code, codeType: 'hcpcs', description: c.description, unitType: c.unitType, defaultRate: c.rate },
+      data: { agencyId: DEMO_AGENCY_ID, code: c.code, codeType: 'hcpcs', description: c.description, unitType: c.unitType, defaultRate: c.rate, revenueCode: c.revenueCode },
     });
     for (const [payer, factor] of [[medicaid, 1], [medicare, 1.2], [privatePay, 1.4]] as const) {
       await prisma.payerRate.create({

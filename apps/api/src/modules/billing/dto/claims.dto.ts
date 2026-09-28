@@ -7,10 +7,11 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
-import { trimmed } from '../../../common/validators/fields.js';
+import { trimmed, upperTrimmed } from '../../../common/validators/fields.js';
 import { IsDateOnly } from '../../../common/validators/is-date-only.js';
 
 export const CLAIM_STATUSES = [
@@ -79,4 +80,27 @@ export class Upload835Dto {
   @IsString()
   @IsNotEmpty()
   content!: string;
+}
+
+/** Institutional claim fields (D-061). Empty string clears HIPPS/CBSA. */
+export class InstitutionalClaimDto {
+  /** e.g. 0329 home health final claim, 0322 interim, 0327 replacement. */
+  @IsOptional()
+  @Transform(upperTrimmed)
+  @Matches(/^0\d{2}[0-9A-Z]$/, { message: 'typeOfBill must look like 0329' })
+  typeOfBill?: string;
+
+  /** UB-04 patient discharge status: 30 still a patient, 01 home, 02 hospital, 20 expired, … */
+  @IsOptional()
+  @Matches(/^\d{2}$/, { message: 'patientStatus is two digits, e.g. 30' })
+  patientStatus?: string;
+
+  @IsOptional()
+  @Transform(upperTrimmed)
+  @Matches(/^([0-9A-Z]{5})?$/, { message: 'hippsCode is 5 letters or digits' })
+  hippsCode?: string;
+
+  @IsOptional()
+  @Matches(/^(\d{5})?$/, { message: 'cbsaCode is 5 digits' })
+  cbsaCode?: string;
 }

@@ -1009,3 +1009,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - CI note (same day): the browser suite now signs in more than 30 times a minute from one IP, which the sign-in limit
   (30/min) rightly refuses. `RATE_LIMITS_DISABLED=true` (env, validated; **refused when APP_ENV=production**) turns the
   throttler off for that CI job only. Production and the API e2e tests keep the limits.
+
+### D-061 — Institutional claims, 837I (P3-05)
+2026-09-28 · Claude Code
+- **Which claims**: `payers.claim_format` = `837P` | `837I`; empty = **837I for Medicare** (home health is billed on the
+  UB-04), 837P for everyone else. Virginia Medicaid skilled home health may need 837I — billing sets it per payer.
+- **Generator** (`edi/edi-837i.ts`, 005010X223A2, golden file reviewed): CLM05 = facility 32 : A : frequency from the
+  type of bill; statement dates DTP*434; admission DTP*435; CL1 (admission type 9, source 1, patient status);
+  REF*G1 prior auth, REF*EA MRN; HI principal ABK / other ABF (≤ 25); value codes HI*BE (61 = CBSA); attending
+  physician NM1*71 (the patient's primary physician, NPI required); lines SV2 revenue code + HCPCS + charge + units.
+  **Medicare**: HIPPS code on a first 0023 line with zero charge, plus value code 61 — both required by validation.
+- **Data**: `service_codes.revenue_code` (UB-04, e.g. 0571 aide, 0551 nursing, 0421 PT; required on every 837I line),
+  and on claims `type_of_bill` (default **0329** final), `patient_status` (default 30, or 01 if discharged),
+  `hipps_code`, `cbsa_code` — editable while the claim is draft/ready (`PATCH /billing/claims/:id/institutional`).
+- **HIPPS is entered by billing staff**: computing it needs the PDGM grouper (OASIS functional scores, comorbidities,
+  admission source, timing) — a licensed CMS component we don't have. Our OASIS forms aren't complete enough yet either.
+  NOAs (type of bill 032A), 30-day period splitting and LUPA logic are not built. **All 837I output must be validated in
+  the clearinghouse's test channel before production (P3-08).**
+- Web: claim page shows the institutional fields and downloads "837I (preview)"; billing setup shows revenue codes and
+  lets billing pick each payer's claim form.

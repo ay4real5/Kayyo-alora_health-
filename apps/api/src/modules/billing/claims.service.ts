@@ -13,7 +13,7 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { memberIdFor } from './billing-readiness.js';
 import { BillingReadinessService, type BillableVisit } from './billing-readiness.service.js';
-import type { CreateClaimsDto, ListClaimsQueryDto } from './dto/claims.dto.js';
+import type { CreateClaimsDto, InstitutionalClaimDto, ListClaimsQueryDto } from './dto/claims.dto.js';
 
 const CLAIM_INCLUDE = {
   patient: { select: { id: true, firstName: true, lastName: true, mrn: true } },
@@ -39,6 +39,8 @@ export interface ClaimView {
   qaPassed: boolean | null;
   qaErrors: unknown;
   voidReason: string | null;
+  /** Institutional (837I) claims only (D-061). */
+  institutional: { typeOfBill: string | null; patientStatus: string | null; hippsCode: string | null; cbsaCode: string | null } | null;
   lines: {
     id: string;
     lineNumber: number;
@@ -189,6 +191,23 @@ export class ClaimsService {
    * Voids a claim that hasn't been sent: its visits can be billed again. (A claim already submitted to a payer needs a
    * void/replacement claim to the payer — frequency code 8/7 — which comes with submission, P3-09.)
    */
+  /** Type of bill, patient status, HIPPS and CBSA on an 837I claim that hasn't been sent (D-061). */
+  async setInstitutional(caller: AuthUser, id: string, dto: InstitutionalClaimDto): Promise<ClaimView> {
+    const claim = await this.find(caller, id);
+    if (claim.claimType !== '837I') throw new ConflictException('Only institutional (837I) claims have these fields');
+    if (!['draft', 'ready'].includes(claim.status)) throw new ConflictException(`A ${claim.status} claim can't be changed`);
+    await this.prisma.claim.update({
+      where: { id },
+      data: {
+        ...(dto.typeOfBill !== undefined ? { typeOfBill: dto.typeOfBill } : {}),
+        ...(dto.patientStatus !== undefined ? { patientStatus: dto.patientStatus } : {}),
+        ...(dto.hippsCode !== undefined ? { hippsCode: dto.hippsCode || null } : {}),
+        ...(dto.cbsaCode !== undefined ? { cbsaCode: dto.cbsaCode || null } : {}),
+      },
+    });
+    return this.get(caller, id);
+  }
+
   async void(caller: AuthUser, id: string, reason: string): Promise<ClaimView> {
     const claim = await this.find(caller, id);
     if (!['draft', 'ready'].includes(claim.status)) {
@@ -214,6 +233,7 @@ export class ClaimsService {
         where: { id: first.patient.id },
         select: {
           medicaidId: true,
+          status: true,
           medicareBeneficiaryId: true,
           insuranceMemberId: true,
           diagnoses: {
@@ -225,7 +245,7 @@ export class ClaimsService {
       }),
       this.prisma.payer.findUniqueOrThrow({
         where: { id: first.payer!.id },
-        select: { id: true, payerType: true },
+        select: { id: true, payerType: true, claimFormat: true },
       }),
     ]);
     const dates = visits.map((v) => v.serviceDate).sort();
@@ -239,7 +259,11 @@ export class ClaimsService {
             patientId: first.patient.id,
             payerId: payer.id,
             claimNumber: newClaimNumber(today),
-            claimType: payer.payerType === 'medicare' ? '837I' : '837P',
+            claimType: claimFormatFor(payer),
+            // Institutional defaults: home health final claim; still a patient unless discharged (billing can edit).
+            ...(claimFormatFor(payer) === '837I'
+              ? { typeOfBill: '0329', patientStatus: patient.status === 'discharged' ? '01' : '30' }
+              : {}),
             status: 'ready',
             billingPeriodStart: toDate(dates[0])!,
             billingPeriodEnd: toDate(dates[dates.length - 1])!,
@@ -328,6 +352,10 @@ function toView(c: ClaimRow): ClaimView {
     qaPassed: c.qaPassed,
     qaErrors: c.qaErrors,
     voidReason: c.voidReason,
+    institutional:
+      c.claimType === '837I'
+        ? { typeOfBill: c.typeOfBill, patientStatus: c.patientStatus, hippsCode: c.hippsCode, cbsaCode: c.cbsaCode }
+        : null,
     lines: c.lines.map((l) => ({
       id: l.id,
       lineNumber: l.lineNumber,
@@ -343,4 +371,10 @@ function toView(c: ClaimRow): ClaimView {
     })),
     createdAt: c.createdAt,
   };
+}
+
+/** The payer's claim format, or by default 837I (UB-04) for Medicare home health and 837P for everyone else (D-061). */
+export function claimFormatFor(payer: { payerType: string; claimFormat: string | null }): '837P' | '837I' {
+  if (payer.claimFormat === '837I' || payer.claimFormat === '837P') return payer.claimFormat;
+  return payer.payerType === 'medicare' ? '837I' : '837P';
 }
