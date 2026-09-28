@@ -733,3 +733,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   yet. The EVV record has the columns (`patient_signature_url`); add capture when documents/S3 land (Phase 3), and
   record the decision then. States' EVV rules (Virginia) don't require a patient signature for GPS EVV.
 - AGENTS.md updated: the portal is in this repo (D-044); how to add Expo native modules and verify bundling.
+
+### D-048 — Mobile offline queue and read cache (P2-09)
+2026-09-28 · Claude Code
+- **What works offline**: clock in/out (GPS works without signal; the timestamp is the button press, and the API
+  accepts it up to 72 h later — D-038), task updates, vitals (`recordedAt` = when taken), and notes. They're saved on
+  the phone and sent **in the order they happened** (`src/lib/offline-queue.ts`, unit-tested).
+- **Order rule**: if anything is already waiting, new work joins the queue instead of going straight to the API — so a
+  note never arrives before the clock-in it depends on. Sending happens when the app comes to the foreground, every
+  30 s while something waits, and after each new item. One send at a time.
+- **Failures**: offline, 5xx, 429 and 401 (session needs renewing) → keep and retry. Any other 4xx → set aside with the
+  API's message, shown to the caregiver ("wasn't accepted — please tell the office") until dismissed; never retried.
+- **Screens reflect pending work**: a pending clock-in shows the visit as in progress (so nobody clocks in twice),
+  task changes show immediately, and editing a note pauses while that visit's note is waiting (prevents duplicates).
+- **Read cache**: today's list, visit, patient, tasks, vitals and notes fall back to the last copy saved on the
+  phone when offline, with an "Offline — showing what was saved" banner.
+- **Encryption (PHI on the device)**: queue + cache live in one SQLite database encrypted with **SQLCipher**
+  (`expo-sqlite` plugin `useSQLCipher: true`), key = 32 random bytes in the keychain (this device only, never
+  backed up). **Expo Go can't do SQLCipher** — it ignores the key, so Expo Go must only be used with the fake demo
+  data; real builds (EAS/dev builds) are encrypted.
+- **Sign-out wipes** the queue and cache; if unsent work exists the caregiver is warned first.
+- Not yet: a background sync task while the app is closed (the next foreground sends it), conflict merging beyond
+  "the API decides".

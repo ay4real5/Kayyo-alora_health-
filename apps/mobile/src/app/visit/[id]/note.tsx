@@ -2,7 +2,9 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Button, ErrorText, Input, colors, styles } from '@/components/ui';
+import { OfflineBanner } from '@/components/offline-banner';
 import { errorMessage, useAuth } from '@/lib/auth-context';
+import { useOffline } from '@/lib/offline';
 
 interface Note {
   id: string;
@@ -33,7 +35,9 @@ const SOAP: [keyof Fields, string][] = [
  */
 export default function NoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { request, user } = useAuth();
+  const { user } = useAuth();
+  const { read, submit, ops } = useOffline();
+  const [stale, setStale] = useState(false);
   const canSign = Boolean(user?.permissions.includes('visit_notes:sign'));
   const [notes, setNotes] = useState<Note[]>([]);
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -45,8 +49,9 @@ export default function NoteScreen() {
 
   const load = useCallback(async () => {
     try {
-      const { data } = await request<Note[]>(`/schedule/visits/${id}/notes`);
+      const { data, stale: fromPhone } = await read<Note[]>(`/schedule/visits/${id}/notes`);
       setNotes(data);
+      setStale(fromPhone);
       const draft = data.find((n) => n.status === 'draft' && n.author.id === user?.id);
       if (draft) {
         setDraftId(draft.id);
@@ -62,7 +67,7 @@ export default function NoteScreen() {
     } catch (e) {
       setError(errorMessage(e));
     }
-  }, [id, request, user?.id]);
+  }, [id, read, user?.id]);
 
   useEffect(() => {
     void load();
@@ -72,34 +77,38 @@ export default function NoteScreen() {
   const mineLocked = locked.filter((n) => n.author.id === user?.id);
   const editing = draftId !== null || mineLocked.length === 0 || amends !== null;
 
-  /** Saves the draft (creating it the first time); returns its id. */
-  const saveDraft = async (): Promise<string> => {
-    if (draftId) {
-      await request(`/schedule/visits/${id}/notes/${draftId}`, { method: 'PATCH', body: fields });
-      return draftId;
-    }
-    const noteType = amends ? 'addendum' : canSign ? 'progress' : 'aide_activity';
-    const { data } = await request<Note>(`/schedule/visits/${id}/notes`, {
-      method: 'POST',
-      body: { noteType, ...fields, ...(amends ? { amendsNoteId: amends } : {}) },
-    });
-    setDraftId(data.id);
-    return data.id;
-  };
+  // A note for this visit waiting in the queue: pause editing so a second save can't create a duplicate note.
+  const pending = ops.some((op) => op.kind === 'note' && op.visitId === id && !op.failure);
 
   const act = async (finalise: boolean) => {
     setBusy(true);
     setError(null);
     setMessage(null);
     try {
-      const noteId = await saveDraft();
+      const result = await submit({
+        kind: 'note',
+        visitId: id,
+        draftId,
+        noteType: amends ? 'addendum' : canSign ? 'progress' : 'aide_activity',
+        amendsNoteId: amends,
+        fields,
+        finalise: finalise ? (canSign ? 'sign' : 'submit') : null,
+      });
+      if (result.outcome === 'queued') {
+        setMessage('Saved on this phone — it will be sent when there is a connection.');
+        if (finalise) {
+          setAmends(null);
+          setFields(EMPTY);
+        }
+        return;
+      }
       if (finalise) {
-        await request(`/schedule/visits/${id}/notes/${noteId}/${canSign ? 'sign' : 'submit'}`, { method: 'POST' });
         setDraftId(null);
         setAmends(null);
         setFields(EMPTY);
         setMessage(canSign ? 'Signed.' : 'Submitted.');
       } else {
+        setDraftId((result.data as { id: string }).id);
         setMessage('Draft saved.');
       }
       await load();
@@ -113,10 +122,13 @@ export default function NoteScreen() {
   const set = (key: keyof Fields) => (value: string) => setFields((f) => ({ ...f, [key]: value }));
   return (
     <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+      <OfflineBanner stale={stale} />
       <ErrorText>{error}</ErrorText>
       {message && <Text style={{ color: colors.brandDark, fontWeight: '600' }}>{message}</Text>}
 
-      {editing ? (
+      {pending ? (
+        <Text style={styles.subtitle}>Your note is saved on this phone and waiting to be sent.</Text>
+      ) : editing ? (
         <>
           {amends && <Text style={styles.subtitle}>Addendum — adds to your finalised note.</Text>}
           {canSign && SOAP.map(([key, label]) => <Input key={key} label={label} value={fields[key]} onChangeText={set(key)} multiline />)}

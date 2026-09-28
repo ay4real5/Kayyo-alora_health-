@@ -68,6 +68,8 @@
 - **Mobile clock-in/out (P2-07)**: visit screen with directions/call and GPS clock in/out; flags explained. D-046.
 - **Mobile documentation (P2-08)**: tasks, vitals (validated on the phone), notes (submit/sign, addenda); signatures
   deferred until file storage exists. D-047.
+- **Mobile offline (P2-09)**: encrypted (SQLCipher) queue + read cache; clock/tasks/vitals/notes work offline and sync
+  in order; refused items shown; wiped at sign-out. D-048.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -81,10 +83,10 @@ Nothing.
 
 ## Next up
 
-**P2-09** mobile offline queue: clock events, task updates, vitals and notes saved on the phone (expo-sqlite) when
-offline and synced in order when back online (API accepts clock timestamps up to 72 h old; vitals take `recordedAt`),
-with an offline banner. Then P2-10 background location during an active visit. P2-12/P2-13 need Twilio/Firebase
-(P2-11, owner). The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+**P2-10** mobile background location during an active visit (think carefully: privacy, battery, and whether any
+Virginia rule needs it — record the decision; the minimum is none). Then Phase 2 is done except P2-11..13 (Twilio /
+Firebase — owner). Next phase: **Phase 3** (P3-01 authorizations first). The owner asked for autonomous work: go
+straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -94,6 +96,7 @@ with an offline banner. Then P2-10 background location during an active visit. P
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P2-09 | Mobile offline queue + encrypted cache; 23 unit tests; bundles. |
 | 2026-09-28 | Claude Code | P2-08 | Mobile tasks/vitals/notes screens; 17 unit tests; bundles. Signatures deferred (D-047). |
 | 2026-09-28 | Claude Code | P2-07 | Mobile visit screen + GPS clock in/out; 13 unit tests; bundles. |
 | 2026-09-28 | Claude Code | P2-06 | Mobile foundation (Expo 57): auth, lock, today's visits; bundles; checks green. |

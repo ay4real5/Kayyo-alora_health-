@@ -3,7 +3,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { Button, ErrorText, colors, styles } from '@/components/ui';
+import { OfflineBanner } from '@/components/offline-banner';
 import { errorMessage, useAuth } from '@/lib/auth-context';
+import { useOffline } from '@/lib/offline';
+import { effectiveStatus } from '@/lib/offline-queue';
 
 interface Visit {
   id: string;
@@ -23,8 +26,10 @@ const humanize = (code: string) => code.charAt(0).toUpperCase() + code.slice(1).
 
 /** Today's visits for the signed-in caregiver, in the agency's timezone. Visit detail and clock-in come in P2-07. */
 export default function TodayScreen() {
-  const { user, request, signOut } = useAuth();
+  const { user } = useAuth();
+  const { read, ops, signOut } = useOffline();
   const [visits, setVisits] = useState<Visit[] | null>(null);
+  const [stale, setStale] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const today = user ? todayInTimeZone(user.agencyTimezone) : null;
@@ -33,12 +38,15 @@ export default function TodayScreen() {
     if (!today) return;
     setError(null);
     try {
-      const { data } = await request<{ date: string; visits: Visit[] }[]>(`/schedule/calendar?from=${today}&to=${today}`);
+      const { data, stale: fromPhone } = await read<{ date: string; visits: Visit[] }[]>(
+        `/schedule/calendar?from=${today}&to=${today}`,
+      );
       setVisits(data[0]?.visits ?? []);
+      setStale(fromPhone);
     } catch (e) {
       setError(errorMessage(e));
     }
-  }, [request, today]);
+  }, [read, today]);
 
   useEffect(() => {
     void load();
@@ -49,6 +57,7 @@ export default function TodayScreen() {
       <Text style={styles.subtitle}>
         Hi {user?.firstName}. {visits ? `${visits.length} visit${visits.length === 1 ? '' : 's'} today.` : 'Loading…'}
       </Text>
+      <OfflineBanner stale={stale} />
       <ErrorText>{error}</ErrorText>
       <FlatList
         data={visits ?? []}
@@ -69,7 +78,7 @@ export default function TodayScreen() {
           <Pressable
             style={({ pressed }) => [styles.card, pressed && { opacity: 0.7 }]}
             accessibilityRole="button"
-            accessibilityLabel={`${time(item.scheduledStart)} ${item.patient.firstName} ${item.patient.lastName}, ${humanize(item.status)}`}
+            accessibilityLabel={`${time(item.scheduledStart)} ${item.patient.firstName} ${item.patient.lastName}, ${humanize(effectiveStatus(item.status, item.id, ops))}`}
             onPress={() => router.push({ pathname: '/visit/[id]', params: { id: item.id } })}
           >
             <Text style={{ fontSize: 17, fontWeight: '700', color: colors.text }}>
@@ -79,11 +88,11 @@ export default function TodayScreen() {
               {item.patient.firstName} {item.patient.lastName}
             </Text>
             <Text style={{ color: colors.muted }}>
-              {humanize(item.visitType)} · {humanize(item.status)}
+              {humanize(item.visitType)} · {humanize(effectiveStatus(item.status, item.id, ops))}
             </Text>
           </Pressable>
         )}
-        ListFooterComponent={<Button title="Sign out" variant="secondary" onPress={() => void signOut()} />}
+        ListFooterComponent={<Button title="Sign out" variant="secondary" onPress={signOut} />}
       />
     </View>
   );

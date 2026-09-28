@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Button, ErrorText, styles } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
+import { useOffline } from '@/lib/offline';
 
 /**
  * Locked (relaunch, or 5+ minutes in the background): Face ID / fingerprint / device passcode to continue.
  * Nothing about patients is shown until unlocked.
  */
 export default function UnlockScreen() {
-  const { unlock, signOut } = useAuth();
+  const { unlock } = useAuth();
+  const { signOut } = useOffline();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const prompted = useRef(false);
@@ -34,7 +36,7 @@ export default function UnlockScreen() {
       </Text>
       <ErrorText>{error}</ErrorText>
       <Button title="Unlock" onPress={() => void tryUnlock()} busy={busy} />
-      <Button title="Sign out" variant="secondary" onPress={() => void signOut()} />
+      <Button title="Sign out" variant="secondary" onPress={signOut} />
     </View>
   );
 }

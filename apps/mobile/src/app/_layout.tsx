@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { OfflineProvider } from '@/lib/offline';
 
 function Routes() {
   const { status, mustChangePassword } = useAuth();
@@ -40,8 +41,10 @@ function Routes() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
-      <Routes />
+      <OfflineProvider>
+        <StatusBar style="dark" />
+        <Routes />
+      </OfflineProvider>
     </AuthProvider>
   );
 }
