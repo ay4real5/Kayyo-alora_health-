@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
@@ -6,6 +17,8 @@ import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { AuthorizationsService } from './authorizations.service.js';
 import { BillingReadinessService } from './billing-readiness.service.js';
 import { BillingSetupService } from './billing-setup.service.js';
+import { ClaimsService } from './claims.service.js';
+import { CreateClaimsDto, ListClaimsQueryDto, VoidClaimDto } from './dto/claims.dto.js';
 import {
   AuthorizationDto,
   EndPayerRateDto,
@@ -163,5 +176,54 @@ export class AuthorizationsController {
     @Body() dto: UpdateAuthorizationDto,
   ) {
     return this.authorizations.update(caller, patientId, id, dto);
+  }
+}
+
+/** Claims (DESIGN.md §6.7, DECISIONS D-052). Submission to the payer comes with EDI (P3-04+). */
+@ApiTags('billing')
+@Controller('billing/claims')
+export class ClaimsController {
+  constructor(private readonly claims: ClaimsService) {}
+
+  @Permissions('billing:read')
+  @Get()
+  list(@CurrentUser() caller: AuthUser, @Query() query: ListClaimsQueryDto) {
+    return this.claims.list(caller, query);
+  }
+
+  @Permissions('billing:read')
+  @Get(':id')
+  get(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string) {
+    return this.claims.get(caller, id);
+  }
+
+  /** Creates claims from ready visits (one per patient + payer); returns them and the visits skipped, with reasons. */
+  @Permissions('billing:create')
+  @Audit({ action: 'CREATE_CLAIMS', resourceType: 'claims' })
+  @Post()
+  create(@CurrentUser() caller: AuthUser, @Body() dto: CreateClaimsDto) {
+    return this.claims.create(caller, dto);
+  }
+
+  /** Re-runs pre-billing QA on the claim's visits. */
+  @Permissions('billing:update')
+  @Audit({ action: 'CLAIM_QA', resourceType: 'claims' })
+  @Post(':id/qa')
+  @HttpCode(HttpStatus.OK)
+  qa(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string) {
+    return this.claims.qa(caller, id);
+  }
+
+  /** Voids an unsent claim; its visits can be billed again. */
+  @Permissions('billing:void')
+  @Audit({ action: 'VOID_CLAIM', resourceType: 'claims' })
+  @Post(':id/void')
+  @HttpCode(HttpStatus.OK)
+  void(
+    @CurrentUser() caller: AuthUser,
+    @Param('id', uuid()) id: string,
+    @Body() dto: VoidClaimDto,
+  ) {
+    return this.claims.void(caller, id, dto.reason);
   }
 }

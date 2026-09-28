@@ -1734,6 +1734,42 @@
           }
         }
       },
+      "CreateClaimsDto": {
+        "type": "object",
+        "properties": {
+          "visitIds": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "payerId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "VoidClaimDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
       "ClockDto": {
         "type": "object",
         "properties": {
