@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Injectable, Logger, Module, Post, Query } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Injectable, Logger, Module, Post, Query, type OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { ApiTags } from '@nestjs/swagger';
@@ -26,15 +26,22 @@ export class ReportQueryDto {
   format?: 'json' | 'csv';
 }
 
-/** Every 15 minutes (DESIGN.md §14.2). Idempotent; several API instances may run it. */
+/**
+ * Every 15 minutes (DESIGN.md §14.2), and once at start-up so a fresh deploy or restore doesn't show empty numbers.
+ * Idempotent; several API instances may run it.
+ */
 @Injectable()
-export class ReportsRefreshJob {
+export class ReportsRefreshJob implements OnApplicationBootstrap {
   private readonly logger = new Logger(ReportsRefreshJob.name);
 
   constructor(
     private readonly reports: ReportsService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
+
+  onApplicationBootstrap(): void {
+    void this.run(); // in the background: start-up doesn't wait for it
+  }
 
   @Cron('*/15 * * * *', { name: 'report-views' })
   async run(): Promise<void> {
