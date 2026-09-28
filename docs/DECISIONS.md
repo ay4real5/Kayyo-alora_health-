@@ -259,7 +259,7 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   request still succeeds — availability over strictness; revisit if compliance requires fail-closed.
 - Every API response carries `Cache-Control: no-store` (+ `Pragma: no-cache`) — no response may be cached.
 - Not yet: querying the trail (`/compliance/audit-logs`, P4-05), monthly partitioning + 6-year retention
-  (P4-08), and a DB-level guard against UPDATE/DELETE on `audit_logs` (add with P4-08).
+  (P4-08), and a DB-level guard against UPDATE/DELETE on `audit_logs` (add with P4-08). *Done: D-067.*
 - E2E test files now run sequentially with 30 s timeouts — they hit a remote database.
 
 ### D-024 — OpenAPI docs and committed spec (P1-10)
@@ -1125,3 +1125,19 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Web checkboxes are **uncontrolled** (`defaultChecked` + a `key` that includes the saved value): a controlled checkbox
   is reset by React before TanStack Query's async cache update re-renders, so the box visibly flips back for a moment
   (and Playwright's `check()` fails). A failed save reverts the cache, which changes the key and remounts the box.
+
+### D-067 — Audit log: monthly partitions, retention, append-only guard (P4-08)
+2026-09-28 · Devin
+- `audit_logs` is **range-partitioned by `created_at`, one partition per UTC month** (`audit_logs_y2026m09`), plus
+  `audit_logs_default` so an insert never fails. Raw-SQL migration `20260928220000_audit_logs_partitioning` (copies
+  existing rows, keeps the `audit_logs_id_seq` sequence). The primary key becomes `(id, created_at)` (Postgres requires
+  the partition key in it) — `@@id([id, createdAt])` in schema.prisma. Prisma ignores the partitions: the CI drift check
+  reports no difference (verified on Postgres 17).
+- **Append-only in the database**: a trigger refuses every UPDATE, and DELETE/TRUNCATE unless the transaction ran
+  `set_config('alora.audit_purge','on',true)`. Row-level, so it's cloned to every partition. Only two things opt in:
+  `purgeAuditLogs(prisma, agencyId)` (test cleanup and the demo-agency wipe — FAKE data only; never call it from
+  product code) and the partition job moving rows out of the default partition. It stops app bugs, not a DB owner.
+- **`AuditPartitionsJob`** (daily 03:45 UTC, `JOBS_ENABLED`, advisory-locked, idempotent): keeps the current month + 3
+  ahead created (moving any rows that landed in the default partition first), and **drops whole months older than
+  `AUDIT_RETENTION_MONTHS`** (default and minimum 72 = HIPAA's 6 years). Dropping is permanent — nothing is archived
+  yet; export to S3/Glacier before drop when S3 exists (P4-10). Retention length: Q-011.

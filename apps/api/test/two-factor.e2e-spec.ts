@@ -5,6 +5,7 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
 import { base32Decode, timeStep, totpAt } from '../src/modules/auth/two-factor/totp.js';
 import { setupApp } from '../src/setup-app.js';
@@ -36,7 +37,7 @@ describe.skipIf(!hasDb)('Two-factor authentication (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.auditLog.deleteMany({ where: { agencyId } });
+    await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } });
     await prisma.agency.delete({ where: { id: agencyId } });
     await app.close();

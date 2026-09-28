@@ -11,6 +11,7 @@ import {
 import { hash } from '@node-rs/argon2';
 import { addDays, toDate, toTime } from '../common/utils/dates.js';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
+import { purgeAuditLogs } from '../modules/audit/purge-audit-logs.js';
 
 /**
  * Demo data for development and demos (DECISIONS D-033). Everything here is FAKE — invented names, example.test
@@ -727,7 +728,7 @@ async function seedBilling(
 export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   const where = { agencyId: DEMO_AGENCY_ID };
   await prisma.notification.deleteMany({ where });
-  await prisma.auditLog.deleteMany({ where });
+  await purgeAuditLogs(prisma, DEMO_AGENCY_ID);
   await prisma.payment.deleteMany({ where }); // details cascade
   await prisma.ediFile.deleteMany({ where });
   await prisma.incidentReport.deleteMany({ where });

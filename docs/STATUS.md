@@ -117,14 +117,17 @@
 - **Notification preferences (P4-07)**: per type and channel (in-app, push, SMS, email; all on by default), `notify()`
   skips muted in-app alerts, `system` alerts mandatory; web `/settings/notifications` from the bell. D-066.
 
+- **Audit-log partitioning (P4-08)**: monthly partitions + default, DB trigger makes rows append-only (tests/seed use
+  `purgeAuditLogs`), daily job creates months ahead and drops months older than `AUDIT_RETENTION_MONTHS` (≥ 72). Migration
+  applied to Neon (36 rows kept). D-067, Q-011.
+
 ## In progress
 
-Nothing. `task/P4-07-notification-prefs` is complete locally (3 API e2e + 1 browser test pass, openapi.json unchanged,
-typecheck/lint green); waiting for CI, then merge to main.
+Nothing. `task/P4-08-audit-partitioning` pushed; merge to main once CI is green.
 
 ## Next up
 
-P4-08 audit-log monthly partitioning + retention; P4-09 security pass (must include: the API enforcing the forced
+P4-09 security pass (must include: the API enforcing the forced
 password change like the 2FA-setup restriction, D-045/D-058); P4-04 Virginia EVV aggregator (research DMAS's current
 EVV vendor and format first — don't assume Sandata/HHAeXchange); P4-10 production packaging (hosting still undecided).
 The owner asked for autonomous work: go straight on, check in ~every 4 hours.
@@ -139,6 +142,7 @@ The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Devin | P4-08 | Audit-log partitions + append-only trigger + retention job; 5 unit + 3 e2e, drift check clean. |
 | 2026-09-28 | Devin | P4-07 | Browser test fixed (uncontrolled checkboxes), openapi/typecheck/lint green; pushed for CI + merge. |
 | 2026-09-28 | Claude Code | P4-07 (in progress) | Preferences API + page; P4-01/P4-02 merged. Owner switched to Devin. |
 | 2026-09-28 | Claude Code | P4-01, P4-02 | Reports API (4 e2e) + dashboard (2 browser tests); P4-03 merged. |
