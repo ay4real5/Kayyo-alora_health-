@@ -60,6 +60,7 @@ model Agency {
   messages          Message[]
   invoices          Invoice[]
   eligibilityChecks EligibilityCheck[]
+  incidentReports   IncidentReport[]
 
   @@map("agencies")
 }
@@ -130,6 +131,8 @@ model User {
   invoicesCreated      Invoice[]                 @relation("InvoiceCreatedBy")
   invoicePayments      InvoicePayment[]          @relation("InvoicePaymentRecordedBy")
   eligibilityChecks    EligibilityCheck[]        @relation("EligibilityRequestedBy")
+  incidentsReported    IncidentReport[]          @relation("IncidentReportedBy")
+  incidentsResolved    IncidentReport[]          @relation("IncidentResolvedBy")
 
   @@index([agencyId])
   @@map("users")
@@ -309,6 +312,7 @@ model Patient {
   conversations     Conversation[]
   invoices          Invoice[]
   eligibilityChecks EligibilityCheck[]
+  incidentReports   IncidentReport[]
 
   @@unique([agencyId, mrn])
   @@index([agencyId])
@@ -452,6 +456,7 @@ model StaffProfile {
   user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   agency            Agency              @relation(fields: [agencyId], references: [id])
   credentials       StaffCredential[]
+  incidentReports   IncidentReport[]
   availability      StaffAvailability[]
   timeOff           StaffTimeOff[]
   visits            Visit[]
@@ -481,6 +486,8 @@ model StaffCredential {
   status           String    @default("active") @db.VarChar(20)
   documentId       String?   @map("document_id") @db.Uuid
   alertDaysBefore  Int       @default(30) @map("alert_days_before")
+  /// Last expiry alert sent: due | week | expired. Cleared when the expiry date changes (D-062).
+  expiryAlertStage String?   @map("expiry_alert_stage") @db.VarChar(10)
   verifiedById     String?   @map("verified_by") @db.Uuid
   verifiedAt       DateTime? @map("verified_at") @db.Timestamptz(6)
   notes            String?
@@ -919,7 +926,8 @@ model Visit {
   /// At most one occurrence per recurring rule per date — generation can be re-run safely (D-031).
   assessments Assessment[]
 
-  invoiceLines InvoiceLine[]
+  invoiceLines    InvoiceLine[]
+  incidentReports IncidentReport[]
 
   @@unique([recurrenceRuleId, scheduledDate])
   @@index([agencyId, scheduledDate])
@@ -1495,4 +1503,41 @@ model EligibilityCheck {
   @@unique([agencyId, traceNumber])
   @@index([patientId, createdAt(sort: Desc)])
   @@map("eligibility_checks")
+}
+
+/// Incident reports (DESIGN.md §5, DECISIONS D-062): falls, injuries, medication errors, complaints, policy breaches.
+model IncidentReport {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId         String    @map("agency_id") @db.Uuid
+  patientId        String?   @map("patient_id") @db.Uuid
+  staffId          String?   @map("staff_id") @db.Uuid
+  visitId          String?   @map("visit_id") @db.Uuid
+  reportedById     String    @map("reported_by") @db.Uuid
+  incidentDate     DateTime  @map("incident_date") @db.Date
+  incidentTime     String?   @map("incident_time") @db.VarChar(5)
+  /// fall | injury | medication_error | abuse_neglect | complaint | property_damage | infection | privacy_breach | other
+  incidentType     String    @map("incident_type") @db.VarChar(50)
+  description      String
+  /// low | moderate | high | critical
+  severity         String    @db.VarChar(20)
+  actionsTaken     String?   @map("actions_taken")
+  followUpRequired Boolean   @default(false) @map("follow_up_required")
+  followUpNotes    String?   @map("follow_up_notes")
+  /// open | investigating | resolved | closed
+  status           String    @default("open") @db.VarChar(20)
+  resolvedAt       DateTime? @map("resolved_at") @db.Timestamptz(6)
+  resolvedById     String?   @map("resolved_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency        @relation(fields: [agencyId], references: [id])
+  patient    Patient?      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staff      StaffProfile? @relation(fields: [staffId], references: [id])
+  visit      Visit?        @relation(fields: [visitId], references: [id])
+  reportedBy User          @relation("IncidentReportedBy", fields: [reportedById], references: [id])
+  resolvedBy User?         @relation("IncidentResolvedBy", fields: [resolvedById], references: [id])
+
+  @@index([agencyId, status, incidentDate(sort: Desc)])
+  @@index([patientId])
+  @@map("incident_reports")
 }
