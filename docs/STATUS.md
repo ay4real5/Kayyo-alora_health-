@@ -52,6 +52,8 @@
 - **EVV (P2-01)**: `POST /evv/clock-in|clock-out` (own visits, GPS geofence + agency-timezone time window → flags,
   never blocks), supervisor list/verify/reject, two-person time corrections. Patients have lat/long (entered by hand
   until geocoding). D-038.
+- **Visit documentation (P2-04)**: notes (draft → sign/submit, addenda), vitals (range-checked, append-only,
+  entered-in-error), task checklists (office adds, caregiver records done/not done). D-039.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -65,11 +67,11 @@ Nothing.
 
 ## Next up
 
-**Phase 2 — EVV & mobile.** P2-01 is done. Next: **P2-04** visit documentation API (notes with signing, vitals,
-task checklists), then P2-05 open shifts, P2-02 real-time (Socket.IO) + background jobs (late/no-show, recurring
-window), P2-03 live monitor page, P2-06+ mobile app. A web EVV review screen (list needing review, verify/reject,
-corrections) is worth adding with P2-03. Human-only tasks (P2-11 Twilio/Firebase) are skipped until the owner acts.
-The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+**Phase 2 — EVV & mobile.** P2-01 and P2-04 are done. Next: **P2-05** open shifts (create, broadcast, claim, assign)
++ shift swaps, then P2-02 real-time (Socket.IO) + background jobs (late/no-show, recurring window), P2-03 live monitor
+page (add a web EVV review screen with it, and show notes/vitals/tasks on the web visit page), P2-06+ mobile app.
+Human-only tasks (P2-11 Twilio/Firebase) are skipped until the owner acts. The owner asked for autonomous work: go
+straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -80,6 +82,7 @@ The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P2-04 | Visit notes/vitals/tasks API, 5 e2e tests; demo aide checklists. |
 | 2026-09-28 | Claude Code | P2-01 | EVV API (clock in/out, flags, verify, corrections), 10 e2e tests. |
 | 2026-09-28 | Claude Code | P1-22 | Browser tests in CI (green), README refresh. Phase 1 complete. |
 | 2026-09-28 | Claude Code | P1-21 | Scheduling calendar screens; CI green, merged. |

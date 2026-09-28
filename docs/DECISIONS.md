@@ -540,3 +540,23 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   themselves yet — the mobile app (P2-07) may add a caregiver "request" later.
 - Deferred: live monitor (`/evv/live`, P2-02/P2-03), telephony/IVR (P2-13), aggregator export (Phase 3), signatures
   (P2-08).
+
+### D-039 — Visit documentation: notes, vitals, tasks (P2-04)
+2026-09-28 · Claude Code
+- Routes under `/schedule/visits/:visitId/{notes,vitals,tasks}` (DESIGN §6.5) in a separate `visit-docs` module.
+  **Reading** follows visit access (D-030: `visits:read_all` or your own visit). **Writing** notes, vitals and task
+  results is only for the visit's own caregiver, and only once the visit is `in_progress` or `completed` (clock in
+  first). Others get 403 (supervisors) or 404 (a visit they can't see).
+- **Notes**: `draft` → `signed` (`/sign`, needs `visit_notes:sign` — clinicians) or `submitted` (`/submit` — aides,
+  who by design don't sign). Both lock the note; only the author edits/discards a draft; an empty note can't be
+  finalised. Changes after locking are **addenda**: a new note with `noteType: 'addendum'` and `amendsNoteId`.
+  Added columns beyond the design: `author_id` (the user; `staff_id` is kept too), `amends_note_id`, `submitted_at`.
+  `form_data` holds discipline form answers as-is; QA review columns exist for the Phase 3 QA engine.
+- **Vitals** are append-only. Plausibility ranges (e.g. HR 20–250, SpO₂ 50–100, temp 85–115 °F / 29–46 °C), BP needs
+  both numbers with diastolic < systolic, at least one measurement, `recordedAt` ≤ now+5 min and ≤ 72 h old (offline
+  sync). A wrong entry is marked **entered in error** with a reason (by its recorder or a `visits:read_all` holder) and
+  stays visible. Abnormal-value alerts are left to clinical configuration later.
+- **Tasks**: the office (`visits:update`) adds/removes checklist items on `scheduled`/`in_progress` visits; the
+  caregiver (`visit_notes:update`, which aides have — the design's `update:visits` would exclude them) marks each
+  done, not done with a reason ("Patient declined"), or back to open. A task the caregiver recorded can't be removed.
+  The demo seed gives every assigned aide visit a 5-item checklist. Care-plan-driven tasks come with care plans (Phase 3).
