@@ -29,3 +29,10 @@ export function humanize(code: string): string {
   const text = code.replaceAll('_', ' ').toLowerCase();
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/** "09:30" → "9:30 AM". */
+export function formatTime(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number);
+  const suffix = h! >= 12 ? 'PM' : 'AM';
+  return `${((h! + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${suffix}`;
+}
