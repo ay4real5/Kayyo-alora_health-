@@ -74,9 +74,9 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-11** `agent` Care plans (CMS-485), assessments (JSONB forms), medications, physician orders. deps: P1-12
 - [x] **P3-12** `agent` Documents: S3 upload/download (pre-signed), versions, e-sign. deps: P1-12
 - [x] **P3-13** `agent` Secure messaging API + `/messages` socket namespace. deps: P2-02
-- [ ] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13
+- [x] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13
 - [ ] **P3-15** `agent` ~~Base44 docs~~ Not needed after D-044; instead retire `docs/base44-portal/` and the portal spec export once P3-16 ships. deps: P3-16
-- [ ] **P3-16** `agent` Build the patient portal screens in `apps/web` (own layout, `portal_user` only) — replaces the Base44 plan (D-044). deps: P3-14
+- [x] **P3-16** `agent` Build the patient portal screens in `apps/web` (own layout, `portal_user` only) — replaces the Base44 plan (D-044). deps: P3-14
 - [ ] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03
 - [ ] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12
 - [ ] **P3-19** `agent` Email channel (SendGrid). deps: P2-12
@@ -91,7 +91,8 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P4-06** `agent` Claims denial/appeal workflow + aging report
 - [ ] **P4-07** `agent` Notification preferences UI/API
 - [ ] **P4-08** `agent` Audit-log monthly partitioning + retention
-- [ ] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes
+- [ ] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes. Include: the API should *enforce* the
+  forced password change (like the 2FA-setup restriction, D-045) — today only the web/mobile clients redirect (D-058)
 - [ ] **P4-10** `agent` Production Dockerfiles, docker-compose.prod, nginx (must NOT log query strings — search terms can be PHI, D-035), deploy workflows. Deploys must run `prisma migrate deploy` (separate migration image/job — the API image has no Prisma CLI) **before** starting the API, which refuses to boot on an unmigrated DB.
 - [ ] **P4-11** `human` Hosting choice (HIPAA-eligible, BAA), production secrets, domain
 - [ ] **P4-12** `human` Rotate/revoke every dev credential shared during development (DECISIONS D-019); make repo private
