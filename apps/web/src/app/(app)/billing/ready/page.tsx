@@ -1,8 +1,9 @@
 'use client';
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader, Pager, formatDate } from '@/components/ui/data-display';
 import { Field } from '@/components/ui/field';
@@ -76,6 +77,22 @@ export default function ReadyToBillPage() {
     },
   });
 
+  const queryClient = useQueryClient();
+  const bill = useMutation({
+    mutationFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const end = to || today;
+      const start = from || new Date(Date.parse(end) - 30 * 86_400_000).toISOString().slice(0, 10);
+      return (
+        await request<{ created: { id: string }[]; skipped: unknown[] }>('/billing/claims', {
+          method: 'POST',
+          body: { from: start, to: end, ...(payerId ? { payerId } : {}) },
+        })
+      ).data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['billing'] }),
+  });
+
   if (!can('billing:read'))
     return <PageHeader title="Ready to bill" subtitle="You don't have access to billing." />;
   const data = readiness.data;
@@ -84,7 +101,24 @@ export default function ReadyToBillPage() {
       <PageHeader
         title="Ready to bill"
         subtitle="Completed visits checked against everything a claim needs."
+        actions={
+          can('billing:create') &&
+          (data?.summary.ready ?? 0) > 0 && (
+            <Button onClick={() => bill.mutate()} disabled={bill.isPending}>
+              Create claims for ready visits
+            </Button>
+          )
+        }
       />
+      <ErrorAlert error={bill.error} />
+      {bill.data && (
+        <p role="status" className="text-sm text-teal-800">
+          Created {bill.data.created.length} claim{bill.data.created.length === 1 ? '' : 's'}.{' '}
+          <Link href="/billing/claims" className="underline">
+            See claims
+          </Link>
+        </p>
+      )}
       {data && (
         <section aria-label="Summary" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card className="p-3">

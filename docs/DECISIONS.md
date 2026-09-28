@@ -812,3 +812,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   days, payer, ready/blocked) and a summary (ready count and amount, blockers by check). Web page **Ready to bill**.
 - Demo data: agency NPI, patients' fake Medicaid IDs, authorizations and submitted notes for the EVV-history visits, so
   some are ready and the flagged ones show why not.
+
+### D-052 — Claims from ready visits (P3-03)
+2026-09-28 · Claude Code
+- `POST /billing/claims` (`billing:create`) takes a date range (optionally a payer) or specific visits, re-runs
+  pre-billing QA (D-051) and makes **one claim per patient + payer** with **one line per visit**. Visits that aren't
+  ready come back in `skipped` with their reasons.
+- A claim is a **snapshot**: member ID (by payer type), ICD-10 codes (primary first, max 12), each line's code, units,
+  unit rate and charge are copied at creation; later rate or record changes don't alter it.
+- **No double billing**: `claim_lines.active` + a partial unique index (one active line per visit) — two people billing
+  the same visit at once: exactly one claim gets it (tested). Pre-billing QA now fails already-billed visits
+  ("Already billed on claim …").
+- Claim numbers: 12 characters, date + random base-32 (fits X12 CLM01's 20), unique per agency, regenerated on the
+  rare collision. Claim type 837P, except Medicare → 837I (Medicare home health institutional billing — OASIS/HIPPS
+  — isn't built; Virginia Medicaid personal care is professional).
+- Statuses now used: `ready` (QA passed), `draft` (QA re-check failed, with `qa_errors`), `void`. `POST .../qa`
+  re-checks; `POST .../void` (`billing:void`, reason required) only before sending — voiding releases the visits for
+  re-billing. Voiding/replacing a claim already sent (frequency 8/7) comes with submission (P3-09).
+- Web: **Create claims for ready visits** on Ready to bill, **Claims** list and claim page (lines, QA problems,
+  re-check, void).
