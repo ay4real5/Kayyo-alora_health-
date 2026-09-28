@@ -9,6 +9,7 @@ import {
 } from './common/middleware/correlation-id.middleware.js';
 import { API_PREFIX } from './config/api.constants.js';
 import { AppEnv, type EnvironmentVariables } from './config/env.validation.js';
+import { ConfiguredIoAdapter } from './modules/realtime/socket-io.adapter.js';
 import { setupSwagger } from './openapi/openapi.js';
 
 export { API_PREFIX };
@@ -26,6 +27,7 @@ export function setupApp(app: INestApplication): INestApplication {
     origin: config.get('CORS_ORIGINS', { infer: true }),
     credentials: true,
   });
+  app.useWebSocketAdapter(new ConfiguredIoAdapter(app, config.get('CORS_ORIGINS', { infer: true })));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // strip properties without validation decorators…

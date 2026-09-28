@@ -112,6 +112,12 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - Permissions say *whether* a role may do something; filtering *which records* (assigned patients, own
   visits, own agency) is each service's job.
 
+### Real-time and jobs — DECISIONS D-041
+- Push to sockets only through `RealtimeService` (`toUser` for notifications, `toMonitor` for live-monitor events);
+  it never throws. `notify()` already pushes `notification:new` — don't emit notifications separately.
+- Background work goes in `src/modules/jobs/` with `@Cron`, checks `JOBS_ENABLED`, and must be idempotent (guarded
+  updates) because several API instances may run it. Give it a `run(now?)` method tests can call directly.
+
 ### Web dashboard (apps/web) — DECISIONS D-034
 - Next.js 16 differs from older versions: read `apps/web/AGENTS.md` and `node_modules/next/dist/docs/` first.
 - Call the API with `useAuth().request(path)` (adds the token, renews once on 401). Never store tokens anywhere.

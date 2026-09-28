@@ -506,6 +506,9 @@ model Visit {
   notes            String?
   cancelReason     String?   @map("cancel_reason")
   missedReason     String?   @map("missed_reason")
+  /// When the late (15 min) / no-show (30 min) alerts went out — each fires once (DECISIONS D-041).
+  lateAlertedAt    DateTime? @map("late_alerted_at") @db.Timestamptz(6)
+  noShowAlertedAt  DateTime? @map("no_show_alerted_at") @db.Timestamptz(6)
   priority         String    @default("normal") @db.VarChar(10)
   createdById      String?   @map("created_by") @db.Uuid
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
