@@ -794,3 +794,21 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   all patients on demo Medicaid; authorizations for the recurring aide patients (visits linked) and one ending soon.
 - Virginia specifics (DMAS/MCO rules, which codes and modifiers) are still to be confirmed against current DMAS
   guidance before real billing (D-044).
+
+### D-051 — Pre-billing QA per visit (P3-02)
+2026-09-28 · Claude Code
+- QA runs **per completed visit**, before any claim exists (the design runs it on claims; claims in P3-03 reuse the same
+  rules). `billing-readiness.ts` is a pure function (unit-tested); the service gathers facts in a few batched queries.
+- Checks (error = can't bill, warning = can, but look): visit completed; **EVV verified** (missing/exception/rejected
+  explained); a **signed or submitted note**; an active service code; an active primary payer; the **member ID** that
+  payer type needs (Medicaid ID, Medicare MBI, or insurance member ID); a primary diagnosis; the **authorization**
+  (when the payer or code needs one: linked, not cancelled, covers the date, and within limits — the first N completed
+  visits/hours in service order are covered, later ones are over); a **rate** (payer rate, else the code's default with
+  a warning); the **agency NPI**; **timely filing** (warning within 30 days of the payer's limit, error after).
+- **Units**: 15-minute units round at 8 minutes (the common Medicaid/Medicare convention — **confirm against the
+  Virginia DMAS provider manual** before real billing); hours round to the quarter hour; visit/day = 1. Minutes come
+  from EVV actual times, else the schedule. Amount = units × rate.
+- `GET /billing/ready-to-bill` (billing:read, audited): visits with checks, units, rate, amount; filters (dates ≤ 92
+  days, payer, ready/blocked) and a summary (ready count and amount, blockers by check). Web page **Ready to bill**.
+- Demo data: agency NPI, patients' fake Medicaid IDs, authorizations and submitted notes for the EVV-history visits, so
+  some are ready and the flagged ones show why not.
