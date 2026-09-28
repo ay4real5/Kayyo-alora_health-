@@ -8,7 +8,7 @@ generator client {
   output          = "../src/generated/prisma"
   moduleFormat    = "esm"
   // partialIndexes: unique system-role names (roles with agency_id NULL), DECISIONS D-022.
-  previewFeatures = ["partialIndexes"]
+  previewFeatures = ["partialIndexes", "relationJoins"]
 }
 
 datasource db {

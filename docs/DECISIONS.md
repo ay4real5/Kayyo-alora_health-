@@ -1141,3 +1141,38 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   ahead created (moving any rows that landed in the default partition first), and **drops whole months older than
   `AUDIT_RETENTION_MONTHS`** (default and minimum 72 = HIPAA's 6 years). Dropping is permanent — nothing is archived
   yet; export to S3/Glacier before drop when S3 exists (P4-10). Retention length: Q-011.
+
+### D-068 — Security pass and load test (P4-09)
+2026-09-29 · Devin (review, forced-password-change code) + Claude Code (verification, fixes, load test)
+- **Forced password change is enforced by the API** (was client-only, D-058). A never-set password (admin-created or
+  portal temporary) or one older than `PASSWORD_MAX_AGE_DAYS` (default 90; 0 = off) puts `pwc: true` in the access
+  token; `JwtAuthGuard` then answers **403 `PASSWORD_CHANGE_REQUIRED`** everywhere except `GET /auth/me` and
+  `POST /auth/change-password` (`@AllowDuringPasswordChange()`), checked **before** the 2FA-setup restriction; sockets
+  are refused too. `/auth/me` and every token response carry `mustChangePassword`; the web shells and the mobile app
+  send the user to change-password first. Changing it issues fresh, unrestricted tokens.
+- **CSV formula injection** (OWASP): all CSV downloads (reports, payroll) go through `common/utils/csv.ts` — text
+  starting with `= + - @`, tab or CR gets a leading apostrophe; numbers (incl. "-5.00") are untouched.
+- **Content-Security-Policy on the dashboard**: nonce per request in `src/proxy.ts` (policy in `src/lib/csp.ts`):
+  `script-src 'self' 'nonce-…' 'strict-dynamic'` (+`'unsafe-eval'` in dev only), `style-src 'self' 'unsafe-inline'`
+  (Leaflet/Recharts style attributes), `img-src 'self' data: blob: https://*.tile.openstreetmap.org`, `connect-src
+  'self'` + the API origin and its ws(s) origin, `object-src 'none'`, `base-uri`/`form-action 'self'`,
+  `frame-ancestors 'none'`, `upgrade-insecure-requests` when the API is HTTPS. The root layout renders per request
+  (`connection()`) so Next.js can nonce its scripts — every route is dynamic, fine for a signed-in app. Verified by a
+  browser test (map tiles, charts, sockets, patient page — no violations) and on a production build (no
+  `unsafe-eval`, all scripts nonced). The other headers stay in `next.config.ts`.
+- **npm audit**: 3 moderate, all `decode-uri-component` under `expo-router → query-string@7` (mobile only). **Accepted**:
+  the fixed 0.5.0 is ESM-only and `query-string@7` `require()`s it (an override would break the app bundle); impact is
+  a client-side slowdown from a crafted deep link on the caregiver's own phone. Revisit when Expo Router drops
+  `query-string@7`.
+- **Reviewed and fine**: raw SQL (tagged templates or fixed strings), agency scoping on every by-id write, mass
+  assignment (whitelist + forbidNonWhitelisted), refresh cookie (httpOnly, Secure, SameSite=strict), sanitised
+  download file names, Swagger off in production, validated secrets, no SSRF surface. `trust proxy` and a shared
+  (Redis) rate-limit store belong to deployment (P4-10).
+- **Load test** (`apps/api/scripts/load-test.mjs`, demo data, laptop → Neon): before, 19.6 req/s at 10 concurrent with
+  p50 150–1,100 ms; the slow endpoints made one database round trip per relation level. Fixes: Prisma
+  **`relationJoins`** (nested includes load in one SQL query with LATERAL joins — now the default strategy for every
+  query), the messages list's latest-message lookup in one `DISTINCT ON` query instead of one per conversation, pg
+  TCP keep-alive. After: 30.4 req/s at 10 concurrent, p50 ~355 ms (≈3 round trips: auth, query, audit write) for
+  almost every endpoint, 0 errors at 25 concurrent. At 25 concurrent throughput plateaus (~28/s) on the connection
+  pool, now configurable: **`DATABASE_POOL_SIZE`** (default 10). Latency here is dominated by the laptop↔Neon
+  distance; in production the API must run in the same region as the database.

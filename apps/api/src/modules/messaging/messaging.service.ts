@@ -106,11 +106,9 @@ export class MessagingService {
       orderBy: [{ lastMessageAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
       take: query.limit ?? 50,
     });
-    const [unread, last] = await Promise.all([
-      this.unreadByConversation(caller.userId, rows.map((r) => r.id)),
-      Promise.all(rows.map((r) => this.latestVisible(caller.userId, r))),
-    ]);
-    return rows.map((r, i) => this.toConversation(caller.userId, r, last[i] ?? null, unread.get(r.id) ?? 0));
+    const ids = rows.map((r) => r.id);
+    const [unread, last] = await Promise.all([this.unreadByConversation(caller.userId, ids), this.latestVisibleMany(caller.userId, ids)]);
+    return rows.map((r) => this.toConversation(caller.userId, r, last.get(r.id) ?? null, unread.get(r.id) ?? 0));
   }
 
   async get(caller: AuthUser, id: string): Promise<ConversationView> {
@@ -388,6 +386,22 @@ export class MessagingService {
     });
     if (!row) throw new NotFoundException('Conversation not found');
     return row;
+  }
+
+  /**
+   * The newest message the caller can see in each conversation — two queries for the whole list instead of one per
+   * conversation (P4-09 load test, D-068). "Can see": up to when they left, if they left.
+   */
+  private async latestVisibleMany(userId: string, ids: string[]): Promise<Map<string, MessageRow>> {
+    if (!ids.length) return new Map();
+    const latest = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT DISTINCT ON (m.conversation_id) m.id::text AS id FROM messages m
+      JOIN conversation_participants p ON p.conversation_id = m.conversation_id AND p.user_id = ${userId}::uuid
+      WHERE m.conversation_id = ANY(${ids}::uuid[]) AND (p.left_at IS NULL OR m.created_at <= p.left_at)
+      ORDER BY m.conversation_id, m.created_at DESC, m.id DESC`;
+    if (!latest.length) return new Map();
+    const messages = await this.prisma.message.findMany({ where: { id: { in: latest.map((l) => l.id) } }, include: MESSAGE_INCLUDE });
+    return new Map(messages.map((m) => [m.conversationId, m]));
   }
 
   private async latestVisible(userId: string, row: ConversationRow): Promise<MessageRow | null> {

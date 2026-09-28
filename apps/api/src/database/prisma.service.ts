@@ -15,6 +15,7 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     super({
       adapter: new PrismaPg({
         connectionString,
+        max: config.get('DATABASE_POOL_SIZE', { infer: true }),
         // Serverless Postgres (e.g. Neon) closes idle connections when it scales to zero; recycle ours first
         // so a request never picks up a connection the server already dropped.
         idleTimeoutMillis: 60_000,

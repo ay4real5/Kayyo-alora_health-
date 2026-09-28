@@ -107,7 +107,10 @@ export class EnvironmentVariables {
   @Max(1440)
   LOGIN_LOCKOUT_MINUTES: number = 30;
 
-  /** 0 disables. When exceeded, login still succeeds but returns mustChangePassword: true. */
+  /**
+   * 0 disables. When exceeded (or never set), sign-in works but the session is limited to /auth/me and
+   * change-password until the password changes (P4-09).
+   */
   @Transform(toNumber)
   @IsInt()
   @Min(0)
@@ -141,6 +144,16 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(72)
   AUDIT_RETENTION_MONTHS: number = 72;
+
+  /**
+   * Database connections per API instance (pg pool). 10 suits a remote dev database; raise it in production when the
+   * database is close by and allows more connections (P4-09 load test, D-068).
+   */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  @Max(200)
+  DATABASE_POOL_SIZE: number = 10;
 
   /** Turns off request rate limits — for the CI browser tests only; refused in production. */
   @Transform(({ value }) => (value === undefined || value === '' ? undefined : value === 'true' || value === true))
