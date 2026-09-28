@@ -14,6 +14,12 @@ the package scope (`@alora/...` is assumed for now)?
 Where does production run (AWS, Azure, GCP, other)? Must be HIPAA-eligible with a signed BAA. Needed
 before P4-10/P4-11. *Owner deferred this on 2026-09-28 — ask again before P4-10.*
 
+### Q-009 — Track caregivers' location during visits?
+The design mentions background location during an active visit (P2-10). EVV only needs the location at clock-in and
+clock-out, and continuous tracking is invasive (needs "Always" permission, drains batteries). Default chosen: **no
+background tracking**, plus a phone reminder to clock out (DECISIONS D-049). Do you want tracking anyway (e.g. for
+safety or disputes)?
+
 ## Resolved
 
 ### Q-002 — Base44 portal authentication

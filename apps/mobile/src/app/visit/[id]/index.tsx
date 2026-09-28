@@ -5,8 +5,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { Button, ErrorText, colors, styles } from '@/components/ui';
 import { OfflineBanner } from '@/components/offline-banner';
-import { errorMessage } from '@/lib/auth-context';
+import { errorMessage, useAuth } from '@/lib/auth-context';
+import { cancelClockOutReminder, scheduleClockOutReminder } from '@/lib/notifications';
 import { useOffline } from '@/lib/offline';
+import { clockOutReminderAt } from '@/lib/reminders';
 import { effectiveStatus } from '@/lib/offline-queue';
 import { clockBody, clockMessage, directionsUrl, isFresh, type ClockResult, type Fix } from '@/lib/evv';
 
@@ -52,6 +54,7 @@ async function currentFix(): Promise<Fix> {
 export default function VisitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { read, submit, ops } = useOffline();
+  const { user } = useAuth();
   const [stale, setStale] = useState(false);
   const [visit, setVisit] = useState<Visit | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -89,6 +92,11 @@ export default function VisitScreen() {
         visitId: id,
         body: clockBody(id, fix, pressedAt, Constants.expoConfig?.version),
       });
+      if (kind === 'in' && visit && user) {
+        await scheduleClockOutReminder(id, clockOutReminderAt(visit, user.agencyTimezone, new Date()));
+      } else if (kind === 'out') {
+        await cancelClockOutReminder(id);
+      }
       setNotice(
         result.outcome === 'sent' && result.data
           ? clockMessage(kind, result.data as ClockResult)

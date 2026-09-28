@@ -70,6 +70,7 @@
   deferred until file storage exists. D-047.
 - **Mobile offline (P2-09)**: encrypted (SQLCipher) queue + read cache; clock/tasks/vitals/notes work offline and sync
   in order; refused items shown; wiped at sign-out. D-048.
+- **Clock-out reminders (P2-10)**: no background tracking (D-049, Q-009); local "remember to clock out" reminder.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -83,19 +84,21 @@ Nothing.
 
 ## Next up
 
-**P2-10** mobile background location during an active visit (think carefully: privacy, battery, and whether any
-Virginia rule needs it — record the decision; the minimum is none). Then Phase 2 is done except P2-11..13 (Twilio /
-Firebase — owner). Next phase: **Phase 3** (P3-01 authorizations first). The owner asked for autonomous work: go
-straight on, check in ~every 4 hours.
+**Phase 2 is done** except P2-11..13 (Twilio/Firebase accounts — owner). **Phase 3** next: P3-01 authorizations
+(payer + authorized units per service, tracked against visits), then P3-02 pre-billing QA and the billing tasks.
+Check DESIGN §5/§6 billing sections and Virginia Medicaid (D-044) before modelling payers. The owner asked for
+autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
 - Q-006 hosting (owner deferred; needed before P4-10). Google Maps key (owner will provide).
+- Q-009 background location during visits — default is no (D-049).
 
 ## Session log
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P2-10 | No background tracking (Q-009); local clock-out reminders; 26 unit tests; bundles. |
 | 2026-09-28 | Claude Code | P2-09 | Mobile offline queue + encrypted cache; 23 unit tests; bundles. |
 | 2026-09-28 | Claude Code | P2-08 | Mobile tasks/vitals/notes screens; 17 unit tests; bundles. Signatures deferred (D-047). |
 | 2026-09-28 | Claude Code | P2-07 | Mobile visit screen + GPS clock in/out; 13 unit tests; bundles. |
