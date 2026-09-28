@@ -69,7 +69,19 @@
 
 ## In progress
 
-Nothing.
+**P2-06** mobile scaffold — branch `task/P2-06-mobile-scaffold`.
+- Done: `apps/mobile` workspace (Expo SDK 57, RN 0.86.3, Expo Router), app.json (Face ID text, no Android backup),
+  one React (19.2.8) for the whole repo via root `overrides` (React Native accepts ^19.2.3), `uuid` override for
+  Expo's `xcode` tool; `src/lib/api.ts` (envelope client, `OfflineError`) and `src/lib/session.ts`
+  (`MobileSession`: refresh token in secure storage, access token in memory, single-flight renew, lock/sign-out,
+  `shouldLock` after 5 min in background) with 7 unit tests (`npm test -w @alora/mobile`).
+- Accepted audit finding: `decode-uri-component` (moderate DoS on malformed URLs) via expo-router → query-string 7;
+  the fixed version is ESM-only and can't be forced. Revisit when expo-router updates.
+- Next: screens in `src/app` — `_layout.tsx` (AuthProvider + `Stack.Protected` guards), `login.tsx` (+2FA step),
+  `unlock.tsx` (expo-local-authentication; no enrolled device security → full sign-in each launch),
+  `change-password.tsx`, `(app)/index.tsx` (today's visits from `/schedule/calendar`); `TokenStore` on
+  expo-secure-store; AppState lock; write D-043; README section on running with Expo Go (`EXPO_PUBLIC_API_URL`
+  must be the laptop's LAN IP and in the API's CORS is not needed for native).
 
 ## Next up
 

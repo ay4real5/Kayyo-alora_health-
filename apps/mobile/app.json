@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Alora Caregiver",
+    "slug": "alora-caregiver",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "alora",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Unlock Alora with Face ID so patient information stays protected."
+      }
+    },
+    "android": {
+      "allowBackup": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-local-authentication", { "faceIDPermission": "Unlock Alora with Face ID so patient information stays protected." }],
+      ["expo-splash-screen", { "backgroundColor": "#0f766e", "image": "./assets/splash-icon.png", "imageWidth": 76 }]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
