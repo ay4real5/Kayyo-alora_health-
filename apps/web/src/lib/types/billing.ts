@@ -87,3 +87,29 @@ export interface Claim {
   lines: ClaimLine[];
   createdAt: string;
 }
+
+/** A private-pay invoice (D-059). */
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  status: 'draft' | 'sent' | 'partially_paid' | 'paid' | 'void';
+  patient: { id: string; firstName: string; lastName: string; mrn: string | null };
+  payer: { id: string; name: string };
+  issueDate: string;
+  dueDate: string;
+  billingPeriodStart: string;
+  billingPeriodEnd: string;
+  subtotal: number;
+  taxAmount: number;
+  totalAmount: number;
+  paidAmount: number;
+  balanceDue: number;
+  overdue: boolean;
+  billTo: { name: string; addressLines: string[] };
+  sentAt: string | null;
+  paidAt: string | null;
+  voidReason: string | null;
+  notes: string | null;
+  lines: { id: string; visitId: string | null; serviceDate: string; serviceCode: string | null; description: string; quantity: number; unitRate: number; total: number }[];
+  payments: { id: string; amount: number; paidOn: string; method: string; reference: string | null; recordedBy: { firstName: string; lastName: string } }[];
+}

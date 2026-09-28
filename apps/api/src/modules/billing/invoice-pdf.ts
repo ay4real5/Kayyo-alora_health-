@@ -136,7 +136,7 @@ export async function renderInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
 
   // Totals
   y -= 6;
-  page.drawLine({ start: { x: W - M - 220, y: y + 8 }, end: { x: W - M, y: y + 8 }, thickness: 0.5, color: grey });
+  page.drawLine({ start: { x: W - M - 220, y: y + 12 }, end: { x: W - M, y: y + 12 }, thickness: 0.5, color: grey });
   const totalRow = (label: string, value: string, strong = false) => {
     right(label, W - M - 110, 10, strong ? bold : font, strong ? ink : grey);
     right(value, W - M, 10, strong ? bold : font);
