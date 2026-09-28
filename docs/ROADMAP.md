@@ -13,7 +13,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P0-01** `agent` Handoff system: AGENTS.md, CLAUDE.md, docs/STATUS, ROADMAP, DECISIONS, OPEN_QUESTIONS, DESIGN
 - [x] **P0-02** `agent` Root monorepo config: package.json workspaces, turbo.json, tsconfig.base, .editorconfig, .gitignore, .env.example, docker-compose (Postgres + Redis)
 - [x] **P0-03** `human` Decide repo visibility — public during build phase (see DECISIONS D-012)
-- [ ] **P0-04** `human` Answer the Phase 1-blocking items in OPEN_QUESTIONS (Q-002 Base44 auth, Q-005 target state)
+- [x] **P0-04** `human` Answer the Phase 1-blocking items in OPEN_QUESTIONS (Q-002 Base44 auth, Q-005 target state)
 
 ## Phase 1 — Foundation & core operations
 
@@ -71,7 +71,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P3-08** `human` Clearinghouse account (Availity/Waystar), SFTP creds, BAA
 - [ ] **P3-09** `agent` Clearinghouse SFTP submit/poll via claims-queue. deps: P3-04, P3-08
 - [ ] **P3-10** `agent` Private-pay invoices + PDF (Puppeteer). deps: P3-01
-- [ ] **P3-11** `agent` Care plans (CMS-485), assessments (JSONB forms), medications, physician orders. deps: P1-12
+- [x] **P3-11** `agent` Care plans (CMS-485), assessments (JSONB forms), medications, physician orders. deps: P1-12
 - [ ] **P3-12** `agent` Documents: S3 upload/download (pre-signed), versions, e-sign. deps: P1-12
 - [ ] **P3-13** `agent` Secure messaging API + `/messages` socket namespace. deps: P2-02
 - [ ] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { AuthorizationsPanel } from '@/components/patients/authorizations-panel';
+import { ClinicalPanels } from '@/components/patients/clinical-panels';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -101,6 +102,8 @@ export default function PatientDetailPage() {
         <DiagnosesPanel patient={p} canEdit={canEdit} onAct={run} />
         <AllergiesPanel patient={p} canEdit={canEdit} onAct={run} />
       </div>
+
+      <ClinicalPanels patientId={p.id} />
 
       <AuthorizationsPanel patientId={p.id} />
 

@@ -79,6 +79,8 @@
   void; web claims list/detail. D-052.
 - **EDI 837P (P3-04)**: golden-tested generator, claim file preview with validation, agency settings, payer EDI IDs. D-053.
 - **835 payments (P3-06)**: parser, upload (dedup, claim matching), posting (paid/partial/denied); web Payments. D-054.
+- **Clinical records (P3-11)**: medications, physician orders, versioned plans of care, scored assessments; web
+  panels on the patient page. D-055.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -88,21 +90,13 @@
 
 ## In progress
 
-**P3-11** clinical records — branch `task/P3-11-clinical`.
-- Done: tables `medications`, `physician_orders`, `care_plans`, `assessments` (migration applied to Neon);
-  `PatientsService.assertAccessible`; shared `ASSESSMENT_TYPES` + Morse/Braden scoring (unit-tested);
-  permission `medications:manage` (supervisor, RN, LPN).
-- Next: `clinical` module — medications (add/update/discontinue), physician orders (pending → sent → signed,
-  overdue after 30 days), care plans (draft → active supersedes previous version), assessments (draft → completed →
-  approved by someone else; score via `scoreAssessment`); reads use `patients:read` + `assertAccessible`; e2e tests;
-  web panels on the patient page; D-055; seed wipe is covered by patient cascade.
+Nothing.
 
 ## Next up
 
-**P3-10** private-pay invoices (PDF), **P3-11** clinical records (care plans CMS-485, assessments, medications,
-physician orders), **P3-12** documents (storage behind an interface; local/dev driver until S3 + BAA), P3-13 secure
-messaging, then the portal (P3-14/P3-16). P3-07 eligibility (270/271) can be built and tested like the 837/835.
-The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+**P3-12** documents (upload/download behind a storage interface — local/dev driver until S3 + BAA; versions; e-sign),
+**P3-13** secure messaging, then the patient portal (**P3-14** API, **P3-16** screens in `apps/web`). Also P3-10
+private-pay invoices and P3-07 eligibility. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -114,6 +108,7 @@ The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P3-11 | Clinical records API + web; 4 e2e + 1 browser test; 23 browser tests pass. Owner tried the app on web and phone. |
 | 2026-09-28 | Claude Code | P3-06 | 835 parser + upload + posting API and web; 22 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-04 | 837P generator (golden file), preview endpoint, agency settings; 21 browser tests pass. |
 | 2026-09-28 | Claude Code | P3-03 | Claims API + web; 3 e2e (incl. simultaneous billing) + 1 browser test; 21 browser tests pass. |
