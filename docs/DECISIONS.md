@@ -918,3 +918,27 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   patients/physicians come with the portal and fax work.
 - **Delete** is soft (`deleted_at`, who, reason, `documents:delete`); the record and file are kept for retention.
 - Not yet: fax sending (`documents:send`), virus scanning (add with S3, e.g. ClamAV/GuardDuty), mobile upload.
+
+### D-057 — Secure messaging (P3-13)
+2026-09-28 · Claude Code
+- **Tables**: `conversations` (direct | group, optional subject and patient), `conversation_participants` (joined,
+  last read, left, muted), `messages`. Message text is **encrypted** (`content_encrypted`, PHI keyring, context
+  `messages.content:<id>` — `messageContentContext`); nothing about content goes in logs, audit rows, socket pushes or
+  notifications.
+- **Who**: new permission `messages:use`, granted to every built-in staff role (not `portal_user` — the portal gets
+  its own endpoints in P3-14 on the same tables). Contacts = active users in the agency with a non-portal role. Only
+  participants can see a conversation (others 404). A conversation *about a patient* requires the creator to have
+  access to that patient; the people they add see the patient's name (sharing for treatment is the creator's call).
+- **Direct** messages: messaging one person without a subject/patient reuses the existing direct thread (a rare race
+  can create two; harmless). You can't add people to or leave a direct thread — start a group.
+- **Groups**: participants may add people (up to 100); leaving keeps read access to what was said *before* leaving,
+  no sending; being added back restores it.
+- **Unread** = others' messages after your `last_read_at` (sending or opening marks read). `GET /messages/unread-count`
+  drives the sidebar badge.
+- **Real-time**: `message:new` `{conversationId, messageId, senderId, isUrgent, createdAt}` on the existing
+  `/notifications` socket (user room) — not a separate `/messages` namespace as DESIGN.md §8 sketches; one socket per
+  client is enough. Clients refetch the text. Typing indicators: not built.
+- **Urgent** messages also create an in-app `message_received` notification ("Urgent message", sender's name only).
+  Push/SMS follow when P2-11 providers exist. Messages are never edited or deleted (record retention).
+- Attachments: `documentId` of a document the sender can see (uploaded via /documents); the web page doesn't offer
+  attaching yet.

@@ -116,9 +116,13 @@ export function Pager({
   );
 }
 
-/** Formats a YYYY-MM-DD date for display without timezone shifts. */
+/**
+ * Formats a YYYY-MM-DD date for display without timezone shifts. A full timestamp (e.g. `createdAt`) is shown as its
+ * date in the viewer's timezone.
+ */
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '';
+  if (value.length > 10) return new Date(value).toLocaleDateString('en-US', { dateStyle: 'medium' });
   const [y, m, d] = value.split('-').map(Number);
   return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('en-US', { timeZone: 'UTC', dateStyle: 'medium' });
 }

@@ -35,6 +35,8 @@ export function NotificationBell() {
 
   useLiveSocket('/notifications', {
     'notification:new': () => void queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    // New messages arrive on the same socket (D-057): refresh the badge and any open conversation.
+    'message:new': () => void queryClient.invalidateQueries({ queryKey: ['messages'] }),
   });
 
   useEffect(() => {

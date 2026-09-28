@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   isValidNpi,
   MANDATORY_TWO_FACTOR_ROLES,
@@ -38,6 +39,8 @@ export interface SeedOptions {
    * on with DEMO_TOTP_SECRET (admins must use 2FA, D-045); otherwise they set it up at first sign-in.
    */
   encryptTwoFaSecret?: (base32Secret: string) => string;
+  /** Encrypts a message's text (PhiCryptoService.encryptBytes with messageContentContext). No messages without it. */
+  encryptMessage?: (text: string, messageId: string) => Uint8Array<ArrayBuffer>;
   /** Makes sure built-in roles exist (RbacSyncService.sync). */
   syncRoles: () => Promise<void>;
 }
@@ -389,6 +392,8 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
     patientIds: patientIds.slice(14, 20),
   });
 
+  const messages = options.encryptMessage ? await seedMessages(prisma, options.encryptMessage, patientIds[0]!) : 0;
+
   return {
     agencyId: DEMO_AGENCY_ID,
     logins,
@@ -402,8 +407,71 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       recurringSeries: recurringCount,
       evvRecords,
       authorizations,
+      messages,
     },
   };
+}
+
+/**
+ * Two demo conversations (P3-13): office ↔ RN about covering a visit, and a care-team group about the first patient.
+ * Unread for the people who didn't write the last message, so the Messages badge shows something.
+ */
+async function seedMessages(
+  prisma: PrismaClient,
+  encrypt: (text: string, messageId: string) => Uint8Array<ArrayBuffer>,
+  patientId: string,
+): Promise<number> {
+  const byEmail = async (local: string) =>
+    (await prisma.user.findFirstOrThrow({ where: { agencyId: DEMO_AGENCY_ID, email: `${local}@${DEMO_EMAIL_DOMAIN}` } })).id;
+  const [office, supervisor, rn, hha] = await Promise.all(['office.staff', 'supervisor', 'rn', 'hha'].map(byEmail));
+  const threads: { subject?: string; patientId?: string; people: string[]; lines: [string, string][] }[] = [
+    {
+      people: [office!, rn!],
+      lines: [
+        [office!, 'Can you take the Tuesday 9:00 skilled nursing visit for the new admission?'],
+        [rn!, 'Yes, please add it to my schedule.'],
+      ],
+    },
+    {
+      subject: 'Care team',
+      patientId,
+      people: [supervisor!, rn!, hha!, office!],
+      lines: [
+        [supervisor!, 'Care team thread for this patient. Please post changes in condition here.'],
+        [hha!, 'Client was a little tired today but ate a full lunch.'],
+        [rn!, 'Thanks, I will check vitals at my visit on Thursday.'],
+      ],
+    },
+  ];
+  let count = 0;
+  const start = Date.now() - 3 * 3_600_000;
+  for (const [t, thread] of threads.entries()) {
+    const conversation = await prisma.conversation.create({
+      data: {
+        agencyId: DEMO_AGENCY_ID,
+        type: thread.people.length === 2 ? 'direct' : 'group',
+        subject: thread.subject ?? null,
+        patientId: thread.patientId ?? null,
+        createdById: thread.lines[0]![0],
+        participants: { create: thread.people.map((userId) => ({ userId })) },
+      },
+    });
+    let at = new Date();
+    for (const [i, [senderId, text]] of thread.lines.entries()) {
+      at = new Date(start + (t * 60 + i * 20) * 60_000);
+      const id = randomUUID();
+      await prisma.message.create({
+        data: { id, agencyId: DEMO_AGENCY_ID, conversationId: conversation.id, senderId, contentEncrypted: encrypt(text, id), createdAt: at },
+      });
+      await prisma.conversationParticipant.update({
+        where: { conversationId_userId: { conversationId: conversation.id, userId: senderId } },
+        data: { lastReadAt: at },
+      });
+      count++;
+    }
+    await prisma.conversation.update({ where: { id: conversation.id }, data: { lastMessageAt: at } });
+  }
+  return count;
 }
 
 /**
@@ -654,6 +722,7 @@ export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   await prisma.ediFile.deleteMany({ where });
   await prisma.claim.deleteMany({ where }); // lines cascade
   await prisma.evvRecord.deleteMany({ where }); // EVV exceptions cascade
+  await prisma.conversation.deleteMany({ where }); // participants and messages cascade
   await prisma.document.deleteMany({ where }); // stored files cascade; version links are cleared
   await prisma.visit.deleteMany({ where }); // notes, vitals, tasks cascade
   await prisma.recurrenceRule.deleteMany({ where });

@@ -7,6 +7,7 @@ import { PhiContext, PhiCryptoService } from '../src/common/crypto/phi-crypto.se
 import { PrismaService } from '../src/database/prisma.service.js';
 import { RbacSyncService } from '../src/modules/rbac/rbac-sync.service.js';
 import { base32Decode, timeStep, totpAt } from '../src/modules/auth/two-factor/totp.js';
+import { messageContentContext } from '../src/modules/messaging/message-content.js';
 import { DEFAULT_DEMO_PASSWORD, DEMO_AGENCY_ID, DEMO_TOTP_SECRET, runDemoSeed } from '../src/seed/demo-seed.js';
 import { setupApp } from '../src/setup-app.js';
 
@@ -45,6 +46,7 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
       encryptTwoFaSecret: (base32) =>
         Buffer.from(crypto.encrypt(base32, PhiContext.UserTwoFaSecret)).toString('base64'),
       encryptSsn: (ssn, kind) => crypto.encrypt(ssn, kind === 'patient' ? PhiContext.PatientSsn : PhiContext.StaffSsn),
+      encryptMessage: (text, id) => crypto.encryptBytes(Buffer.from(text, 'utf8'), messageContentContext(id)),
     });
   }, 300_000);
 
@@ -85,6 +87,16 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
     const rn = await login('rn@demo.alora.test');
     const rnPatients = await http().get('/api/v1/patients?limit=100').set(rn).expect(200);
     expect(rnPatients.body.meta.total).toBeLessThan(30);
+
+    // Demo messages decrypt through the API; the office has unread replies.
+    const conversations = (await http().get('/api/v1/messages/conversations').set(rn).expect(200)).body.data;
+    expect(conversations).toHaveLength(2);
+    const office = await login('office.staff@demo.alora.test');
+    const unread = await http().get('/api/v1/messages/unread-count').set(office).expect(200);
+    expect(unread.body.data.unread).toBe(4); // the RN's reply + the 3 care-team messages
+    expect(conversations.map((c: { lastMessage: { content: string } }) => c.lastMessage.content)).toContain(
+      'Thanks, I will check vitals at my visit on Thursday.',
+    );
 
     await login('billing.staff@demo.alora.test');
     // Admins have 2FA on; nobody else is forced.

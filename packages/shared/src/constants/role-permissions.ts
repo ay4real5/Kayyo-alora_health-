@@ -19,6 +19,7 @@ const CLINICAL_BASE: Permission[] = [
   'vitals:create',
   'documents:read',
   'documents:create',
+  'messages:use',
 ];
 
 export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
@@ -29,6 +30,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Clinical supervisor: all clinical and scheduling work, approvals, live monitoring. No billing/payroll. */
   supervisor: [
+    'messages:use',
     'medications:manage',
     'authorizations:read',
     'authorizations:manage',
@@ -91,12 +93,20 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   therapist: [...CLINICAL_BASE, 'assessments:create', 'assessments:update', 'documents:sign'],
 
   /** HHA/CNA: visit documentation (activity notes, vitals, task checklists). No signing. */
-  home_health_aide: ['patients:read', 'visits:read', 'visit_notes:create', 'visit_notes:update', 'vitals:create'],
+  home_health_aide: [
+    'patients:read',
+    'visits:read',
+    'visit_notes:create',
+    'visit_notes:update',
+    'vitals:create',
+    'messages:use',
+  ],
 
   medical_social_worker: [...CLINICAL_BASE, 'assessments:create', 'assessments:update'],
 
   /** Billing: full billing and claims, patient demographics, no clinical notes. */
   billing_staff: [
+    'messages:use',
     'authorizations:read',
     'authorizations:manage',
     'patients:read',
@@ -116,6 +126,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Office coordinator: scheduling, basic patient info, staff management. No billing, no clinical notes. */
   office_staff: [
+    'messages:use',
     'authorizations:read',
     'authorizations:manage',
     'patients:create',

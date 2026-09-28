@@ -22,6 +22,7 @@ import { BillingModule } from './modules/billing/billing.module.js';
 import { AgencyModule } from './modules/agency/agency.module.js';
 import { ClinicalModule } from './modules/clinical/clinical.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
+import { MessagingModule } from './modules/messaging/messaging.module.js';
 import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 
 @Module({
@@ -44,6 +45,7 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
     AgencyModule,
     ClinicalModule,
     DocumentsModule,
+    MessagingModule,
     VisitDocsModule,
     NotificationsModule,
     RealtimeModule,
