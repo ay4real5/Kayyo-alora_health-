@@ -97,6 +97,9 @@
   270, download it, upload the 271 (matched by trace number). Automatic send/receive waits for the clearinghouse (P3-08). D-060.
 - **837I (P3-05)**: institutional (UB-04) claims — Medicare by default, any payer can be switched; revenue codes on
   service codes; type of bill / patient status / HIPPS / CBSA per claim; golden-tested generator; preview download. D-061.
+- **Compliance (P4-05)**: dashboard (credentials, incidents, EVV, overdue orders, plans ending, approvals, admin 2FA),
+  incident reports (everyone reports; compliance staff resolve), daily credential-expiry alerts, audit-log search and a
+  HIPAA safeguards checklist (admins). Web: Compliance, Audit log. D-062.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -122,6 +125,7 @@ Phase 4 (reports, payroll, compliance, EVV aggregator for Virginia after DMAS re
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P4-05 | Compliance API (5 e2e + unit) + web (browser test); P3-05 merged. |
 | 2026-09-28 | Claude Code | P3-05 | 837I generator (golden), claim format per payer, institutional fields, preview (2 e2e); P3-07 + P3-10 merged. |
 | 2026-09-28 | Claude Code | P3-07 | 270/271 builder+parser (5 unit), eligibility API (4 e2e), patient panel (browser test). |
 | 2026-09-28 | Claude Code | P3-10 | Private-pay invoices API (4 e2e) + PDF + web pages (browser test). P3-16 merged. |

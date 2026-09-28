@@ -13,6 +13,8 @@ export const NAVIGATION = [
   { href: '/billing/invoices', label: 'Invoices', permission: 'billing:read' },
   { href: '/billing/payments', label: 'Payments', permission: 'billing:read' },
   { href: '/billing/setup', label: 'Billing setup', permission: 'billing:read' },
+  { href: '/compliance', label: 'Compliance', permission: 'compliance:create' },
+  { href: '/compliance/audit-log', label: 'Audit log', permission: 'audit_logs:read' },
   { href: '/users', label: 'Users', permission: 'users:read' },
   { href: '/settings/agency', label: 'Agency settings', permission: 'settings:read' },
 ] as const;

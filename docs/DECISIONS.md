@@ -1028,3 +1028,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   the clearinghouse's test channel before production (P3-08).**
 - Web: claim page shows the institutional fields and downloads "837I (preview)"; billing setup shows revenue codes and
   lets billing pick each payer's claim form.
+
+### D-062 — Compliance: incidents, credential alerts, audit search, HIPAA checklist (P4-05)
+2026-09-28 · Claude Code
+- **Incidents** (`incident_reports`): type (fall, injury, medication error, abuse/neglect, complaint, property damage,
+  infection, privacy breach, other), severity low/moderate/high/critical, date/time, description, actions, follow-up,
+  optional patient/staff/visit. **Anyone who witnesses one can report it**: `compliance:create` now goes to every
+  clinical role, aides and office staff; reviewing needs `compliance:read` (supervisor, admins). Reporting about a
+  patient requires access to that patient. High/critical reports alert `compliance:update` holders in-app (no PHI).
+  Status open → investigating → resolved (who/when recorded) → closed (final); reopening clears the resolution.
+- **Credential expiry job** (daily 12:30 UTC, `JOBS_ENABLED`): stages *due* (inside the credential's own
+  `alert_days_before`), *week* (≤ 7 days), *expired*. Each stage is claimed with a guarded update on
+  `staff_credentials.expiry_alert_stage` before notifying the staff member and every `staff:update` holder, so it's
+  idempotent across API instances; changing the expiry date clears the stage. Notification texts name the credential
+  and staff member (not patient data).
+- **Dashboard** (`GET /compliance/dashboard`, `compliance:read`): expired / expiring credentials, open and serious
+  incidents, missed visits and EVV awaiting review, physician orders unsigned > 30 days, plans of care ending within
+  14 days, assessments awaiting approval, admins without 2FA.
+- **Audit log search** (`GET /compliance/audit-logs`, `audit_logs:read` = admins): by user, action, record type, record
+  ID and date range; the search itself is audited. **HIPAA checklist** (`GET /compliance/hipaa-checklist`): technical
+  safeguards the system can check about itself (2FA coverage, idle timeout, audit activity, encryption key, rate
+  limits, HTTPS in production) plus reminders for the agency's own obligations (BAAs, risk assessment, training).
+- State EVV rules (`/compliance/evv-state-rules`) wait for P4-04 and the Virginia DMAS research.

@@ -34,13 +34,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const items = NAVIGATION.filter((item) => item.permission === null || can(item.permission));
+  // The most specific entry wins (e.g. /compliance/audit-log over /compliance).
+  const activeHref = items
+    .map((item) => item.href as string)
+    .filter((href) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)))
+    .sort((a, b) => b.length - a.length)[0];
   return (
     <div className="flex min-h-screen">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
         <div className="px-5 py-4 text-lg font-semibold text-teal-800">Alora Health</div>
         <nav className="flex flex-col gap-1 px-3" aria-label="Main">
           {items.map((item) => {
-            const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+            const active = item.href === activeHref;
             return (
               <Link
                 key={item.href}
