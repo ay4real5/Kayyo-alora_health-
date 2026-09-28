@@ -225,10 +225,19 @@ export class OpenShiftsService {
       },
       select: { id: true, userId: true },
     });
+    // Conflict checks in small parallel batches: fast enough for an agency's staff list, gentle on the pool.
     const eligible: string[] = [];
-    for (const staff of candidates) {
-      const found = await this.conflicts.check(this.proposal(caller, shift, staff.id));
-      if (!found.some((c) => c.severity === 'blocking')) eligible.push(staff.userId);
+    for (let i = 0; i < candidates.length; i += 5) {
+      const batch = candidates.slice(i, i + 5);
+      const checked = await Promise.all(
+        batch.map(async (staff) => ({
+          staff,
+          blocked: (await this.conflicts.check(this.proposal(caller, shift, staff.id))).some(
+            (c) => c.severity === 'blocking',
+          ),
+        })),
+      );
+      eligible.push(...checked.filter((c) => !c.blocked).map((c) => c.staff.userId));
     }
     await this.notifications.notify({
       agencyId: caller.agencyId,

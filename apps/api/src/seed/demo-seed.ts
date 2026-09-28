@@ -1,4 +1,4 @@
-import { isValidNpi, recurrenceDates, todayInTimeZone, type Discipline } from '@alora/shared';
+import { isValidNpi, recurrenceDates, todayInTimeZone, zonedTimeToUtc, type Discipline } from '@alora/shared';
 import { hash } from '@node-rs/argon2';
 import { addDays, toDate, toTime } from '../common/utils/dates.js';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
@@ -351,6 +351,13 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
     ),
   });
 
+  const evvRecords = await seedEvvHistory(prisma, {
+    today,
+    timezone,
+    aideIds: aides.map((a) => a.id),
+    patientIds: patientIds.slice(14, 20),
+  });
+
   return {
     agencyId: DEMO_AGENCY_ID,
     logins,
@@ -362,8 +369,128 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       patients: 30,
       visits: visits.length,
       recurringSeries: recurringCount,
+      evvRecords,
     },
   };
+}
+
+/**
+ * EVV history for the review and monitor screens (P2-03): two past days of aide visits — verified two days ago,
+ * completed yesterday, with two flagged ones (clocked in ~1.2 km away; a 10-minute visit) — and, during the day,
+ * one visit in progress right now. Coordinates are the fake patients' homes.
+ */
+async function seedEvvHistory(
+  prisma: PrismaClient,
+  opts: { today: string; timezone: string; aideIds: string[]; patientIds: string[] },
+): Promise<number> {
+  const patients = await prisma.patient.findMany({
+    where: { id: { in: opts.patientIds } },
+    select: { id: true, latitude: true, longitude: true },
+  });
+  const at = (date: string, time: string, plusMinutes = 0) =>
+    new Date(zonedTimeToUtc(date, time, opts.timezone).getTime() + plusMinutes * 60_000);
+  let created = 0;
+
+  const record = async (p: {
+    date: string;
+    start: string;
+    end: string;
+    staffId: string;
+    patient: (typeof patients)[number];
+    clockIn: Date;
+    clockOut: Date | null;
+    offsetLat?: number;
+    flags?: string[];
+    status: string;
+  }) => {
+    const home = { lat: Number(p.patient.latitude), lng: Number(p.patient.longitude) };
+    const lat = home.lat + (p.offsetLat ?? 0.0001);
+    const distance = Math.round(Math.abs(lat - home.lat) * 111_195);
+    const visit = await prisma.visit.create({
+      data: {
+        agencyId: DEMO_AGENCY_ID,
+        patientId: p.patient.id,
+        staffId: p.staffId,
+        visitType: 'home_health_aide',
+        serviceCode: 'G0156',
+        status: p.clockOut ? 'completed' : 'in_progress',
+        scheduledDate: toDate(p.date)!,
+        scheduledStart: toTime(p.start),
+        scheduledEnd: toTime(p.end),
+        actualStart: p.clockIn,
+        actualEnd: p.clockOut,
+      },
+    });
+    await prisma.evvRecord.create({
+      data: {
+        visitId: visit.id,
+        agencyId: DEMO_AGENCY_ID,
+        staffId: p.staffId,
+        patientId: p.patient.id,
+        serviceType: 'home_health_aide',
+        serviceDate: toDate(p.date)!,
+        clockInTime: p.clockIn,
+        clockOutTime: p.clockOut,
+        clockInMethod: 'gps',
+        clockOutMethod: p.clockOut ? 'gps' : null,
+        clockInLatitude: lat,
+        clockInLongitude: home.lng,
+        clockOutLatitude: p.clockOut ? home.lat + 0.0001 : null,
+        clockOutLongitude: p.clockOut ? home.lng : null,
+        clockInAccuracyMeters: 8,
+        clockInWithinGeofence: distance <= 200,
+        clockInDistanceMeters: distance,
+        clockOutWithinGeofence: p.clockOut ? true : null,
+        clockOutDistanceMeters: p.clockOut ? 11 : null,
+        flags: p.flags ?? [],
+        status: p.status,
+        deviceId: 'demo-device',
+      },
+    });
+    created++;
+  };
+
+  for (const [dayBack, status] of [[2, 'verified'], [1, 'completed']] as const) {
+    const date = addDays(opts.today, -dayBack);
+    for (const [n, patient] of patients.entries()) {
+      const [start, end] = SLOTS[n % SLOTS.length]!;
+      const flagged = dayBack === 1 && n < 2;
+      const short = flagged && n === 1;
+      await record({
+        date,
+        start,
+        end,
+        staffId: opts.aideIds[n % opts.aideIds.length]!,
+        patient,
+        clockIn: at(date, start, 3),
+        clockOut: short ? at(date, start, 13) : at(date, end, -2),
+        offsetLat: flagged && n === 0 ? 0.011 : undefined,
+        flags: flagged ? [n === 0 ? 'outside_geofence_in' : 'very_short_visit'] : [],
+        status: flagged ? 'exception' : status,
+      });
+    }
+  }
+
+  // One visit in progress now, if it's daytime in the agency (the monitor's map needs someone on it).
+  const hour = Number(
+    new Intl.DateTimeFormat('en-US', { timeZone: opts.timezone, hour: '2-digit', hourCycle: 'h23' }).format(new Date()),
+  );
+  if (hour >= 6 && hour <= 20 && patients[0]) {
+    // Started in the previous hour, so the clock-in is always in the past.
+    const start = `${String(hour - 1).padStart(2, '0')}:00`;
+    const end = `${String(hour + 1).padStart(2, '0')}:00`;
+    await record({
+      date: opts.today,
+      start,
+      end,
+      staffId: opts.aideIds[opts.aideIds.length - 1]!,
+      patient: patients[0],
+      clockIn: at(opts.today, start, 2),
+      clockOut: null,
+      status: 'in_progress',
+    });
+  }
+  return created;
 }
 
 /** Removes the demo agency and everything in it (children first, respecting foreign keys). */

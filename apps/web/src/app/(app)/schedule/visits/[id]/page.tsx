@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { ConflictList } from '@/components/schedule/conflict-list';
+import { OfferOpenShift, VisitEvv, VisitRecords, VisitTasks } from '@/components/schedule/visit-documentation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -99,6 +100,10 @@ export default function VisitPage() {
 
       {warnings.length > 0 && <ConflictList conflicts={warnings} />}
 
+      {v.status !== 'scheduled' && v.status !== 'cancelled' && <VisitEvv visitId={v.id} />}
+      {v.status !== 'cancelled' && <VisitTasks visitId={v.id} status={v.status} />}
+      {(v.status === 'in_progress' || v.status === 'completed') && <VisitRecords visitId={v.id} />}
+
       {editable && (
         <Card className="p-5">
           <h2 className="mb-4 text-base font-semibold text-slate-900">Reschedule or reassign</h2>
@@ -135,6 +140,8 @@ export default function VisitPage() {
           </form>
         </Card>
       )}
+
+      {editable && <OfferOpenShift visitId={v.id} assigned={Boolean(v.staff)} />}
 
       {editable && (
         <Card className="p-5">

@@ -9,6 +9,8 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   timeout: 60_000,
   fullyParallel: false,
+  // One test at a time: the tests share the demo agency's data, and parallel page compiles exhaust a small laptop.
+  workers: 1,
   retries: 0,
   use: {
     baseURL: process.env.WEB_URL ?? 'http://localhost:3000',

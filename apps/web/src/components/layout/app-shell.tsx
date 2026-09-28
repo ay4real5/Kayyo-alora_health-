@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { NAVIGATION } from './navigation';
+import { NotificationBell } from './notification-bell';
 
 /** Signed-in frame: guards the route, shows the permission-filtered sidebar and the idle warning. */
 export function AppShell({ children }: { children: ReactNode }) {
@@ -57,6 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-4">
+            <NotificationBell />
             <span className="text-sm text-slate-700">
               {user.firstName} {user.lastName}
             </span>
