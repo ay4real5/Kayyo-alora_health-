@@ -7,5 +7,6 @@ export const NAVIGATION = [
   { href: '/patients', label: 'Patients', permission: 'patients:read' },
   { href: '/staff', label: 'Staff', permission: 'staff:read' },
   { href: '/physicians', label: 'Physicians', permission: 'physicians:read' },
+  { href: '/billing/setup', label: 'Billing setup', permission: 'billing:read' },
   { href: '/users', label: 'Users', permission: 'users:read' },
 ] as const;

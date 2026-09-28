@@ -5,6 +5,7 @@ import { Paginated } from '../../common/dto/pagination.dto.js';
 import { addDays, fromDate, fromTime, toDate, toTime } from '../../common/utils/dates.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import { AuthorizationsService } from '../billing/authorizations.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import { ConflictDetectorService, type Conflict } from './conflict-detector.service.js';
@@ -64,6 +65,7 @@ export class RecurringService {
     private readonly conflicts: ConflictDetectorService,
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
+    private readonly authorizations: AuthorizationsService,
   ) {}
 
   async list(caller: AuthUser, query: ListRecurringQueryDto): Promise<Paginated<RecurringView>> {
@@ -257,6 +259,7 @@ export class RecurringService {
             scheduledDate: date,
             scheduledStart: fromTime(rule.startTime),
             scheduledEnd: fromTime(rule.endTime),
+            serviceCode: rule.serviceCode,
           }),
         })),
       );
@@ -267,9 +270,18 @@ export class RecurringService {
           continue;
         }
         try {
+          const { authorizationId } = await this.authorizations.match({
+            agencyId: caller.agencyId,
+            patientId: rule.patientId,
+            serviceCode: rule.serviceCode,
+            scheduledDate: date,
+            scheduledStart: fromTime(rule.startTime),
+            scheduledEnd: fromTime(rule.endTime),
+          });
           const visit = await this.prisma.visit.create({
             data: {
               agencyId: caller.agencyId,
+              authorizationId,
               patientId: rule.patientId,
               staffId: rule.staffId,
               visitType: rule.visitType,

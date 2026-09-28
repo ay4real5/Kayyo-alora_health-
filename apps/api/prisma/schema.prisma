@@ -50,6 +50,7 @@ model Agency {
   documents       Document[]
   evvRecords      EvvRecord[]
   openShifts      OpenShift[]
+  serviceCodes    ServiceCode[]
   swapRequests    ShiftSwapRequest[]
   notifications   Notification[]
 
@@ -367,6 +368,7 @@ model Payer {
   primaryPatients   Patient[]       @relation("PatientPayerPrimary")
   secondaryPatients Patient[]       @relation("PatientPayerSecondary")
   authorizations    Authorization[]
+  rates             PayerRate[]
 
   @@index([agencyId])
   @@map("payers")
@@ -483,6 +485,50 @@ model StaffTimeOff {
 
   @@index([staffProfileId])
   @@map("staff_time_off")
+}
+
+// ─────────────────────────────── Billing setup (§5.6, DECISIONS D-050) ───────────────────────────────
+
+/// A billable service the agency provides (HCPCS/CPT/revenue code) with its unit and default rate.
+model ServiceCode {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String   @map("agency_id") @db.Uuid
+  code         String   @db.VarChar(20)
+  /// hcpcs | cpt | revenue
+  codeType     String   @map("code_type") @db.VarChar(20)
+  description  String?
+  defaultRate  Decimal? @map("default_rate") @db.Decimal(10, 2)
+  /// visit | hour | unit_15min | day
+  unitType     String   @default("visit") @map("unit_type") @db.VarChar(20)
+  requiresAuth Boolean  @default(false) @map("requires_auth")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency Agency      @relation(fields: [agencyId], references: [id])
+  rates  PayerRate[]
+
+  @@unique([agencyId, code, codeType])
+  @@map("service_codes")
+}
+
+/// What a payer pays for a service code over a period (optionally with modifiers). Periods never overlap.
+model PayerRate {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payerId       String    @map("payer_id") @db.Uuid
+  serviceCodeId String    @map("service_code_id") @db.Uuid
+  rate          Decimal   @db.Decimal(10, 2)
+  effectiveDate DateTime  @map("effective_date") @db.Date
+  endDate       DateTime? @map("end_date") @db.Date
+  modifier1     String?   @map("modifier1") @db.VarChar(5)
+  modifier2     String?   @map("modifier2") @db.VarChar(5)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payer       Payer       @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  serviceCode ServiceCode @relation(fields: [serviceCodeId], references: [id])
+
+  @@index([payerId, serviceCodeId, effectiveDate])
+  @@map("payer_rates")
 }
 
 // ─────────────────────────────── Scheduling (§5.4, core subset) ───────────────────────────────

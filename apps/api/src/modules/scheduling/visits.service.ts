@@ -12,6 +12,7 @@ import { addDays, fromDate, fromTime, toDate, toTime } from '../../common/utils/
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { AuditService } from '../audit/audit.service.js';
+import { AuthorizationsService } from '../billing/authorizations.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import { ConflictDetectorService, type Conflict, type ProposedVisit } from './conflict-detector.service.js';
@@ -70,6 +71,7 @@ export class VisitsService {
     private readonly permissions: PermissionsService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly authorizations: AuthorizationsService,
   ) {}
 
   async list(caller: AuthUser, query: ListVisitsQueryDto): Promise<Paginated<VisitView>> {
@@ -130,11 +132,14 @@ export class VisitsService {
   async create(caller: AuthUser, dto: CreateVisitDto): Promise<VisitWithWarnings> {
     await this.assertReferences(caller, dto.patientId, dto.staffId);
     assertTimes(dto.scheduledStart, dto.scheduledEnd);
-    const warnings = await this.checkOrThrow(caller, proposalFrom(caller, dto), dto.override);
+    const proposal = proposalFrom(caller, dto);
+    const warnings = await this.checkOrThrow(caller, proposal, dto.override);
+    const { authorizationId } = await this.authorizations.match(proposal);
 
     const visit = await this.prisma.visit.create({
       data: {
         agencyId: caller.agencyId,
+        authorizationId,
         patientId: dto.patientId,
         staffId: dto.staffId ?? null,
         visitType: dto.visitType,
@@ -165,15 +170,14 @@ export class VisitsService {
       scheduledDate: dto.scheduledDate ?? fromDate(existing.scheduledDate)!,
       scheduledStart: dto.scheduledStart ?? fromTime(existing.scheduledStart),
       scheduledEnd: dto.scheduledEnd ?? fromTime(existing.scheduledEnd),
+      serviceCode: dto.serviceCode === undefined ? existing.serviceCode : dto.serviceCode,
     };
     if (dto.staffId) await this.assertReferences(caller, existing.patientId, dto.staffId);
     assertTimes(merged.scheduledStart, merged.scheduledEnd);
-    const warnings = await this.checkOrThrow(
-      caller,
-      { ...merged, agencyId: caller.agencyId, excludeVisitId: id },
-      dto.override,
-      id,
-    );
+    const proposal = { ...merged, agencyId: caller.agencyId, excludeVisitId: id };
+    const warnings = await this.checkOrThrow(caller, proposal, dto.override, id);
+    // Date, time or code may have changed: re-link to the authorization that now covers it (D-050).
+    const { authorizationId } = await this.authorizations.match(proposal);
 
     const data: Prisma.VisitUncheckedUpdateInput = {
       staffId: merged.staffId,
@@ -181,6 +185,7 @@ export class VisitsService {
       scheduledDate: toDate(merged.scheduledDate),
       scheduledStart: toTime(merged.scheduledStart),
       scheduledEnd: toTime(merged.scheduledEnd),
+      authorizationId,
     };
     if (dto.serviceCode !== undefined) data.serviceCode = dto.serviceCode;
     if (dto.priority !== undefined) data.priority = dto.priority;
@@ -332,7 +337,9 @@ export class VisitsService {
 /** The fields the conflict detector needs, copied explicitly from a request. */
 function proposalFrom(
   caller: AuthUser,
-  source: Pick<CreateVisitDto, 'patientId' | 'staffId' | 'visitType' | 'scheduledDate' | 'scheduledStart' | 'scheduledEnd'>,
+  source: Pick<CreateVisitDto, 'patientId' | 'staffId' | 'visitType' | 'scheduledDate' | 'scheduledStart' | 'scheduledEnd'> & {
+    serviceCode?: string | null;
+  },
 ): ProposedVisit {
   return {
     agencyId: caller.agencyId,
@@ -342,6 +349,7 @@ function proposalFrom(
     scheduledDate: source.scheduledDate,
     scheduledStart: source.scheduledStart,
     scheduledEnd: source.scheduledEnd,
+    serviceCode: source.serviceCode ?? null,
   };
 }
 

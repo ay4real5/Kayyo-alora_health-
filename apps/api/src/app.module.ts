@@ -18,6 +18,7 @@ import { SchedulingModule } from './modules/scheduling/scheduling.module.js';
 import { StaffModule } from './modules/staff/staff.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { EvvModule } from './modules/evv/evv.module.js';
+import { BillingModule } from './modules/billing/billing.module.js';
 import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 
 @Module({
@@ -36,6 +37,7 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
     StaffModule,
     SchedulingModule,
     EvvModule,
+    BillingModule,
     VisitDocsModule,
     NotificationsModule,
     RealtimeModule,

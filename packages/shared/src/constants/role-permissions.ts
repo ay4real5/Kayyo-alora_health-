@@ -29,6 +29,8 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Clinical supervisor: all clinical and scheduling work, approvals, live monitoring. No billing/payroll. */
   supervisor: [
+    'authorizations:read',
+    'authorizations:manage',
     'patients:create',
     'patients:read',
     'patients:read_all',
@@ -93,6 +95,8 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Billing: full billing and claims, patient demographics, no clinical notes. */
   billing_staff: [
+    'authorizations:read',
+    'authorizations:manage',
     'patients:read',
     'patients:read_all',
     'physicians:read',
@@ -110,6 +114,8 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Office coordinator: scheduling, basic patient info, staff management. No billing, no clinical notes. */
   office_staff: [
+    'authorizations:read',
+    'authorizations:manage',
     'patients:create',
     'patients:read',
     'patients:read_all',
