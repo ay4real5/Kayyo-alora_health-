@@ -28,7 +28,8 @@ export class RealtimeService {
     private readonly monitor: LiveMonitorGateway,
   ) {}
 
-  toUser(userId: string, event: 'notification:new', payload: unknown): void {
+  /** Per-user pushes. `message:new` carries IDs only; the client fetches the text (D-057). */
+  toUser(userId: string, event: 'notification:new' | 'message:new', payload: unknown): void {
     this.safely(() => this.notifications.server?.to(userRoom(userId)).emit(event, payload));
   }
 

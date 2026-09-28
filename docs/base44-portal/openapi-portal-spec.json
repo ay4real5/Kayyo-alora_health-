@@ -2325,6 +2325,81 @@
           "reason"
         ]
       },
+      "CreateConversationDto": {
+        "type": "object",
+        "properties": {
+          "participantIds": {
+            "description": "The other people (the caller is added automatically).",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "patientId": {
+            "type": "string",
+            "description": "The patient this is about (the caller must have access to them).",
+            "format": "uuid"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "isUrgent": {
+            "type": "boolean"
+          },
+          "documentId": {
+            "type": "string",
+            "description": "A document the sender can see (uploaded through /documents).",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "participantIds",
+          "content"
+        ]
+      },
+      "SendMessageDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "isUrgent": {
+            "type": "boolean"
+          },
+          "documentId": {
+            "type": "string",
+            "description": "A document the sender can see (uploaded through /documents).",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "AddParticipantsDto": {
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "userIds"
+        ]
+      },
       "CreateVisitNoteDto": {
         "type": "object",
         "properties": {
