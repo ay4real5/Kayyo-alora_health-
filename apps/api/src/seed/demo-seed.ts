@@ -63,6 +63,8 @@ const DIAGNOSES: [string, string][] = [
 const ALLERGENS = ['Penicillin', 'Sulfa drugs', 'Latex', 'Codeine', 'Shellfish', 'Aspirin'];
 
 /** Field staff to create: discipline, how many, their login role, and the visit type they do. */
+const AIDE_TASKS = ['Assist with bathing', 'Prepare a meal', 'Medication reminder', 'Light housekeeping', 'Walk / range of motion'];
+
 const STAFF_PLAN: { discipline: Discipline; count: number; role: string; visitType: string }[] = [
   { discipline: 'RN', count: 3, role: 'registered_nurse', visitType: 'skilled_nursing' },
   { discipline: 'LPN', count: 1, role: 'licensed_nurse', visitType: 'skilled_nursing' },
@@ -338,6 +340,17 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
   }
   await prisma.visit.createMany({ data: visits });
 
+  // A typical aide checklist on every assigned aide visit (P2-04), so the caregiver app has something to tick off.
+  const aideVisits = await prisma.visit.findMany({
+    where: { agencyId: DEMO_AGENCY_ID, visitType: 'home_health_aide', staffId: { not: null } },
+    select: { id: true },
+  });
+  await prisma.visitTask.createMany({
+    data: aideVisits.flatMap(({ id }) =>
+      AIDE_TASKS.map((taskName, sortOrder) => ({ visitId: id, taskName, sortOrder })),
+    ),
+  });
+
   return {
     agencyId: DEMO_AGENCY_ID,
     logins,
@@ -358,7 +371,8 @@ export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   const where = { agencyId: DEMO_AGENCY_ID };
   await prisma.notification.deleteMany({ where });
   await prisma.auditLog.deleteMany({ where });
-  await prisma.visit.deleteMany({ where });
+  await prisma.evvRecord.deleteMany({ where }); // EVV exceptions cascade
+  await prisma.visit.deleteMany({ where }); // notes, vitals, tasks cascade
   await prisma.recurrenceRule.deleteMany({ where });
   await prisma.patient.deleteMany({ where }); // diagnoses, allergies cascade
   await prisma.physician.deleteMany({ where });

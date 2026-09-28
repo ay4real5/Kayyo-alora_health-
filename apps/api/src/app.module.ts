@@ -15,6 +15,7 @@ import { SchedulingModule } from './modules/scheduling/scheduling.module.js';
 import { StaffModule } from './modules/staff/staff.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { EvvModule } from './modules/evv/evv.module.js';
+import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { EvvModule } from './modules/evv/evv.module.js';
     StaffModule,
     SchedulingModule,
     EvvModule,
+    VisitDocsModule,
     NotificationsModule,
     HealthModule,
   ],

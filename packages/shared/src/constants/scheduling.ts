@@ -60,3 +60,11 @@ export function zonedTimeToUtc(date: string, time: string, timeZone: string): Da
   instant = wall - offsetMinutes(timeZone, instant) * 60_000;
   return new Date(instant);
 }
+
+/** Visit note kinds (DECISIONS D-039). `addendum` amends a locked note. */
+export const VISIT_NOTE_TYPES = ['progress', 'skilled_nursing', 'therapy', 'aide_activity', 'addendum'] as const;
+export type VisitNoteType = (typeof VISIT_NOTE_TYPES)[number];
+
+/** draft → signed (clinicians with visit_notes:sign) or submitted (aides, who don't sign). Both are locked. */
+export const VISIT_NOTE_STATUSES = ['draft', 'submitted', 'signed'] as const;
+export type VisitNoteStatus = (typeof VISIT_NOTE_STATUSES)[number];
