@@ -147,7 +147,7 @@ npm run test:e2e -w @alora/api           # API e2e tests (DB tests use DATABASE_
 npm run start:dev -w @alora/api          # API on http://localhost:3001/api/v1 (health: /api/v1/health)
 npm run generate -w @alora/api           # regenerate Prisma client (turbo does this before build/test)
 npm run db:deploy -w @alora/api          # apply migrations to DATABASE_URL
-npm run openapi -w @alora/api            # after build: regenerate docs/api/openapi.json + portal spec (CI checks)
+npm run openapi -w @alora/api            # after build: regenerate docs/api/openapi.json (CI checks)
 npm run db:seed -w @alora/api            # after build: wipe + rebuild the FAKE demo agency, prints logins (D-033)
 npm run dev -w @alora/web                # dashboard on http://localhost:3000 (API must be running; CORS_ORIGINS)
 npm run test:e2e -w @alora/web           # Playwright browser tests (API + dashboard running; re-seeds the demo agency first; CI runs them too)
