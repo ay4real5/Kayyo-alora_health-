@@ -496,3 +496,17 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   (de)activate).
 - React pattern: don't copy server data into state in an effect (lint rule); use a child component keyed by the
   server value (see `RoleEditor`, `AvailabilityForm`).
+
+### D-037 — Scheduling screens (P1-21)
+2026-09-28 · Claude Code
+- `/schedule`: Monday–Sunday week grid from `GET /schedule/calendar` (agency "today" highlighted), caregiver filter and
+  "only unassigned" for `visits:read_all` holders; caregivers automatically see only their own visits. While the next
+  week loads, the old week stays dimmed and the count says "loading…" (showing the previous week's count under the new
+  dates was a real bug the browser tests caught).
+- `/schedule/new`: patient type-ahead, caregiver, type, date/time; **live conflict check** (`GET /schedule/conflicts`,
+  debounced) shows blocking (red) and warnings (amber); booking is disabled while blocked unless a `visits:approve`
+  holder ticks "Book anyway" (sent as `override`, audited by the API). "Repeat every week" books a recurring series and
+  shows the generation report, including skipped dates and why.
+- `/schedule/visits/:id`: details, reschedule/reassign (409 conflicts shown with the same list + override for
+  supervisors), cancel with a reason. Only `scheduled` visits are editable.
+- Browser tests use times inside the demo caregivers' stated hours (08:00–17:00) — outside them the app rightly warns.

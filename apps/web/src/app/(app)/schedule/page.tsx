@@ -59,7 +59,10 @@ export default function SchedulePage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Schedule"
-        subtitle={`${formatDate(weekStart)} – ${formatDate(weekEnd)} · ${total} visit${total === 1 ? '' : 's'}`}
+        subtitle={`${formatDate(weekStart)} – ${formatDate(weekEnd)} · ${
+          // While the new week loads, the previous week's data is still on screen — don't show its count as this week's.
+          calendar.isPlaceholderData || !calendar.data ? 'loading…' : `${total} visit${total === 1 ? '' : 's'}`
+        }`}
         actions={
           <>
             <Button variant="secondary" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Previous week">
@@ -97,7 +100,7 @@ export default function SchedulePage() {
 
       <ErrorAlert error={calendar.error} />
 
-      <div className="grid gap-3 md:grid-cols-7">
+      <div className={`grid gap-3 md:grid-cols-7 ${calendar.isPlaceholderData ? 'opacity-50' : ''}`} aria-busy={calendar.isPlaceholderData}>
         {calendar.data?.map((day) => {
           const visits = day.visits.filter(show);
           return (
