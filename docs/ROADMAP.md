@@ -72,7 +72,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P3-09** `agent` Clearinghouse SFTP submit/poll via claims-queue. deps: P3-04, P3-08
 - [ ] **P3-10** `agent` Private-pay invoices + PDF (Puppeteer). deps: P3-01
 - [x] **P3-11** `agent` Care plans (CMS-485), assessments (JSONB forms), medications, physician orders. deps: P1-12
-- [ ] **P3-12** `agent` Documents: S3 upload/download (pre-signed), versions, e-sign. deps: P1-12
+- [x] **P3-12** `agent` Documents: S3 upload/download (pre-signed), versions, e-sign. deps: P1-12
 - [ ] **P3-13** `agent` Secure messaging API + `/messages` socket namespace. deps: P2-02
 - [ ] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13
 - [ ] **P3-15** `agent` ~~Base44 docs~~ Not needed after D-044; instead retire `docs/base44-portal/` and the portal spec export once P3-16 ships. deps: P3-16

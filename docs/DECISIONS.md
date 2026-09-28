@@ -895,3 +895,26 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   else** (`assessments:approve`). Full OASIS forms/validation are future work.
 - Web: clinical section on the patient page (medications, orders, plan of care with physician and activation,
   assessments with approval). Mobile assessment entry comes with the next mobile pass.
+
+### D-056 — Documents: storage, versions, e-signature (P3-12)
+2026-09-28 · Claude Code
+- **Storage** goes through an abstract `DocumentStorage` (`save`/`load`). The only driver today is
+  `DatabaseDocumentStorage`: the file is AES-256-GCM encrypted with the PHI keyring (`PhiCryptoService.encryptBytes`,
+  context bound to the document ID so blobs can't be swapped) into `document_blobs`, and `documents.s3_key` holds
+  `db:<id>`. When hosting + an S3 BAA exist (Q-006), an S3 driver (SSE-KMS, private bucket) replaces it without API
+  changes. Files are **streamed through the API**, not handed out as pre-signed URLs, so every download is permission-
+  and patient-checked and audited (`DOWNLOAD_DOCUMENT`). Pre-signed URLs can come with S3 if size requires it.
+- **Accepted files**: PDF, PNG, JPEG, DOCX, recognised by their first bytes (a ZIP only counts as DOCX when named
+  `.docx`); anything else 415, over 10 MB 413. The stored name is cleaned (no paths, quotes or control characters)
+  and the extension set from the real type. SHA-256 of the content is kept and re-checked on every download and
+  before signing (mismatch → 409).
+- **Access**: `documents:read|create|sign|delete`. A document tied to a patient follows patient access
+  (`PatientsService.accessibleWhere`) — outsiders get 404. Aides have no `documents:read` (unchanged role grants).
+- **Versions**: uploading with `replacesDocumentId` creates version n+1 (inherits patient/staff/visit links and type);
+  `previous_version_id` is unique, so two people replacing the same version at once → one wins, the other 409. Lists
+  show the newest version; `GET /documents/:id/versions` gives the chain.
+- **E-signature**: the signer types their name; stored with signer ID, time, IP, user agent and the file's SHA-256.
+  Only the newest version, once (guarded update). A new version is unsigned. Drawn signatures and signing by
+  patients/physicians come with the portal and fax work.
+- **Delete** is soft (`deleted_at`, who, reason, `documents:delete`); the record and file are kept for retention.
+- Not yet: fax sending (`documents:send`), virus scanning (add with S3, e.g. ClamAV/GuardDuty), mobile upload.
