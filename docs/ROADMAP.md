@@ -49,7 +49,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P2-02** `agent` Socket.IO gateway with JWT handshake + rooms; `/live-monitor` events; late/no-show cron; nightly job extending recurring-visit windows (D-031). deps: P2-01
 - [ ] **P2-03** `agent` Web: live monitor page (map + feed). deps: P2-02, P1-18
 - [x] **P2-04** `agent` Visit documentation API: notes (sign), vitals, tasks. deps: P1-14
-- [ ] **P2-05** `agent` Open shifts (create, broadcast, claim, assign) + shift swaps. deps: P1-14, P1-16
+- [x] **P2-05** `agent` Open shifts (create, broadcast, claim, assign) + shift swaps. deps: P1-14, P1-16
 - [ ] **P2-06** `agent` Scaffold `apps/mobile` (Expo, Expo Router): login, PIN, secure token storage. deps: P1-06
 - [ ] **P2-07** `agent` Mobile: today's schedule, visit detail, clock-in/out with location. deps: P2-06, P2-01
 - [ ] **P2-08** `agent` Mobile: tasks, vitals, notes, signature pad. deps: P2-07, P2-04

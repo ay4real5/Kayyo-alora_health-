@@ -1346,6 +1346,90 @@
           }
         }
       },
+      "CreateOpenShiftDto": {
+        "type": "object",
+        "properties": {
+          "visitId": {
+            "type": "string",
+            "description": "A scheduled visit. If it has a caregiver, they are taken off it (e.g. they called out) and told.",
+            "format": "uuid"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Shown to caregivers — no patient details (they see only area and time before claiming).",
+            "maxLength": 1000
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "After this moment nobody can claim it (ISO 8601)."
+          }
+        },
+        "required": [
+          "visitId"
+        ]
+      },
+      "AssignOpenShiftDto": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "override": {
+            "type": "boolean",
+            "description": "Book despite blocking conflicts (needs visits:approve; audited)."
+          }
+        },
+        "required": [
+          "staffId"
+        ]
+      },
+      "CreateShiftSwapDto": {
+        "type": "object",
+        "properties": {
+          "visitId": {
+            "type": "string",
+            "description": "One of your own scheduled visits.",
+            "format": "uuid"
+          },
+          "targetStaffId": {
+            "type": "string",
+            "description": "A colleague who'll take it; leave out to hand it back to the pool (it becomes an open shift when approved).",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "visitId",
+          "reason"
+        ]
+      },
+      "DecideShiftSwapDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "denied"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "override": {
+            "type": "boolean",
+            "description": "When approving onto a colleague with blocking conflicts (needs visits:approve; audited)."
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "ClockDto": {
         "type": "object",
         "properties": {

@@ -560,3 +560,30 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   caregiver (`visit_notes:update`, which aides have — the design's `update:visits` would exclude them) marks each
   done, not done with a reason ("Patient declined"), or back to open. A task the caregiver recorded can't be removed.
   The demo seed gives every assigned aide visit a 5-item checklist. Care-plan-driven tasks come with care plans (Phase 3).
+
+### D-040 — Open shifts and shift swaps (P2-05)
+2026-09-28 · Claude Code
+- An **open shift always wraps an existing visit** (`open_shifts.visit_id`); date, time, type and patient live on the
+  visit, so the design's copied columns (`patient_id`, `visit_type`, times, `required_discipline`) are dropped —
+  eligible disciplines come from `VISIT_TYPE_DISCIPLINES`. Required skills wait until staff have skills. Statuses:
+  `open | filled | cancelled`; expiry is computed (`expired: true`), not a status. At most one open offer per visit
+  and one pending swap per visit (partial unique indexes; the schema text uses Postgres' normalised
+  `((status)::text = 'open'::text)` form so the drift check stays clean).
+- **Create** (`visits:create`) from a scheduled visit that hasn't started; if a caregiver is on it (call-out), they are
+  taken off and notified in the same step. **Broadcast** (`notifications:create`) notifies active caregivers of a
+  fitting discipline who have no blocking conflict — the text has date/time/visit type only, no patient or place.
+- **Claim** (any field role, `visits:read` + own staff profile): first come, first served. Refused for the wrong
+  discipline (403), blocking conflicts or expired credentials (409 `SCHEDULE_CONFLICT`, no self-override), expired
+  offers, or a visit that has started. The fill is a guarded update on both the offer and the visit — two claims at
+  once: exactly one wins (tested). The offer's creator is notified.
+- **Assign** (`visits:assign`) uses the normal conflict rules and override (`VisitsService.checkOrThrow`, now public).
+- **Privacy**: before claiming, caregivers see area (city, ZIP) and time, not the patient's name; schedulers
+  (`visits:read_all`) see the patient. After claiming, the visit gives normal access.
+- **Swaps**: a caregiver asks to hand off their own upcoming visit, to a named active colleague or back to the pool,
+  with a reason. A `visits:approve` holder (not the requester) approves or denies; approval re-checks the colleague's
+  schedule (override allowed) and moves the visit, or — with no colleague — unassigns it and creates an open shift.
+  The requester can withdraw a pending request. The named colleague isn't asked to accept first (the office already
+  assigns visits directly); they're notified on approval.
+- **Consistency**: directly reassigning a visit fills its open shift; cancelling it cancels the offer; either
+  withdraws pending swap requests.
+- Broadcasting runs the conflict check once per candidate — fine for agency-sized staff lists; batch it if it gets slow.
