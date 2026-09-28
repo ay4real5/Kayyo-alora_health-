@@ -14,6 +14,7 @@ export const NAVIGATION = [
   { href: '/billing/payments', label: 'Payments', permission: 'billing:read' },
   { href: '/billing/aging', label: 'AR aging', permission: 'billing:read' },
   { href: '/billing/setup', label: 'Billing setup', permission: 'billing:read' },
+  { href: '/reports', label: 'Reports', permission: 'reports:read' },
   { href: '/payroll', label: 'Payroll', permission: 'payroll:read' },
   { href: '/my-pay', label: 'My pay', permission: 'visits:read' },
   { href: '/compliance', label: 'Compliance', permission: 'compliance:create' },

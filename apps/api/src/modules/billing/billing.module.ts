@@ -41,6 +41,6 @@ import { BillingSetupService } from './billing-setup.service.js';
     EligibilityService,
     ClaimWorkflowService,
   ],
-  exports: [BillingSetupService, AuthorizationsService, BillingReadinessService],
+  exports: [BillingSetupService, AuthorizationsService, BillingReadinessService, ClaimWorkflowService],
 })
 export class BillingModule {}
