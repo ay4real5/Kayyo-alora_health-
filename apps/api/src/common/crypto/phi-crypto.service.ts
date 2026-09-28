@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
-import { decryptPhi, encryptPhi, type PhiKeyring } from './phi-crypto.js';
+import { decryptPhi, decryptPhiBytes, encryptPhi, encryptPhiBytes, type PhiKeyring } from './phi-crypto.js';
 import { buildPhiKeyring } from './phi-keyring.js';
 
 /**
@@ -34,6 +34,18 @@ export class PhiCryptoService {
 
   decrypt(blob: Uint8Array, context: PhiContext): string {
     return decryptPhi(blob, context, this.requireKeyring());
+  }
+
+  /**
+   * Binary content (documents). The context should name the record too (e.g. `documents.content:<id>`), so an
+   * encrypted file can't be moved to another record and still decrypt.
+   */
+  encryptBytes(content: Uint8Array, context: string): Uint8Array<ArrayBuffer> {
+    return new Uint8Array(encryptPhiBytes(content, context, this.requireKeyring()));
+  }
+
+  decryptBytes(blob: Uint8Array, context: string): Buffer {
+    return decryptPhiBytes(blob, context, this.requireKeyring());
   }
 
   /** Convenience for nullable columns. */

@@ -2,7 +2,9 @@ import { randomBytes } from 'node:crypto';
 import {
   PhiDecryptionError,
   decryptPhi,
+  decryptPhiBytes,
   encryptPhi,
+  encryptPhiBytes,
   keyVersionOf,
   parseKey,
   type PhiKeyring,
@@ -17,6 +19,13 @@ const ring = (currentVersion: number, keys: Record<number, Buffer>): PhiKeyring 
 describe('PHI encryption', () => {
   const k1 = newKey();
   const keyring = ring(1, { 1: k1 });
+
+  it('round-trips binary content, bound to its record', () => {
+    const file = randomBytes(5000);
+    const blob = encryptPhiBytes(file, 'documents.content:doc-1', keyring);
+    expect(decryptPhiBytes(blob, 'documents.content:doc-1', keyring).equals(file)).toBe(true);
+    expect(() => decryptPhiBytes(blob, 'documents.content:doc-2', keyring)).toThrow(PhiDecryptionError);
+  });
 
   it('round-trips text, including unicode', () => {
     for (const value of ['123-45-6789', '', 'Zoë Ñúñez 🏥']) {
