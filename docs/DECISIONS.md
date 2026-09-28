@@ -646,3 +646,24 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Browser tests run with **one worker**: they share the demo agency, and parallel dev-server compiles exhausted the
   owner's laptop. 17 browser tests.
 - The API's open-shift broadcast now checks candidates in parallel batches of 5 (it was sequential and slow).
+
+### D-044 — Owner answers: 2FA roles, multi-agency, Virginia, portal (2026-09-28)
+2026-09-28 · Claude Code (owner's answers)
+- **Q-008 → mandatory 2FA for admins only**: `agency_admin` and `super_admin`. Everyone else may turn it on.
+  Implemented in P1-11c (D-045).
+- **Q-003 → multi-agency SaaS.** Keep everything agency-scoped (already the rule). Consequences, to plan in Phase 4:
+  agency onboarding (create agency + first admin), `super_admin` cross-agency tooling, per-agency settings and
+  billing, and tenant isolation tests. Never add a feature that reads across agencies except for `super_admin`.
+- **Q-005 → Virginia first.** Virginia Medicaid (DMAS) requires EVV for personal care and home health; which
+  aggregator/vendor and data format apply must be researched from DMAS's current guidance before P4-04 — don't
+  assume Sandata or HHAeXchange. Billing rules (Virginia Medicaid + its managed-care plans) follow in Phase 3.
+- **Q-006 → deferred** by the owner; development continues on Neon/Upstash. Production must still be HIPAA-eligible
+  with a BAA — ask again before P4-10.
+- **Q-002 → build the patient portal ourselves, in this repo, instead of on Base44.** The owner asked for the
+  unsafe design to be fixed. Building it here removes both problems: sessions are per patient (the same secure
+  sign-in as the dashboard, `portal_user` role, API guard limiting them to their own record — P3-14), and PHI no
+  longer passes through a third party (no Base44 BAA needed). P3-16 changes from `base44` to `agent`;
+  `docs/base44-portal/` becomes obsolete once the portal exists. Portal screens live in the web app under their own
+  layout; portal users can't reach staff pages and vice versa.
+- **Google Maps key**: the owner will provide it later; until then patient map points are entered by hand and the map
+  uses OpenStreetMap (D-042).
