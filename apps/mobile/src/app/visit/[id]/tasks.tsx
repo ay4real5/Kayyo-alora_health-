@@ -2,7 +2,9 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { ErrorText, colors, styles } from '@/components/ui';
-import { errorMessage, useAuth } from '@/lib/auth-context';
+import { OfflineBanner } from '@/components/offline-banner';
+import { errorMessage } from '@/lib/auth-context';
+import { useOffline } from '@/lib/offline';
 
 interface Task {
   id: string;
@@ -35,7 +37,8 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 /** The visit's checklist: done, or not done with a reason ("Patient declined"). Tap again to undo. */
 export default function TasksScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { request } = useAuth();
+  const { read, submit } = useOffline();
+  const [stale, setStale] = useState(false);
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [asking, setAsking] = useState<string | null>(null);
   const [reason, setReason] = useState('');
@@ -43,11 +46,13 @@ export default function TasksScreen() {
 
   const load = useCallback(async () => {
     try {
-      setTasks((await request<Task[]>(`/schedule/visits/${id}/tasks`)).data);
+      const { data, stale: fromPhone } = await read<Task[]>(`/schedule/visits/${id}/tasks`);
+      setTasks(data);
+      setStale(fromPhone);
     } catch (e) {
       setError(errorMessage(e));
     }
-  }, [id, request]);
+  }, [id, read]);
 
   useEffect(() => {
     void load();
@@ -56,8 +61,17 @@ export default function TasksScreen() {
   const save = async (task: Task, body: { completed: boolean; notDoneReason?: string }) => {
     setError(null);
     try {
-      const { data } = await request<Task>(`/schedule/visits/${id}/tasks/${task.id}`, { method: 'PATCH', body });
-      setTasks((list) => list?.map((t) => (t.id === task.id ? data : t)) ?? null);
+      const result = await submit({ kind: 'task', visitId: id, taskId: task.id, body });
+      // Offline: show the change now; it's sent with the queue.
+      const updated: Task =
+        result.outcome === 'sent' && result.data
+          ? (result.data as Task)
+          : {
+              ...task,
+              state: body.completed ? 'done' : body.notDoneReason ? 'not_done' : 'open',
+              notDoneReason: body.notDoneReason ?? null,
+            };
+      setTasks((list) => list?.map((t) => (t.id === task.id ? updated : t)) ?? null);
       setAsking(null);
       setReason('');
     } catch (e) {
@@ -67,6 +81,7 @@ export default function TasksScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+      <OfflineBanner stale={stale} />
       <ErrorText>{error}</ErrorText>
       {tasks?.length === 0 && <Text style={styles.subtitle}>No tasks for this visit.</Text>}
       {tasks?.map((task) => (

@@ -4,7 +4,10 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { Button, ErrorText, colors, styles } from '@/components/ui';
-import { errorMessage, useAuth } from '@/lib/auth-context';
+import { OfflineBanner } from '@/components/offline-banner';
+import { errorMessage } from '@/lib/auth-context';
+import { useOffline } from '@/lib/offline';
+import { effectiveStatus } from '@/lib/offline-queue';
 import { clockBody, clockMessage, directionsUrl, isFresh, type ClockResult, type Fix } from '@/lib/evv';
 
 interface Visit {
@@ -48,7 +51,8 @@ async function currentFix(): Promise<Fix> {
 /** One visit: patient, address with directions, and clock in / clock out with GPS (DECISIONS D-038, D-046). */
 export default function VisitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { request } = useAuth();
+  const { read, submit, ops } = useOffline();
+  const [stale, setStale] = useState(false);
   const [visit, setVisit] = useState<Visit | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,14 +63,15 @@ export default function VisitScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const { data } = await request<Visit>(`/schedule/visits/${id}`);
-      setVisit(data);
-      const p = await request<Patient>(`/patients/${data.patient.id}`);
+      const v = await read<Visit>(`/schedule/visits/${id}`);
+      setVisit(v.data);
+      setStale(v.stale);
+      const p = await read<Patient>(`/patients/${v.data.patient.id}`);
       setPatient(p.data);
     } catch (e) {
       setError(errorMessage(e));
     }
-  }, [id, request]);
+  }, [id, read]);
 
   useEffect(() => {
     void load();
@@ -79,11 +84,19 @@ export default function VisitScreen() {
     try {
       const pressedAt = new Date();
       const fix = await currentFix();
-      const { data } = await request<ClockResult>(`/evv/clock-${kind}`, {
-        method: 'POST',
+      const result = await submit({
+        kind: `clock-${kind}`,
+        visitId: id,
         body: clockBody(id, fix, pressedAt, Constants.expoConfig?.version),
       });
-      setNotice(clockMessage(kind, data));
+      setNotice(
+        result.outcome === 'sent' && result.data
+          ? clockMessage(kind, result.data as ClockResult)
+          : {
+              title: kind === 'in' ? 'Clock-in saved on this phone' : 'Clock-out saved on this phone',
+              detail: 'It will be sent with the time you pressed the button as soon as there is a connection.',
+            },
+      );
       await load();
     } catch (e) {
       setError(e instanceof Error && !('status' in e) && e.name !== 'OfflineError' ? e.message : errorMessage(e));
@@ -98,6 +111,7 @@ export default function VisitScreen() {
         .join(', ')
     : '';
   const phone = patient?.phoneCell ?? patient?.phoneHome;
+  const status = visit ? effectiveStatus(visit.status, visit.id, ops) : 'scheduled';
 
   return (
     <ScrollView
@@ -114,6 +128,7 @@ export default function VisitScreen() {
       }
     >
       <Stack.Screen options={{ title: visit ? humanize(visit.visitType) : 'Visit' }} />
+      <OfflineBanner stale={stale} />
       <ErrorText>{error}</ErrorText>
       {notice && (
         <View accessibilityRole="alert" style={[styles.card, { borderColor: colors.brand }]}>
@@ -130,7 +145,7 @@ export default function VisitScreen() {
               {visit.patient.firstName} {visit.patient.lastName}
             </Text>
             <Text style={styles.subtitle}>
-              {visit.scheduledDate} · {visit.scheduledStart}–{visit.scheduledEnd} · {humanize(visit.status)}
+              {visit.scheduledDate} · {visit.scheduledStart}–{visit.scheduledEnd} · {humanize(status)}
             </Text>
             {visit.actualStart && (
               <Text style={{ color: colors.text }}>
@@ -152,13 +167,13 @@ export default function VisitScreen() {
             </View>
           ) : null}
 
-          {visit.status === 'scheduled' && (
+          {status === 'scheduled' && (
             <Button title="Clock in" onPress={() => void clockAction('in')} busy={busy} />
           )}
-          {visit.status === 'in_progress' && (
+          {status === 'in_progress' && (
             <Button title="Clock out" onPress={() => void clockAction('out')} busy={busy} />
           )}
-          {(visit.status === 'in_progress' || visit.status === 'completed') && (
+          {(status === 'in_progress' || status === 'completed') && (
             <View style={{ gap: 8 }}>
               <Text style={styles.label}>Document the visit</Text>
               {(['tasks', 'vitals', 'note'] as const).map((page) => (
@@ -171,7 +186,7 @@ export default function VisitScreen() {
               ))}
             </View>
           )}
-          {(visit.status === 'scheduled' || visit.status === 'in_progress') && (
+          {(status === 'scheduled' || status === 'in_progress') && (
             <Text style={{ color: colors.muted, fontSize: 13 }}>
               Your location is recorded only when you clock in or out, for electronic visit verification.
             </Text>

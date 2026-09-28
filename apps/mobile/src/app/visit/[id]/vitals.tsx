@@ -2,7 +2,9 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Button, ErrorText, Input, colors, styles } from '@/components/ui';
-import { errorMessage, useAuth } from '@/lib/auth-context';
+import { OfflineBanner } from '@/components/offline-banner';
+import { errorMessage } from '@/lib/auth-context';
+import { useOffline } from '@/lib/offline';
 import { EMPTY_VITALS, vitalsPayload, type VitalsForm } from '@/lib/vitals';
 
 interface Vital {
@@ -65,36 +67,44 @@ function Toggle<T extends string>({ options, value, onChange }: { options: T[]; 
 /** Record vitals (checked on the phone with the API's ranges); earlier readings listed below. */
 export default function VitalsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { request } = useAuth();
+  const { read, submit: send } = useOffline();
+  const [stale, setStale] = useState(false);
   const [form, setForm] = useState<VitalsForm>(EMPTY_VITALS);
   const [vitals, setVitals] = useState<Vital[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const set = (key: keyof VitalsForm) => (value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   const load = useCallback(async () => {
     try {
-      setVitals((await request<Vital[]>(`/schedule/visits/${id}/vitals`)).data);
+      const { data, stale: fromPhone } = await read<Vital[]>(`/schedule/visits/${id}/vitals`);
+      setVitals(data);
+      setStale(fromPhone);
     } catch (e) {
       setErrors([errorMessage(e)]);
     }
-  }, [id, request]);
+  }, [id, read]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const submit = async () => {
-    setSaved(false);
+    setSaved(null);
     const { body, errors: problems } = vitalsPayload(form);
     setErrors(problems);
     if (!body) return;
     setBusy(true);
     try {
-      await request(`/schedule/visits/${id}/vitals`, { method: 'POST', body });
+      // recordedAt = now, so readings sent later from the queue keep the time they were taken.
+      const result = await send({
+        kind: 'vitals',
+        visitId: id,
+        body: { ...body, recordedAt: new Date().toISOString() },
+      });
       setForm(EMPTY_VITALS);
-      setSaved(true);
+      setSaved(result.outcome === 'sent' ? 'Saved.' : 'Saved on this phone — will be sent when there is a connection.');
       await load();
     } catch (e) {
       setErrors([errorMessage(e)]);
@@ -106,8 +116,9 @@ export default function VitalsScreen() {
   const numeric = { keyboardType: 'decimal-pad' as const };
   return (
     <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+      <OfflineBanner stale={stale} />
       <ErrorText>{errors.length ? errors.join('\n') : null}</ErrorText>
-      {saved && <Text style={{ color: colors.brandDark, fontWeight: '600' }}>Saved.</Text>}
+      {saved && <Text style={{ color: colors.brandDark, fontWeight: '600' }}>{saved}</Text>}
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 1 }}>
           <Input label="BP upper" value={form.systolic} onChangeText={set('systolic')} {...numeric} />

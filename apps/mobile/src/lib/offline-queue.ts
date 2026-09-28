@@ -40,7 +40,7 @@ export interface QueueStore {
 }
 
 /** Sends one operation. Throw OfflineError (or a 5xx ApiError) to stop and retry later; a 4xx means it can't succeed. */
-export type Sender = (op: QueuedOp) => Promise<void>;
+export type Sender = (op: QueuedOp) => Promise<unknown>;
 
 export type Outcome = 'retry' | 'failed';
 

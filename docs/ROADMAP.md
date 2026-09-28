@@ -53,7 +53,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P2-06** `agent` Scaffold `apps/mobile` (Expo, Expo Router): login, PIN, secure token storage. deps: P1-06
 - [x] **P2-07** `agent` Mobile: today's schedule, visit detail, clock-in/out with location. deps: P2-06, P2-01
 - [x] **P2-08** `agent` Mobile: tasks, vitals, notes, signature pad. deps: P2-07, P2-04
-- [ ] **P2-09** `agent` Mobile: offline queue (expo-sqlite) + background sync + offline banner. deps: P2-08
+- [x] **P2-09** `agent` Mobile: offline queue (expo-sqlite) + background sync + offline banner. deps: P2-08
 - [ ] **P2-10** `agent` Mobile: background location during active visit. deps: P2-07
 - [ ] **P2-11** `human` Create Twilio + Firebase accounts, sign Twilio BAA, put keys in `.env`
 - [ ] **P2-12** `agent` Notification queue (BullMQ) + push (FCM) + SMS (Twilio) channels, PHI-free templates. deps: P1-16, P2-11

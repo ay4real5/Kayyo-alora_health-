@@ -39,6 +39,12 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
       ]
     ],
     "experiments": {

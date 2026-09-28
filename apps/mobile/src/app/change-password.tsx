@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 import { Button, ErrorText, Input, styles } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
+import { useOffline } from '@/lib/offline';
 import type { Tokens } from '@/lib/session';
 
 /** Shown when the password was set by an administrator or has expired. */
 export default function ChangePasswordScreen() {
-  const { request, passwordChanged, signOut } = useAuth();
+  const { request, passwordChanged } = useAuth();
+  const { signOut } = useOffline();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -46,7 +48,7 @@ export default function ChangePasswordScreen() {
       ))}
       <Input label="Confirm new password" value={confirm} onChangeText={setConfirm} secureTextEntry />
       <Button title="Change password" onPress={() => void submit()} busy={busy} />
-      <Button title="Sign out" variant="secondary" onPress={() => void signOut()} />
+      <Button title="Sign out" variant="secondary" onPress={signOut} />
     </ScrollView>
   );
 }
