@@ -109,7 +109,7 @@ export function evaluate(f: ReadinessFacts): Readiness {
     f.visitStatus === 'completed',
     `The visit is ${f.visitStatus.replace('_', ' ')}`,
   );
-  if (f.alreadyBilledOn) check('not_billed', false, `Already billed on claim ${f.alreadyBilledOn}`);
+  if (f.alreadyBilledOn) check('not_billed', false, `Already billed on ${f.alreadyBilledOn}`);
   check(
     'evv_verified',
     f.evvStatus === 'verified',

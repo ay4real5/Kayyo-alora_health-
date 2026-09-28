@@ -122,8 +122,17 @@ export class ClaimsService {
     const missing = visitIds.filter((id) => !evaluated.some((v) => v.visitId === id));
     skipped.push(...missing.map((visitId) => ({ visitId, reasons: ['Visit not found'] })));
 
+    // Private-pay patients get an invoice, not an insurance claim (D-059).
+    const privatePay = evaluated.filter((e) => e.ready && e.payer?.payerType === 'private_pay');
+    skipped.push(
+      ...privatePay.map((v) => ({
+        visitId: v.visitId,
+        reasons: ['Private pay — bill it on an invoice (Billing → Invoices)'],
+      })),
+    );
+
     const groups = new Map<string, BillableVisit[]>();
-    for (const v of evaluated.filter((e) => e.ready)) {
+    for (const v of evaluated.filter((e) => e.ready && e.payer?.payerType !== 'private_pay')) {
       const key = `${v.patient.id}|${v.payer!.id}`;
       groups.set(key, [...(groups.get(key) ?? []), v]);
     }
@@ -257,7 +266,7 @@ export class ClaimsService {
       } catch (error) {
         const target =
           error instanceof Prisma.PrismaClientKnownRequestError
-            ? String(error.meta?.target ?? '')
+            ? `${JSON.stringify(error.meta ?? {})} ${error.message}`
             : '';
         // A claim-number collision (vanishingly rare): pick another. Anything else (e.g. a visit billed meanwhile) bubbles.
         if (

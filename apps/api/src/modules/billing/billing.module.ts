@@ -9,6 +9,8 @@ import {
 } from './billing.controllers.js';
 import { ClaimsService } from './claims.service.js';
 import { EdiService } from './edi.service.js';
+import { InvoicesController } from './invoices.controller.js';
+import { InvoicesService } from './invoices.service.js';
 import { PaymentsService } from './payments.service.js';
 import { BillingSetupService } from './billing-setup.service.js';
 
@@ -19,6 +21,7 @@ import { BillingSetupService } from './billing-setup.service.js';
     AuthorizationsController,
     ClaimsController,
     PaymentsController,
+    InvoicesController,
   ],
   providers: [
     BillingSetupService,
@@ -27,6 +30,7 @@ import { BillingSetupService } from './billing-setup.service.js';
     ClaimsService,
     EdiService,
     PaymentsService,
+    InvoicesService,
   ],
   exports: [BillingSetupService, AuthorizationsService, BillingReadinessService],
 })
