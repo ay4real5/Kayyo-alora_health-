@@ -188,6 +188,7 @@ export class VisitsService {
     const visit = await this.prisma.visit.update({ where: { id }, data, include: VISIT_INCLUDE });
 
     const reassigned = existing.staffId !== visit.staffId;
+    if (reassigned) await this.closeOffers(caller, id, visit.staffId ? 'filled' : null);
     const moved =
       fromDate(existing.scheduledDate) !== fromDate(visit.scheduledDate) ||
       fromTime(existing.scheduledStart) !== fromTime(visit.scheduledStart) ||
@@ -211,8 +212,29 @@ export class VisitsService {
       data: { status: 'cancelled', cancelReason: reason },
       include: VISIT_INCLUDE,
     });
+    await this.closeOffers(caller, id, 'cancelled');
     await this.notifyCaregiver(caller, visit, 'shift_cancelled', 'A visit was cancelled');
     return toView(visit);
+  }
+
+  /**
+   * Keeps open shifts and swap requests in step with direct edits (D-040): assigning the visit fills its open shift,
+   * cancelling cancels it; any reassignment or cancellation withdraws pending swap requests.
+   */
+  private async closeOffers(caller: AuthUser, visitId: string, openShift: 'filled' | 'cancelled' | null): Promise<void> {
+    if (openShift) {
+      await this.prisma.openShift.updateMany({
+        where: { visitId, status: 'open' },
+        data:
+          openShift === 'filled'
+            ? { status: 'filled', assignedById: caller.userId, assignedAt: new Date() }
+            : { status: 'cancelled' },
+      });
+    }
+    await this.prisma.shiftSwapRequest.updateMany({
+      where: { visitId, status: 'pending' },
+      data: { status: 'cancelled', decisionNote: 'The visit was changed by the office' },
+    });
   }
 
   /** Tells the visit's caregiver (if any, and not the person making the change). No PHI in the text. */
@@ -248,8 +270,8 @@ export class VisitsService {
     return this.conflicts.check({ ...proposalFrom(caller, query), excludeVisitId: query.excludeVisitId });
   }
 
-  /** Blocking conflicts stop the save unless overridden by someone with visits:approve. Returns the warnings. */
-  private async checkOrThrow(
+  /** Blocking conflicts stop the save unless overridden by someone with visits:approve (audited). Returns the warnings. Also used by open shifts and swaps. */
+  async checkOrThrow(
     caller: AuthUser,
     proposal: Parameters<ConflictDetectorService['check']>[0],
     override: boolean | undefined,

@@ -2473,6 +2473,409 @@
         ]
       }
     },
+    "/api/v1/schedule/open-shifts": {
+      "get": {
+        "operationId": "OpenShiftsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "filled",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Schedulers: all offers. Caregivers: what they could claim now (area and time only, no patient name).",
+        "tags": [
+          "schedule"
+        ]
+      },
+      "post": {
+        "operationId": "OpenShiftsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOpenShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Offers a scheduled visit; a caregiver already on it is taken off and told.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/open-shifts/{id}": {
+      "get": {
+        "operationId": "OpenShiftsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/open-shifts/{id}/broadcast": {
+      "post": {
+        "operationId": "OpenShiftsController_broadcast",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Notifies every eligible caregiver (PHI-free text).",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/open-shifts/{id}/claim": {
+      "post": {
+        "operationId": "OpenShiftsController_claim",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "A caregiver takes the shift: first come, first served; refused on blocking conflicts or expired credentials.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/open-shifts/{id}/assign": {
+      "post": {
+        "operationId": "OpenShiftsController_assign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignOpenShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/open-shifts/{id}/cancel": {
+      "post": {
+        "operationId": "OpenShiftsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/shift-swaps": {
+      "get": {
+        "operationId": "OpenShiftsController_listSwaps",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "denied",
+                "cancelled"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Schedulers: all requests. Caregivers: the ones they made or are named in.",
+        "tags": [
+          "schedule"
+        ]
+      },
+      "post": {
+        "operationId": "OpenShiftsController_requestSwap",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShiftSwapDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "A caregiver asks to hand one of their upcoming visits to a colleague, or back to the pool.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/shift-swaps/{id}/cancel": {
+      "post": {
+        "operationId": "OpenShiftsController_withdrawSwap",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/shift-swaps/{id}": {
+      "patch": {
+        "operationId": "OpenShiftsController_decideSwap",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideShiftSwapDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Approve (the visit moves to the colleague, or becomes an open shift) or deny. Not your own request.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
     "/api/v1/evv/clock-in": {
       "post": {
         "operationId": "EvvController_clockIn",
@@ -4754,6 +5157,90 @@
             "description": "Create occurrences up to this date (default: 4 weeks from today, max 1 year)."
           }
         }
+      },
+      "CreateOpenShiftDto": {
+        "type": "object",
+        "properties": {
+          "visitId": {
+            "type": "string",
+            "description": "A scheduled visit. If it has a caregiver, they are taken off it (e.g. they called out) and told.",
+            "format": "uuid"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Shown to caregivers — no patient details (they see only area and time before claiming).",
+            "maxLength": 1000
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "After this moment nobody can claim it (ISO 8601)."
+          }
+        },
+        "required": [
+          "visitId"
+        ]
+      },
+      "AssignOpenShiftDto": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "override": {
+            "type": "boolean",
+            "description": "Book despite blocking conflicts (needs visits:approve; audited)."
+          }
+        },
+        "required": [
+          "staffId"
+        ]
+      },
+      "CreateShiftSwapDto": {
+        "type": "object",
+        "properties": {
+          "visitId": {
+            "type": "string",
+            "description": "One of your own scheduled visits.",
+            "format": "uuid"
+          },
+          "targetStaffId": {
+            "type": "string",
+            "description": "A colleague who'll take it; leave out to hand it back to the pool (it becomes an open shift when approved).",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "visitId",
+          "reason"
+        ]
+      },
+      "DecideShiftSwapDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "denied"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "override": {
+            "type": "boolean",
+            "description": "When approving onto a colleague with blocking conflicts (needs visits:approve; audited)."
+          }
+        },
+        "required": [
+          "status"
+        ]
       },
       "ClockDto": {
         "type": "object",
