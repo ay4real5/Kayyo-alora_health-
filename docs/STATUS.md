@@ -121,23 +121,23 @@
   `purgeAuditLogs`), daily job creates months ahead and drops months older than `AUDIT_RETENTION_MONTHS` (≥ 72). Migration
   applied to Neon (36 rows kept). D-067, Q-011.
 
+- **Security pass (P4-09)**: API-enforced forced password change (403 `PASSWORD_CHANGE_REQUIRED`), CSV formula
+  injection guard, nonce-based CSP on the dashboard, load test script + Prisma `relationJoins` (~1.5× throughput),
+  `DATABASE_POOL_SIZE`. D-068.
+
 ## In progress
 
-**P4-09 security pass** — branch `task/P4-09-security-pass`. All parts done (D-068). **Left**: the full API e2e suite
-was running (relationJoins changes how every nested query loads) — if it's green, tick P4-09, push, CI, merge.
-
-**P4-04 Virginia EVV on claims** — branch `task/P4-04-virginia-evv` (branched from P4-09; merge P4-09 first). Done
-(D-069): `edi/evv-virginia.ts` rules + 837P/837I segments, payer setting `evvClaimProfile = 'va_dmas'` (migration
-`20260929010000_payer_evv_claim_profile`, applied to Neon), EDI preview lists missing EVV data with the DMAS edit
-numbers, Billing setup "EVV on claims" column, unit tests + `test/evv-virginia.e2e-spec.ts` (green). P4-04b too:
-overnight shifts split per day (migration `20260929020000_claim_line_evv_window`, applied), modifier 76, readiness
-check `evv_claim_data`; billing e2e files green. **Left**: merge main (P4-09 merged), full checks, push, CI, merge.
+**P4-04 Virginia EVV on claims** — branch `task/P4-04-virginia-evv`. Done (D-069): `edi/evv-virginia.ts` rules +
+837P/837I segments, payer setting `evvClaimProfile = 'va_dmas'` (migration `20260929010000_payer_evv_claim_profile`,
+applied to Neon), EDI preview lists missing EVV data with the DMAS edit numbers, Billing setup "EVV on claims" column,
+unit tests + `test/evv-virginia.e2e-spec.ts` (green). P4-04b too: overnight shifts split per day (migration
+`20260929020000_claim_line_evv_window`, applied), modifier 76, readiness check `evv_claim_data`; billing e2e files
+green. **Left**: full checks, push, CI, merge.
 
 ## Next up
 
-P4-04c monthly hour rounding (after Q-012); P4-10 production
-packaging (hosting still undecided — prepare what doesn't depend on it). The owner asked for autonomous work: go
-straight on, check in with questions every ~6 hours.
+P4-04c monthly hour rounding (after Q-012); P4-10 production packaging (hosting still undecided — prepare what
+doesn't depend on it). The owner asked for autonomous work: go straight on, check in with questions every ~6 hours.
 
 ## Blockers / waiting on human
 

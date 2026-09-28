@@ -96,7 +96,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P4-06** `agent` Claims denial/appeal workflow + aging report
 - [x] **P4-07** `agent` Notification preferences UI/API
 - [x] **P4-08** `agent` Audit-log monthly partitioning + retention
-- [ ] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes. Include: the API should *enforce* the
+- [x] **P4-09** `agent` Security pass (OWASP checklist), load test, perf fixes. Include: the API should *enforce* the
   forced password change (like the 2FA-setup restriction, D-045) — today only the web/mobile clients redirect (D-058)
 - [ ] **P4-10** `agent` Production Dockerfiles, docker-compose.prod, nginx (must NOT log query strings — search terms can be PHI, D-035), deploy workflows. Deploys must run `prisma migrate deploy` (separate migration image/job — the API image has no Prisma CLI) **before** starting the API, which refuses to boot on an unmigrated DB.
 - [ ] **P4-11** `human` Hosting choice (HIPAA-eligible, BAA), production secrets, domain
