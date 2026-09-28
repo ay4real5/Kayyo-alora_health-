@@ -37,9 +37,9 @@ describe('calculatePay', () => {
 
   it('counts overtime per workweek, not per pay period', () => {
     // Two weeks of 35 hours each = 70 hours, but never over 40 in a week → no overtime.
-    const visits = [...['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02'], ...['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09']].map((d) =>
-      visit(d, 7),
-    );
+    const week1 = ['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02'];
+    const week2 = ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'];
+    const visits = week1.concat(week2).map((d) => visit(d, 7));
     const r = calculatePay({ ...base, rates: hourly, visits });
     expect(r).toMatchObject({ regularHours: 70, overtimeHours: 0, regularPay: 1400 });
   });

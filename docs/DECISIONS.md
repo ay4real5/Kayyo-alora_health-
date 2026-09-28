@@ -1072,3 +1072,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   explicit write-offs).
 - Not yet: 277CA/999 acknowledgments (with P3-09), write-off/adjustment entries, statements to patients for their
   responsibility.
+
+### D-064 — Payroll (P4-03)
+2026-09-28 · Claude Code
+- **Gross earnings only.** Taxes, benefits and garnishments are done by the payroll provider (ADP, Gusto, QuickBooks…);
+  we export what they need. "Deductions" here are agency adjustments entered by hand (e.g. uniform advance).
+- **What is paid**: completed visits whose **EVV is verified**, using the EVV clock-in/out (visit actual times as a
+  fallback). Completed but unverified visits are listed as warnings and paid in a later period once verified (they
+  aren't lost: they're picked up by whichever period contains the visit date — recalculate that period before approval).
+- **Rates** (staff profile): a per-visit rate → per-visit pay, no overtime (fee-basis clinicians); otherwise the hourly
+  rate. No rate → warning, not paid. **Overtime (FLSA)**: home care workers are non-exempt (DOL Home Care Rule, 2015):
+  hours over 40 in a **workweek** at the staff overtime rate, default 1.5 × hourly. Workweeks start on
+  `agencies.workweek_start_day` (default Sunday); weeks straddling a period boundary count the hours from before the
+  period toward the 40 without paying them again. Travel time between clients and "regular rate" adjustments for
+  bonuses are **not** computed — the owner's accountant should confirm policy (added to OPEN_QUESTIONS as Q-010).
+- **Mileage**: staff log trips (no patient addresses needed), `payroll:approve` holders approve/reject with a reason;
+  approved miles in the period × the staff member's mileage rate, else `agencies.payroll_mileage_rate` (default
+  $0.70). Reimbursement is a separate, non-taxable column, not in gross.
+- **Lifecycle**: open → calculated (recalculate freely; bonuses, deductions and notes survive) → approved (locked;
+  each staff member gets a `payroll_ready` notification) → exported (CSV, re-downloadable, every export audited).
+  Periods can't overlap and are at most 31 days.
+- **Privacy**: stub lines show the patient as "First L." only; the CSV has no patient data at all. Staff see only
+  their own stubs, and only once approved ("My pay").

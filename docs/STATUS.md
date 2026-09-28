@@ -102,6 +102,8 @@
   HIPAA safeguards checklist (admins). Web: Compliance, Audit log. D-062.
 - **Claim follow-up (P4-06)**: mark sent (starts aging), 835 denials set an appeal deadline, multi-level appeals,
   corrected claims (frequency 7 with REF*F8), AR aging report (payers + private pay). Web: claim page, Billing → AR aging. D-063.
+- **Payroll (P4-03)**: pay periods calculated from EVV-verified visits (hourly with FLSA workweek overtime, or per
+  visit), approved mileage, bonuses/deductions, approval (staff notified), CSV export; staff see stubs in My pay. D-064.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -127,6 +129,7 @@ Phase 4 (reports, payroll, compliance, EVV aggregator for Virginia after DMAS re
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P4-03 | Payroll calc (8 unit) + API (6 e2e) + web (browser test); P4-06 merged. |
 | 2026-09-28 | Claude Code | P4-06 | Submit/appeal/rebill/aging API (4 e2e) + web (browser test); P4-05 merged. |
 | 2026-09-28 | Claude Code | P4-05 | Compliance API (5 e2e + unit) + web (browser test); P3-05 merged. |
 | 2026-09-28 | Claude Code | P3-05 | 837I generator (golden), claim format per payer, institutional fields, preview (2 e2e); P3-07 + P3-10 merged. |
