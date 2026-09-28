@@ -16,16 +16,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const mustSetUp2fa = Boolean(user?.is2faRequired && !user.is2faEnabled);
+  const mustChangePassword = Boolean(user?.mustChangePassword);
   // Patients and families have their own portal (D-058) and no access to staff pages.
   const isPortalUser = Boolean(user?.roles.includes('portal_user'));
   useEffect(() => {
     if (status === 'anonymous') router.replace('/login');
+    // A forced password change comes before everything else — the API refuses all other routes (P4-09).
+    else if (status === 'authenticated' && mustChangePassword) router.replace('/change-password?required=1');
     else if (status === 'authenticated' && isPortalUser) router.replace('/portal');
     // Admins must use 2FA (D-045); the API refuses everything else until it's on.
     else if (status === 'authenticated' && mustSetUp2fa) router.replace('/setup-two-factor');
-  }, [status, mustSetUp2fa, isPortalUser, router]);
+  }, [status, mustChangePassword, mustSetUp2fa, isPortalUser, router]);
 
-  if (status !== 'authenticated' || !user || mustSetUp2fa || isPortalUser) {
+  if (status !== 'authenticated' || !user || mustChangePassword || mustSetUp2fa || isPortalUser) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-slate-500" aria-live="polite">
         Loading…

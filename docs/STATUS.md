@@ -121,16 +121,18 @@
   `purgeAuditLogs`), daily job creates months ahead and drops months older than `AUDIT_RETENTION_MONTHS` (≥ 72). Migration
   applied to Neon (36 rows kept). D-067, Q-011.
 
+- **Security pass (P4-09)**: API-enforced forced password change (403 `PASSWORD_CHANGE_REQUIRED`), CSV formula
+  injection guard, nonce-based CSP on the dashboard, load test script + Prisma `relationJoins` (~1.5× throughput),
+  `DATABASE_POOL_SIZE`. D-068.
+
 ## In progress
 
-Nothing. `task/P4-08-audit-partitioning` pushed; merge to main once CI is green.
+Nothing on this branch — P4-09 is done (D-068; full API e2e 238/238 green with Prisma `relationJoins`).
 
 ## Next up
 
-P4-09 security pass (must include: the API enforcing the forced
-password change like the 2FA-setup restriction, D-045/D-058); P4-04 Virginia EVV aggregator (research DMAS's current
-EVV vendor and format first — don't assume Sandata/HHAeXchange); P4-10 production packaging (hosting still undecided).
-The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+P4-04 Virginia EVV (branch `task/P4-04-virginia-evv`, see its STATUS); P4-10 production packaging (hosting still
+undecided). The owner asked for autonomous work: go straight on, check in with questions every ~6 hours.
 
 ## Blockers / waiting on human
 
@@ -142,6 +144,8 @@ The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P4-09 | Verified Devin's forced-password-change work; CSV injection, CSP, load test + relationJoins. |
+| 2026-09-28 | Devin | P4-09 (in progress) | Forced-password-change enforcement written (unverified WIP); OWASP review findings in STATUS. Owner switched to Claude Code. |
 | 2026-09-28 | Devin | P4-08 | Audit-log partitions + append-only trigger + retention job; 5 unit + 3 e2e, drift check clean. |
 | 2026-09-28 | Devin | P4-07 | Browser test fixed (uncontrolled checkboxes), openapi/typecheck/lint green; pushed for CI + merge. |
 | 2026-09-28 | Claude Code | P4-07 (in progress) | Preferences API + page; P4-01/P4-02 merged. Owner switched to Devin. |

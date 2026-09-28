@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
+import { csvRows } from '../../common/utils/csv.js';
 import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
@@ -235,11 +236,7 @@ export class ReportsService {
   }
 }
 
-/** Rows → CSV (RFC 4180, CRLF). Only for list reports; no free-text PHI beyond what the screen shows. */
+/** Rows → CSV (safe against formula injection, D-068). Only for list reports; no PHI beyond what the screen shows. */
 export function toCsv(columns: { key: string; label: string }[], rows: Record<string, unknown>[]): string {
-  const cell = (v: unknown) => {
-    const text = v === null || v === undefined ? '' : v instanceof Date ? v.toISOString() : typeof v === 'object' ? JSON.stringify(v) : String(v as string | number | boolean);
-    return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-  };
-  return [columns.map((c) => cell(c.label)).join(','), ...rows.map((r) => columns.map((c) => cell(r[c.key])).join(','))].join('\r\n') + '\r\n';
+  return csvRows([columns.map((c) => c.label), ...rows.map((r) => columns.map((c) => r[c.key]))]);
 }

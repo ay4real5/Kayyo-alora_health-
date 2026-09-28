@@ -19,8 +19,8 @@ interface AuthContextValue {
   /** Authenticated API call; renews the access token once and retries on 401. */
   request<T>(path: string, options?: Omit<RequestOptions, 'accessToken'>): Promise<ApiResult<T>>;
   can(permission: string): boolean;
-  /** Takes over the fresh tokens the API issues after a password change. */
-  adoptTokens(tokens: SessionTokens): void;
+  /** Takes over the fresh tokens the API issues after a password change and reloads the profile. */
+  adoptTokens(tokens: SessionTokens): Promise<void>;
   /** The current access token, for the Socket.IO handshake only (sockets can't use the request helper). */
   currentAccessToken(): string | null;
   /** Renews the access token and reloads the user — after enabling 2FA, so the setup-only restriction lifts. */
@@ -169,7 +169,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       request,
       can: (permission) => Boolean(user?.permissions.includes(permission)),
-      adoptTokens: (tokens) => session.adopt(tokens),
+      adoptTokens: async (tokens) => {
+        session.adopt(tokens);
+        await loadUser(); // the cached user still says mustChangePassword until /auth/me is reloaded
+      },
       currentAccessToken: () => session.accessToken,
       refreshSession: async () => {
         await session.renew();

@@ -7,6 +7,8 @@ export interface AuthUser {
   agencyId: string;
   /** Set when the user must set up 2FA before doing anything else (D-045). */
   twoFactorSetupRequired?: boolean;
+  /** Set when the user must choose a new password before doing anything else (P4-09). */
+  passwordChangeRequired?: boolean;
 }
 
 declare module 'express-serve-static-core' {

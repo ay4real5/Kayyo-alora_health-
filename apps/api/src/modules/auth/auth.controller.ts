@@ -5,6 +5,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AppEnv, type EnvironmentVariables } from '../../config/env.validation.js';
 import { AllowDuringTwoFactorSetup } from '../../common/decorators/allow-during-2fa-setup.decorator.js';
+import { AllowDuringPasswordChange } from '../../common/decorators/allow-during-password-change.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { AuthService } from './auth.service.js';
@@ -82,6 +83,7 @@ export class AuthController {
   }
 
   @AllowDuringTwoFactorSetup()
+  @AllowDuringPasswordChange()
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return this.auth.me(user);
@@ -138,6 +140,7 @@ export class AuthController {
 
   @Throttle(ACCOUNT_SETTINGS_LIMIT)
   @AllowDuringTwoFactorSetup()
+  @AllowDuringPasswordChange()
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
   async changePassword(

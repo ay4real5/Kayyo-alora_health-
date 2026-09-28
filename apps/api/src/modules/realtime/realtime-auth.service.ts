@@ -54,6 +54,7 @@ export class RealtimeAuthService {
     const token = handshakeToken(socket);
     if (!token) throw new Error('unauthorized');
     const claims = await this.tokens.verifyAccessTokenWithExpiry(token);
+    if (claims.passwordChangeRequired) throw new Error('forbidden'); // forced password change first (P4-09)
     if (claims.twoFactorSetupRequired) throw new Error('forbidden'); // mandatory 2FA not set up yet (D-045)
     const active = await this.prisma.user.count({
       where: { id: claims.userId, agencyId: claims.agencyId, isActive: true },

@@ -12,6 +12,7 @@ export interface Me {
   agencyTimezone: string;
   is2faEnabled: boolean;
   is2faRequired: boolean;
+  mustChangePassword: boolean;
   roles: string[];
   permissions: string[];
 }
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Your role needs two-factor authentication. Set it up in the Alora web dashboard first.');
       }
       setUser(data);
-      setMustChangePassword(outcome.mustChangePassword);
+      setMustChangePassword(Boolean(data.mustChangePassword));
       setStatus('signed-in');
       return outcome;
     },
@@ -112,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           const { data } = await session.request<Me>('/auth/me');
           setUser(data);
+          setMustChangePassword(Boolean(data.mustChangePassword));
           setStatus('signed-in');
           return null;
         } catch (error) {
