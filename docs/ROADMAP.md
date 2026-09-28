@@ -45,7 +45,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 
 ## Phase 2 — EVV & mobile
 
-- [ ] **P2-01** `agent` EVV module: GPS clock-in/out, geofence (haversine), exceptions, verify. deps: P1-14
+- [x] **P2-01** `agent` EVV module: GPS clock-in/out, geofence (haversine), exceptions, verify. deps: P1-14
 - [ ] **P2-02** `agent` Socket.IO gateway with JWT handshake + rooms; `/live-monitor` events; late/no-show cron; nightly job extending recurring-visit windows (D-031). deps: P2-01
 - [ ] **P2-03** `agent` Web: live monitor page (map + feed). deps: P2-02, P1-18
 - [ ] **P2-04** `agent` Visit documentation API: notes (sign), vitals, tasks. deps: P1-14

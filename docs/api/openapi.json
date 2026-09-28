@@ -2473,6 +2473,348 @@
         ]
       }
     },
+    "/api/v1/evv/clock-in": {
+      "post": {
+        "operationId": "EvvController_clockIn",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Clock into your own scheduled visit with the device's GPS reading. Never refused for location or timing —\nthose are flagged for review. Refused if the visit isn't yours, isn't scheduled, or is far from this time.",
+        "tags": [
+          "evv"
+        ]
+      }
+    },
+    "/api/v1/evv/clock-out": {
+      "post": {
+        "operationId": "EvvController_clockOut",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Clock out of the visit you're clocked into. Flags make the record `exception` instead of `completed`.",
+        "tags": [
+          "evv"
+        ]
+      }
+    },
+    "/api/v1/evv/records": {
+      "get": {
+        "operationId": "EvvController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "staffId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in_progress",
+                "completed",
+                "exception",
+                "verified",
+                "rejected"
+              ]
+            }
+          },
+          {
+            "name": "needsReview",
+            "required": false,
+            "in": "query",
+            "description": "Only records needing review (exception status or pending corrections).",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "evv"
+        ]
+      }
+    },
+    "/api/v1/evv/records/{id}": {
+      "get": {
+        "operationId": "EvvController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "evv"
+        ]
+      }
+    },
+    "/api/v1/evv/records/{id}/verify": {
+      "post": {
+        "operationId": "EvvController_verify",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEvvDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Confirms a completed/exception record. Not your own visit; no pending corrections.",
+        "tags": [
+          "evv"
+        ]
+      }
+    },
+    "/api/v1/evv/records/{id}/reject": {
+      "post": {
+        "operationId": "EvvController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectEvvDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Rejects a record (it won't be billed or paid). A note is required.",
+        "tags": [
+          "evv"
+        ]
+      }
+    },
+    "/api/v1/evv/records/{id}/exception": {
+      "post": {
+        "operationId": "EvvController_createException",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEvvExceptionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Files a clock-in/out time correction with a reason. Applied only when someone else approves it.",
+        "tags": [
+          "evv"
+        ]
+      }
+    },
+    "/api/v1/evv/exceptions/{id}": {
+      "patch": {
+        "operationId": "EvvController_decideException",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideEvvExceptionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "evv"
+        ]
+      }
+    },
     "/api/v1/notifications": {
       "get": {
         "operationId": "NotificationsController_list",
@@ -2859,6 +3201,13 @@
           "zip": {
             "type": "string"
           },
+          "latitude": {
+            "type": "number",
+            "description": "Home location for the EVV geofence (WGS84). Set both or neither; address geocoding comes later."
+          },
+          "longitude": {
+            "type": "number"
+          },
           "geoFenceRadiusMeters": {
             "type": "number",
             "description": "EVV geofence around the home, in meters.",
@@ -2974,6 +3323,13 @@
           },
           "zip": {
             "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Home location for the EVV geofence (WGS84). Set both or neither; address geocoding comes later."
+          },
+          "longitude": {
+            "type": "number"
           },
           "geoFenceRadiusMeters": {
             "type": "number",
@@ -3896,6 +4252,112 @@
             "description": "Create occurrences up to this date (default: 4 weeks from today, max 1 year)."
           }
         }
+      },
+      "ClockDto": {
+        "type": "object",
+        "properties": {
+          "visitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "description": "Reported GPS accuracy radius in meters.",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "When it happened on the device (ISO 8601 with offset). May be up to 72 hours old — clock events captured\noffline are synced later — but not in the future."
+          },
+          "deviceId": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "deviceModel": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "appVersion": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "visitId",
+          "latitude",
+          "longitude",
+          "timestamp"
+        ]
+      },
+      "VerifyEvvDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      },
+      "RejectEvvDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "note"
+        ]
+      },
+      "CreateEvvExceptionDto": {
+        "type": "object",
+        "properties": {
+          "exceptionType": {
+            "type": "string",
+            "description": "Which time is being corrected.",
+            "enum": [
+              "clock_in_time",
+              "clock_out_time"
+            ]
+          },
+          "correctedValue": {
+            "type": "string",
+            "description": "The corrected time (ISO 8601 with offset)."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Required: why the correction is needed, e.g. \"Phone battery died; caregiver left at 4:05 PM per patient\".",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "exceptionType",
+          "correctedValue",
+          "reason"
+        ]
+      },
+      "DecideEvvExceptionDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "denied"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
       }
     }
   },

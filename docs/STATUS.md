@@ -49,6 +49,9 @@
   agency timezone (`AgencyClockService`). 10 Playwright tests. D-036.
 - Web scheduling (P1-21): week calendar, book with live conflict check + audited override, recurring booking report,
   reschedule/reassign/cancel. 13 Playwright tests. D-037.
+- **EVV (P2-01)**: `POST /evv/clock-in|clock-out` (own visits, GPS geofence + agency-timezone time window → flags,
+  never blocks), supervisor list/verify/reject, two-person time corrections. Patients have lat/long (entered by hand
+  until geocoding). D-038.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -62,12 +65,11 @@ Nothing.
 
 ## Next up
 
-**Phase 2 — EVV & mobile.** Start with **P2-01** EVV module: GPS clock-in/out (`POST /evv/clock-in`, `/evv/clock-out`),
-geofence check (haversine vs `patients.geo_fence_radius_meters`, needs patient lat/long — add geocoding later, accept
-coordinates set manually for now), EVV records with the 21st Century Cures Act six data points, visit status
-scheduled → in_progress → completed, exceptions + supervisor verification. Then P2-04 visit documentation, P2-05
-open shifts, P2-02 real-time + background jobs, P2-06+ mobile app. Human-only tasks (P2-11 Twilio/Firebase) are skipped
-until the owner acts. The owner asked for autonomous work: go straight on, check in ~every 4 hours.
+**Phase 2 — EVV & mobile.** P2-01 is done. Next: **P2-04** visit documentation API (notes with signing, vitals,
+task checklists), then P2-05 open shifts, P2-02 real-time (Socket.IO) + background jobs (late/no-show, recurring
+window), P2-03 live monitor page, P2-06+ mobile app. A web EVV review screen (list needing review, verify/reject,
+corrections) is worth adding with P2-03. Human-only tasks (P2-11 Twilio/Firebase) are skipped until the owner acts.
+The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
 
@@ -78,6 +80,7 @@ until the owner acts. The owner asked for autonomous work: go straight on, check
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P2-01 | EVV API (clock in/out, flags, verify, corrections), 10 e2e tests. |
 | 2026-09-28 | Claude Code | P1-22 | Browser tests in CI (green), README refresh. Phase 1 complete. |
 | 2026-09-28 | Claude Code | P1-21 | Scheduling calendar screens; CI green, merged. |
 | 2026-09-28 | Claude Code | P1-20 | Staff/users/physicians screens; agency clock; CI green, merged. |
