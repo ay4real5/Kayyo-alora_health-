@@ -20,7 +20,7 @@ interface Message {
 }
 interface Conversation {
   id: string;
-  type: 'direct' | 'group';
+  type: 'direct' | 'group' | 'portal';
   subject: string | null;
   patient: Person | null;
   participants: (Person & { left: boolean })[];
@@ -54,6 +54,7 @@ export default function MessagesPage() {
   });
 
   const title = (c: Conversation) =>
+    (c.type === 'portal' && c.patient ? `Portal · ${name(c.patient)}` : null) ??
     c.subject ??
     (c.participants
       .filter((p) => p.id !== user?.id)
@@ -207,6 +208,11 @@ function ConversationPane({
           </Button>
         )}
       </div>
+      {conversation?.type === 'portal' && (
+        <p className="border-b border-sky-100 bg-sky-50 px-5 py-2 text-xs text-sky-900">
+          Patient portal: the patient&apos;s family member reads your replies here. Keep it to what they need to know.
+        </p>
+      )}
       <ErrorAlert error={messages.error ?? send.error ?? leave.error} />
       <ol aria-label="Messages" className="flex flex-1 flex-col-reverse gap-3 overflow-y-auto px-5 py-4" style={{ maxHeight: '32rem' }}>
         {messages.data?.map((m) => {
