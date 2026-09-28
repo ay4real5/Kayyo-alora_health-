@@ -3907,6 +3907,156 @@
         ]
       }
     },
+    "/api/v1/billing/eligibility": {
+      "get": {
+        "operationId": "EligibilityController_list",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      },
+      "post": {
+        "operationId": "EligibilityController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEligibilityCheckDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Makes the 270 for the patient's primary payer. 422 ELIGIBILITY_INCOMPLETE lists what's missing.",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/eligibility/responses": {
+      "post": {
+        "operationId": "EligibilityController_respond",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EligibilityResponseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "A 271 answer; filed on the request with the same trace number.",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/eligibility/{id}": {
+      "get": {
+        "operationId": "EligibilityController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/eligibility/{id}/270": {
+      "get": {
+        "operationId": "EligibilityController_request270",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The 270 file, to send through the clearinghouse portal until P3-08 connects it.",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/api/v1/evv/clock-in": {
       "post": {
         "operationId": "EvvController_clockIn",
@@ -8333,6 +8483,34 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "CreateEligibilityCheckDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serviceDate": {
+            "type": "string",
+            "description": "The date coverage is asked about (default: today in the agency's timezone)."
+          }
+        },
+        "required": [
+          "patientId"
+        ]
+      },
+      "EligibilityResponseDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 1000000
+          }
+        },
+        "required": [
+          "content"
         ]
       },
       "ClockDto": {
