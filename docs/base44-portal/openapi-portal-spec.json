@@ -2251,6 +2251,80 @@
           }
         }
       },
+      "UploadDocumentDto": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "consent",
+              "care_plan",
+              "physician_order",
+              "assessment",
+              "insurance_card",
+              "identification",
+              "credential",
+              "policy",
+              "correspondence",
+              "other"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "staffId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "visitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "replacesDocumentId": {
+            "type": "string",
+            "description": "Upload as a new version of this document (inherits its links and type).",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "documentType",
+          "title"
+        ]
+      },
+      "SignDocumentDto": {
+        "type": "object",
+        "properties": {
+          "typedName": {
+            "type": "string",
+            "description": "The signer types their full name (the e-signature).",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "typedName"
+        ]
+      },
+      "DeleteDocumentDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
       "CreateVisitNoteDto": {
         "type": "object",
         "properties": {

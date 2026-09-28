@@ -4716,6 +4716,252 @@
         ]
       }
     },
+    "/api/v1/documents": {
+      "get": {
+        "operationId": "DocumentsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "patientId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "staffId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "visitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "consent",
+                "care_plan",
+                "physician_order",
+                "assessment",
+                "insurance_card",
+                "identification",
+                "credential",
+                "policy",
+                "correspondence",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "includeDeleted",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      },
+      "post": {
+        "operationId": "DocumentsController_upload",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{id}": {
+      "get": {
+        "operationId": "DocumentsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      },
+      "delete": {
+        "operationId": "DocumentsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{id}/versions": {
+      "get": {
+        "operationId": "DocumentsController_versions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{id}/download": {
+      "get": {
+        "operationId": "DocumentsController_download",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{id}/sign": {
+      "post": {
+        "operationId": "DocumentsController_sign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
     "/api/v1/schedule/visits/{visitId}/notes": {
       "get": {
         "operationId": "VisitDocsController_listNotes",
@@ -7560,6 +7806,80 @@
             "maxLength": 2000
           }
         }
+      },
+      "UploadDocumentDto": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "consent",
+              "care_plan",
+              "physician_order",
+              "assessment",
+              "insurance_card",
+              "identification",
+              "credential",
+              "policy",
+              "correspondence",
+              "other"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "staffId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "visitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "replacesDocumentId": {
+            "type": "string",
+            "description": "Upload as a new version of this document (inherits its links and type).",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "documentType",
+          "title"
+        ]
+      },
+      "SignDocumentDto": {
+        "type": "object",
+        "properties": {
+          "typedName": {
+            "type": "string",
+            "description": "The signer types their full name (the e-signature).",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "typedName"
+        ]
+      },
+      "DeleteDocumentDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "CreateVisitNoteDto": {
         "type": "object",
