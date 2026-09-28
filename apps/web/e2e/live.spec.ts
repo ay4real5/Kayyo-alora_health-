@@ -45,11 +45,12 @@ test('a supervisor reviews flagged EVV records: verify one, request a correction
   const short = page.getByRole('row').filter({ hasText: 'Visit much shorter than scheduled' });
   await short.getByRole('link').click();
   await page.getByLabel('Which time').selectOption('clock_out_time');
+  // 23:30 yesterday: after every seeded clock-in (those are daytime), and never in the future.
   await page.getByLabel('Corrected time').fill(
     await page.evaluate(() => {
-      const d = new Date(Date.now() - 20 * 3_600_000);
-      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-      return d.toISOString().slice(0, 16);
+      const d = new Date(Date.now() - 86_400_000);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T23:30`;
     }),
   );
   await page.getByLabel('Reason').fill('Phone died; the patient confirmed a full visit');

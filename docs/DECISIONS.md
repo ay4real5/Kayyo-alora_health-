@@ -667,3 +667,21 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   layout; portal users can't reach staff pages and vice versa.
 - **Google Maps key**: the owner will provide it later; until then patient map points are entered by hand and the map
   uses OpenStreetMap (D-042).
+
+### D-045 — Mandatory 2FA for admins (P1-11c)
+2026-09-28 · Claude Code
+- Roles `agency_admin` and `super_admin` (`MANDATORY_TWO_FACTOR_ROLES` in `@alora/shared`) must use 2FA.
+- An admin without 2FA can still sign in (they need a session to set it up), but tokens are issued with a
+  setup-only claim: every route answers **403 `TWO_FACTOR_SETUP_REQUIRED`** except those marked
+  `@AllowDuringTwoFactorSetup()` — `/auth/me`, `/auth/2fa/setup`, `/auth/2fa/enable`, `/auth/change-password`
+  (plus the public refresh/logout). Sockets are refused too. Login/refresh responses carry `mustEnable2fa`;
+  `/auth/me` carries `is2faRequired`.
+- The claim is computed from the database whenever tokens are issued, so after enabling 2FA the client refreshes and
+  the restriction is gone; if an admin's 2FA is reset, the next token is restricted again. Admins can't turn 2FA off.
+- Web: login sends such admins to **`/setup-two-factor`** (QR code drawn in the browser from the otpauth URI — the
+  secret never goes to a third party — the key as text, code confirmation, backup codes), and the app shell redirects
+  there too. Any user may open the page to turn 2FA on voluntarily.
+- Demo data: the demo admins have 2FA on with the published demo key `JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP` (fake data;
+  the seed refuses production). Tests: API suites sign admins in through `test/login-helper.ts`, which performs the
+  real setup; browser tests compute codes from the demo key (`e2e/two-factor.ts`) and wait for the next code when a
+  second sign-in in the same 30 s is refused as a replay.

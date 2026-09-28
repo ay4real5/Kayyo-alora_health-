@@ -78,11 +78,14 @@ Sign in with a demo login (password `Demo-Password-1!`, development only):
 
 | Login | Sees |
 |---|---|
-| `agency.admin@demo.alora.test` | everything, including users and pay |
+| `agency.admin@demo.alora.test` | everything, including users and pay — **needs a 2FA code** (below) |
 | `supervisor@demo.alora.test` | clinical + scheduling; can override schedule conflicts |
 | `office.staff@demo.alora.test` | patients, staff, scheduling; no pay, no users |
 | `billing.staff@demo.alora.test` | patients (read-only) and billing |
 | `rn@demo.alora.test`, `hha@demo.alora.test`, `pt@demo.alora.test`… | only their own patients and visits |
+
+Admins must use two-factor authentication. For the demo admin, add this key to an authenticator app (Google
+Authenticator, Microsoft Authenticator…) as "Alora demo": `JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP` (demo data only).
 
 Tests: `npm run test` (unit), `npm run test:e2e -w @alora/api` (API, needs a database),
 `npm run test:e2e -w @alora/web` (browser, needs the API and dashboard running). More commands:
