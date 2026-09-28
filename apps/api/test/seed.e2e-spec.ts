@@ -99,6 +99,15 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
     );
 
     await login('billing.staff@demo.alora.test');
+
+    // The demo family member sees their patient's plan of care and medications in the portal.
+    const family = await login('family@demo.alora.test');
+    const me = (await http().get('/api/v1/portal/me').set(family).expect(200)).body.data;
+    expect(me.patients).toHaveLength(1);
+    const base = `/api/v1/portal/patients/${me.patients[0].id}`;
+    expect((await http().get(`${base}/care-plan`).set(family).expect(200)).body.data.goals).toHaveLength(2);
+    expect((await http().get(`${base}/medications`).set(family).expect(200)).body.data).toHaveLength(2);
+    expect((await http().get(`${base}/messages`).set(family).expect(200)).body.data.messages).toHaveLength(2);
     // Admins have 2FA on; nobody else is forced.
     expect(await prisma.user.count({ where: { agencyId: DEMO_AGENCY_ID, is2faEnabled: true } })).toBe(2);
   });

@@ -942,3 +942,28 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   Push/SMS follow when P2-11 providers exist. Messages are never edited or deleted (record retention).
 - Attachments: `documentId` of a document the sender can see (uploaded via /documents); the web page doesn't offer
   attaching yet.
+
+### D-058 — Patient & family portal (P3-14, P3-16)
+2026-09-28 · Claude Code
+- **Accounts**: staff with `patients:update` give access from the patient page: email + name → a `portal_user` account
+  with a **temporary password shown once** (three groups of four unambiguous characters, meets the policy) that must be
+  changed at first sign-in. One account per family member; linking the same email to another patient of the agency
+  reuses it (no new password). An email used by staff or another agency → 409 (without saying which). Reset = new
+  temporary password + all sessions revoked. Removing access unlinks; an account with no patients left is deactivated
+  and signed out. `patients.portal_user_id` stays one portal account per patient. Invitation emails wait for P2-11.
+- **API** (`/portal`, guard: role `portal_user`; staff get 403, and portal users hold no permissions so every staff
+  route is 403 for them). Every patient route re-checks `patients.portal_user_id = caller` on each request, so
+  removing access takes effect immediately even with a live token. All portal reads are audited (`PORTAL_VIEW_*`).
+- **What they see** (deliberately narrow): name, DOB, contact/address, emergency contact, physician; visits 30 days
+  back/ahead with caregiver as "First L."; the active plan of care (goals, interventions, visit frequency); active
+  medications (no notes); **only documents staff marked `shared_with_patient`** (off by default, set on upload or
+  toggled; must be about a patient; new versions inherit it); messages. Never SSN, insurance/Medicaid IDs, clinical
+  notes, assessments, EVV locations, staff contact details.
+- **Messages**: one `portal` conversation per (patient, portal user). Each family message (re)adds every active user
+  holding the new **`messages:portal`** permission (supervisor, office staff, admins) as participants and sends them
+  an in-app alert without content; they answer from the normal Messages page, where the thread is labelled
+  "Portal · <patient>" with a reminder that the family reads it. Staff can't add portal users to other conversations.
+- **Web**: `/portal` has its own layout (patient switcher for families with several patients, phone-friendly menu,
+  "not for emergencies" notice); the staff shell sends portal users to `/portal` and the portal sends staff to `/`.
+- **Known gap**: the forced password change is enforced by the clients only; the API doesn't yet restrict a session
+  still on a temporary password (P4-09). Fixed a login-page race that could skip the forced change entirely.
