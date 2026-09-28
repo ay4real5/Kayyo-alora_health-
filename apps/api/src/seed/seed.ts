@@ -42,6 +42,8 @@ try {
           new Uint8Array(encryptPhi(ssn, kind === 'patient' ? PhiContext.PatientSsn : PhiContext.StaffSsn, keyring))
       : undefined,
   });
+  // Reports read a materialized view (D-065); refresh it so the demo's numbers show straight away.
+  await prisma.$executeRawUnsafe('REFRESH MATERIALIZED VIEW mv_daily_visit_summary');
   console.log('\nDemo agency seeded (all data is FAKE).\n');
   console.table(summary.counts);
   console.log(`Password for every demo login: ${summary.password}\n`);

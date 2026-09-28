@@ -13,7 +13,9 @@ test('billing staff read the reports dashboard, switch ranges, see the table vie
 
   const numbers = page.getByRole('region', { name: 'Key numbers' });
   await expect(numbers.getByText('Active patients')).toBeVisible({ timeout: 30_000 }); // first visit compiles the page in dev
-  await expect(numbers).toContainText('27', { timeout: 15_000 }); // the demo agency's active patients
+  // Other tests admit patients and complete visits, so check the shape, not exact counts.
+  await expect(numbers).toContainText(/Active patients\d+/, { timeout: 15_000 });
+  await expect(numbers).toContainText(/Visits completed\d+(\.\d)?%/);
   await expect(numbers.getByText('Outstanding')).toBeVisible(); // billing sees money
   await expect(page.getByRole('img', { name: /Visits per day/ })).toBeVisible();
   if (process.env.REPORTS_SCREENSHOT) await page.screenshot({ path: process.env.REPORTS_SCREENSHOT, fullPage: true });
