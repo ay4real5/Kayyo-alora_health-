@@ -77,8 +77,8 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-14** `agent` Portal module (`/portal/*`, portal_user guard scoped to own patient). deps: P3-11, P3-12, P3-13
 - [x] **P3-15** `agent` ~~Base44 docs~~ Not needed after D-044; instead retire `docs/base44-portal/` and the portal spec export once P3-16 ships. deps: P3-16
 - [x] **P3-16** `agent` Build the patient portal screens in `apps/web` (own layout, `portal_user` only) — replaces the Base44 plan (D-044). deps: P3-14
-- [ ] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03
-- [ ] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12
+- [x] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03 — done within P3-03…P3-10 (Billing menu + eligibility panel on the patient page)
+- [x] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12 — done within P3-11/P3-12 (panels on the patient page)
 - [ ] **P3-19** `agent` Email channel (SendGrid). deps: P2-12
 
 ## Phase 4 — Analytics, compliance, hardening
