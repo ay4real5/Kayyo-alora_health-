@@ -29,6 +29,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Clinical supervisor: all clinical and scheduling work, approvals, live monitoring. No billing/payroll. */
   supervisor: [
+    'medications:manage',
     'authorizations:read',
     'authorizations:manage',
     'patients:create',
@@ -73,6 +74,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   ],
 
   registered_nurse: [
+    'medications:manage',
     ...CLINICAL_BASE,
     'care_plans:create',
     'care_plans:update',
@@ -84,7 +86,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   ],
 
   /** LPN/LVN: like an RN but cannot write care plans or physician orders. */
-  licensed_nurse: [...CLINICAL_BASE, 'assessments:create', 'assessments:update', 'documents:sign'],
+  licensed_nurse: [...CLINICAL_BASE, 'assessments:create', 'assessments:update', 'documents:sign', 'medications:manage'],
 
   therapist: [...CLINICAL_BASE, 'assessments:create', 'assessments:update', 'documents:sign'],
 

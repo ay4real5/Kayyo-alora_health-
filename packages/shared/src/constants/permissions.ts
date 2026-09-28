@@ -11,6 +11,8 @@ export const PERMISSION_CATALOGUE = {
   care_plans: ['create', 'update'],
   assessments: ['create', 'update', 'approve'],
   orders: ['create', 'update'],
+  /** Patient medication list (reconciliation) — nurses and supervisors (D-055). */
+  medications: ['manage'],
   staff: ['create', 'read', 'update', 'delete'],
   time_off: ['approve'],
   /** read = the caller's own visits; read_all = every visit in the agency (D-030). approve = override conflicts. */

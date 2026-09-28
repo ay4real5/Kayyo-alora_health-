@@ -88,7 +88,14 @@
 
 ## In progress
 
-Nothing.
+**P3-11** clinical records — branch `task/P3-11-clinical`.
+- Done: tables `medications`, `physician_orders`, `care_plans`, `assessments` (migration applied to Neon);
+  `PatientsService.assertAccessible`; shared `ASSESSMENT_TYPES` + Morse/Braden scoring (unit-tested);
+  permission `medications:manage` (supervisor, RN, LPN).
+- Next: `clinical` module — medications (add/update/discontinue), physician orders (pending → sent → signed,
+  overdue after 30 days), care plans (draft → active supersedes previous version), assessments (draft → completed →
+  approved by someone else; score via `scoreAssessment`); reads use `patients:read` + `assertAccessible`; e2e tests;
+  web panels on the patient page; D-055; seed wipe is covered by patient cascade.
 
 ## Next up
 
