@@ -42,6 +42,19 @@ describe('validateEnv', () => {
       PHI_ENCRYPTION_KEY: newKey(),
     });
     expect(env.APP_ENV).toBe(AppEnv.Production);
+    expect(env.RATE_LIMITS_DISABLED).toBe(false);
+  });
+
+  it('allows switching rate limits off only outside production (CI browser tests)', () => {
+    expect(validateEnv({ RATE_LIMITS_DISABLED: 'true' }).RATE_LIMITS_DISABLED).toBe(true);
+    expect(() =>
+      validateEnv({
+        APP_ENV: 'production',
+        DATABASE_URL: 'postgresql://u:p@db:5432/x',
+        PHI_ENCRYPTION_KEY: newKey(),
+        RATE_LIMITS_DISABLED: 'true',
+      }),
+    ).toThrow(/RATE_LIMITS_DISABLED: not allowed in production/);
   });
 
   it('rejects a malformed PHI key without echoing it', () => {

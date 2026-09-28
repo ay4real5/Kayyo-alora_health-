@@ -1006,3 +1006,6 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   `billing:read` (as DESIGN.md §6.10), recording answers `billing:update`.
 - **Until P3-08** staff send the 270 through the clearinghouse's portal and upload the 271; P3-08 adds a transport that
   sends and polls automatically, using the same records. Batch checks (many subscribers in one 270) come with it.
+- CI note (same day): the browser suite now signs in more than 30 times a minute from one IP, which the sign-in limit
+  (30/min) rightly refuses. `RATE_LIMITS_DISABLED=true` (env, validated; **refused when APP_ENV=production**) turns the
+  throttler off for that CI job only. Production and the API e2e tests keep the limits.
