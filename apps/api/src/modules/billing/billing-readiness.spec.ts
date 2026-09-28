@@ -48,6 +48,7 @@ describe('evaluate', () => {
 
   it('explains each missing piece', () => {
     expect(failing({ visitStatus: 'in_progress' })).toEqual(['visit_completed:error']);
+    expect(failing({ alreadyBilledOn: 'C123' })).toEqual(['not_billed:error']);
     expect(failing({ evvStatus: 'exception' })).toEqual(['evv_verified:error']);
     expect(failing({ hasFinalNote: false })).toEqual(['note_finalised:error']);
     expect(failing({ serviceCode: null })).toEqual(['service_code:error']);

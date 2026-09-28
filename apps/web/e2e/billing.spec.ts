@@ -70,3 +70,32 @@ test('pre-billing QA shows ready visits and what blocks the rest', async ({ page
   await expect(table.getByText('Blocked', { exact: true })).toHaveCount(0);
   await expect(table.getByText('Ready', { exact: true }).first()).toBeVisible();
 });
+
+test('billing creates claims from ready visits, opens one and voids it', async ({ page }) => {
+  await signIn(page, 'billing.staff@demo.alora.test');
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Ready to bill' })
+    .click();
+  await page.getByRole('button', { name: 'Create claims for ready visits' }).click();
+  // One claim per patient: several round trips to the database.
+  await expect(page.getByRole('status').filter({ hasText: /Created \d+ claims?/ })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.getByRole('link', { name: 'See claims' }).click();
+  await expect(page.getByRole('heading', { name: 'Claims' })).toBeVisible();
+
+  const first = page.getByRole('table').getByRole('link').first();
+  const claimNumber = (await first.textContent())!.trim();
+  await first.click();
+  await expect(page.getByRole('heading', { name: new RegExp(claimNumber) })).toBeVisible();
+  await expect(
+    page.getByRole('table', { name: 'Claim lines' }).getByText('G0156').first(),
+  ).toBeVisible();
+
+  await page.getByLabel('Void reason').fill('Playwright test');
+  page.once('dialog', (d) => void d.accept());
+  await page.getByRole('button', { name: 'Void claim' }).click();
+  await expect(page.getByText('Playwright test')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Void claim' })).toHaveCount(0);
+});

@@ -1,0 +1,69 @@
+import { Transform } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
+import { trimmed } from '../../../common/validators/fields.js';
+import { IsDateOnly } from '../../../common/validators/is-date-only.js';
+
+export const CLAIM_STATUSES = [
+  'draft',
+  'ready',
+  'submitted',
+  'acknowledged',
+  'rejected',
+  'paid',
+  'partially_paid',
+  'denied',
+  'void',
+] as const;
+
+/** Either specific visits, or every ready, unbilled completed visit in a date range (optionally one payer). */
+export class CreateClaimsDto {
+  @IsOptional()
+  @IsUUID('all', { each: true })
+  @ArrayMinSize(1)
+  @ArrayMaxSize(500)
+  visitIds?: string[];
+
+  @IsOptional()
+  @IsDateOnly()
+  from?: string;
+
+  @IsOptional()
+  @IsDateOnly()
+  to?: string;
+
+  @IsOptional()
+  @IsUUID()
+  payerId?: string;
+}
+
+export class ListClaimsQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsIn(CLAIM_STATUSES)
+  status?: string;
+
+  @IsOptional()
+  @IsUUID()
+  payerId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  patientId?: string;
+}
+
+export class VoidClaimDto {
+  @Transform(trimmed)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  reason!: string;
+}

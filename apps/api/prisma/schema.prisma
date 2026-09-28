@@ -51,6 +51,7 @@ model Agency {
   evvRecords      EvvRecord[]
   openShifts      OpenShift[]
   serviceCodes    ServiceCode[]
+  claims          Claim[]
   swapRequests    ShiftSwapRequest[]
   notifications   Notification[]
 
@@ -91,6 +92,8 @@ model User {
   openShiftsAssigned   OpenShift[]         @relation("OpenShiftAssignedBy")
   openShiftsCreated    OpenShift[]         @relation("OpenShiftCreatedBy")
   swapsDecided         ShiftSwapRequest[]  @relation("SwapDecidedBy")
+  claimsCreated        Claim[]             @relation("ClaimCreatedBy")
+  claimsSubmitted      Claim[]             @relation("ClaimSubmittedBy")
   visitNotesAuthored   VisitNote[]         @relation("VisitNoteAuthor")
   visitNotesSigned     VisitNote[]         @relation("VisitNoteSignedBy")
   visitNotesQaReviewed VisitNote[]         @relation("VisitNoteQaReviewedBy")
@@ -275,6 +278,8 @@ model Patient {
   evvRecords       EvvRecord[]
 
   /// Medical record numbers are unique within an agency (NULLs allowed — MRN is optional).
+  claims Claim[]
+
   @@unique([agencyId, mrn])
   @@index([agencyId])
   @@index([agencyId, status])
@@ -369,6 +374,7 @@ model Payer {
   secondaryPatients Patient[]       @relation("PatientPayerSecondary")
   authorizations    Authorization[]
   rates             PayerRate[]
+  claims            Claim[]
 
   @@index([agencyId])
   @@map("payers")
@@ -531,6 +537,94 @@ model PayerRate {
   @@map("payer_rates")
 }
 
+// ─────────────────────────────── Claims (§5.6, DECISIONS D-052) ───────────────────────────────
+
+/// A bill to one payer for one patient over a period. A snapshot: codes, diagnoses and amounts are fixed at creation.
+model Claim {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId              String    @map("agency_id") @db.Uuid
+  patientId             String    @map("patient_id") @db.Uuid
+  payerId               String    @map("payer_id") @db.Uuid
+  claimNumber           String    @map("claim_number") @db.VarChar(20)
+  /// 837P | 837I
+  claimType             String    @map("claim_type") @db.VarChar(10)
+  /// draft | ready | submitted | acknowledged | rejected | paid | partially_paid | denied | void
+  status                String    @default("draft") @db.VarChar(30)
+  /// 1 original, 7 replacement, 8 void (X12 CLM05-3)
+  frequencyCode         String    @default("1") @map("frequency_code") @db.VarChar(1)
+  billingPeriodStart    DateTime  @map("billing_period_start") @db.Date
+  billingPeriodEnd      DateTime  @map("billing_period_end") @db.Date
+  totalCharges          Decimal   @default(0) @map("total_charges") @db.Decimal(10, 2)
+  totalPaid             Decimal   @default(0) @map("total_paid") @db.Decimal(10, 2)
+  totalAdjustments      Decimal   @default(0) @map("total_adjustments") @db.Decimal(10, 2)
+  patientResponsibility Decimal   @default(0) @map("patient_responsibility") @db.Decimal(10, 2)
+  /// The payer's member ID for the patient, as billed.
+  memberId              String?   @map("member_id") @db.VarChar(50)
+  /// ICD-10 codes as billed, primary first (max 12).
+  diagnosisCodes        String[]  @map("diagnosis_codes")
+  /// The claim this replaces (frequency 7) — rebills.
+  originalClaimId       String?   @map("original_claim_id") @db.Uuid
+  submittedAt           DateTime? @map("submitted_at") @db.Timestamptz(6)
+  submittedById         String?   @map("submitted_by") @db.Uuid
+  payerClaimNumber      String?   @map("payer_claim_number") @db.VarChar(100)
+  denialReasonCode      String?   @map("denial_reason_code") @db.VarChar(20)
+  denialReason          String?   @map("denial_reason")
+  qaPassed              Boolean?  @map("qa_passed")
+  qaErrors              Json?     @map("qa_errors")
+  qaReviewedAt          DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
+  voidReason            String?   @map("void_reason")
+  notes                 String?
+  createdById           String    @map("created_by") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency        Agency      @relation(fields: [agencyId], references: [id])
+  patient       Patient     @relation(fields: [patientId], references: [id])
+  payer         Payer       @relation(fields: [payerId], references: [id])
+  createdBy     User        @relation("ClaimCreatedBy", fields: [createdById], references: [id])
+  submittedBy   User?       @relation("ClaimSubmittedBy", fields: [submittedById], references: [id])
+  originalClaim Claim?      @relation("ClaimReplacements", fields: [originalClaimId], references: [id])
+  replacements  Claim[]     @relation("ClaimReplacements")
+  lines         ClaimLine[]
+
+  @@unique([agencyId, claimNumber])
+  @@index([agencyId, status])
+  @@index([patientId])
+  @@index([payerId, status])
+  @@map("claims")
+}
+
+/// One billed service (one visit). A visit can be on only one active line (partial unique index).
+model ClaimLine {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId              String   @map("claim_id") @db.Uuid
+  visitId              String?  @map("visit_id") @db.Uuid
+  lineNumber           Int      @map("line_number")
+  serviceCode          String   @map("service_code") @db.VarChar(20)
+  revenueCode          String?  @map("revenue_code") @db.VarChar(4)
+  modifier1            String?  @map("modifier1") @db.VarChar(5)
+  modifier2            String?  @map("modifier2") @db.VarChar(5)
+  serviceDate          DateTime @map("service_date") @db.Date
+  units                Decimal  @default(1) @db.Decimal(8, 2)
+  unitRate             Decimal  @map("unit_rate") @db.Decimal(10, 2)
+  chargeAmount         Decimal  @map("charge_amount") @db.Decimal(10, 2)
+  paidAmount           Decimal  @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  adjustmentAmount     Decimal  @default(0) @map("adjustment_amount") @db.Decimal(10, 2)
+  diagnosisPointers    Int[]    @default([1]) @map("diagnosis_pointers")
+  placeOfService       String   @default("12") @map("place_of_service") @db.VarChar(2)
+  renderingProviderNpi String?  @map("rendering_provider_npi") @db.VarChar(10)
+  /// False once the claim is voided — the visit can then be billed again.
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  claim Claim  @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  visit Visit? @relation(fields: [visitId], references: [id])
+
+  @@unique([visitId], map: "claim_lines_one_active_per_visit", where: raw("active"))
+  @@index([claimId])
+  @@map("claim_lines")
+}
+
 // ─────────────────────────────── Scheduling (§5.4, core subset) ───────────────────────────────
 
 model Visit {
@@ -573,6 +667,7 @@ model Visit {
   visitNotes     VisitNote[]
   vitals         VisitVital[]
   tasks          VisitTask[]
+  claimLines     ClaimLine[]
 
   /// At most one occurrence per recurring rule per date — generation can be re-run safely (D-031).
   @@unique([recurrenceRuleId, scheduledDate])

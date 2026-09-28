@@ -52,3 +52,38 @@ export interface Authorization {
   remaining: { visits: number | null; hours: number | null };
   notes: string | null;
 }
+
+export interface ClaimLine {
+  id: string;
+  lineNumber: number;
+  visitId: string | null;
+  serviceCode: string;
+  modifier1: string | null;
+  serviceDate: string;
+  units: number;
+  unitRate: number;
+  chargeAmount: number;
+  placeOfService: string;
+  active: boolean;
+}
+
+export interface Claim {
+  id: string;
+  claimNumber: string;
+  claimType: string;
+  status: string;
+  frequencyCode: string;
+  patient: { id: string; firstName: string; lastName: string; mrn: string | null };
+  payer: { id: string; name: string; payerType: string };
+  memberId: string | null;
+  diagnosisCodes: string[];
+  billingPeriodStart: string;
+  billingPeriodEnd: string;
+  totalCharges: number;
+  totalPaid: number;
+  qaPassed: boolean | null;
+  qaErrors: { visitId: string; messages: string[] }[] | null;
+  voidReason: string | null;
+  lines: ClaimLine[];
+  createdAt: string;
+}

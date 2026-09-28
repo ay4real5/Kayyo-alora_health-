@@ -33,6 +33,10 @@ const VISIT_INCLUDE = {
   staff: { select: { id: true, user: { select: { firstName: true, lastName: true } } } },
   evvRecords: { select: { status: true } },
   visitNotes: { where: { status: { in: ['signed', 'submitted'] } }, select: { id: true }, take: 1 },
+  claimLines: {
+    where: { active: true },
+    select: { claimId: true, claim: { select: { claimNumber: true } } },
+  },
   authorization: {
     select: {
       id: true,
@@ -109,10 +113,29 @@ export class BillingReadinessService {
     };
   }
 
+  /**
+   * Readiness for specific completed visits (claims use this). `ignoreClaimId`: don't count the visit's line on this
+   * claim as "already billed" — when re-checking a claim's own visits.
+   */
+  async evaluateVisits(
+    agencyId: string,
+    visitIds: string[],
+    ignoreClaimId?: string,
+  ): Promise<BillableVisit[]> {
+    const today = await this.clock.todayString(agencyId);
+    const visits = await this.prisma.visit.findMany({
+      where: { agencyId, id: { in: visitIds } },
+      include: VISIT_INCLUDE,
+      orderBy: [{ scheduledDate: 'asc' }, { scheduledStart: 'asc' }],
+    });
+    return this.evaluateAll(agencyId, visits, today, ignoreClaimId);
+  }
+
   private async evaluateAll(
     agencyId: string,
     visits: VisitRow[],
     today: string,
+    ignoreClaimId?: string,
   ): Promise<BillableVisit[]> {
     const [agency, codes] = await Promise.all([
       this.prisma.agency.findUniqueOrThrow({ where: { id: agencyId }, select: { npi: true } }),
@@ -152,6 +175,8 @@ export class BillingReadinessService {
       const auth = v.authorization;
       const readiness = evaluate({
         visitStatus: v.status,
+        alreadyBilledOn:
+          v.claimLines.find((l) => l.claimId !== ignoreClaimId)?.claim.claimNumber ?? null,
         serviceDate: date,
         minutes,
         evvStatus: v.evvRecords[0]?.status ?? null,

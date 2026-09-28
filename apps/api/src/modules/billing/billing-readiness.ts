@@ -5,6 +5,7 @@
 
 export type CheckCode =
   | 'visit_completed'
+  | 'not_billed'
   | 'evv_verified'
   | 'note_finalised'
   | 'service_code'
@@ -26,6 +27,8 @@ export interface Check {
 
 export interface ReadinessFacts {
   visitStatus: string;
+  /** Claim number of an active claim this visit is already on, if any. */
+  alreadyBilledOn?: string | null;
   serviceDate: string;
   /** Minutes actually worked (EVV) — or scheduled when unknown. */
   minutes: number;
@@ -84,7 +87,7 @@ export function billingUnits(unitType: string, minutes: number): number {
   }
 }
 
-function memberIdFor(payerType: string, ids: ReadinessFacts['memberIds']): string | null {
+export function memberIdFor(payerType: string, ids: ReadinessFacts['memberIds']): string | null {
   if (payerType === 'medicaid' || payerType === 'medicaid_mco')
     return ids.medicaidId ?? ids.insuranceMemberId;
   if (payerType === 'medicare') return ids.medicareBeneficiaryId;
@@ -106,6 +109,7 @@ export function evaluate(f: ReadinessFacts): Readiness {
     f.visitStatus === 'completed',
     `The visit is ${f.visitStatus.replace('_', ' ')}`,
   );
+  if (f.alreadyBilledOn) check('not_billed', false, `Already billed on claim ${f.alreadyBilledOn}`);
   check(
     'evv_verified',
     f.evvStatus === 'verified',
