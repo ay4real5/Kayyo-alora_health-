@@ -67,3 +67,16 @@ export class VoidClaimDto {
   @MaxLength(1000)
   reason!: string;
 }
+
+export class Upload835Dto {
+  @Transform(trimmed)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  fileName!: string;
+
+  /** The 835 file's text (up to 5 MB). */
+  @IsString()
+  @IsNotEmpty()
+  content!: string;
+}

@@ -77,7 +77,11 @@ describe('parse835', () => {
   });
 
   it('uses the separators declared in ISA, with or without line breaks', () => {
-    const other = sample.replaceAll('\n', '').replaceAll('*', '|').replaceAll('~', '\\').replaceAll(':', '>');
+    const other = sample
+      .replaceAll('\n', '')
+      .replaceAll('*', '|')
+      .replaceAll('~', '\\')
+      .replaceAll(':', '>');
     expect(parse835(other)).toEqual(expected);
   });
 

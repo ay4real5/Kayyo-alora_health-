@@ -19,7 +19,14 @@ import { BillingReadinessService } from './billing-readiness.service.js';
 import { BillingSetupService } from './billing-setup.service.js';
 import { ClaimsService } from './claims.service.js';
 import { EdiService } from './edi.service.js';
-import { CreateClaimsDto, ListClaimsQueryDto, VoidClaimDto } from './dto/claims.dto.js';
+import { PaymentsService } from './payments.service.js';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto.js';
+import {
+  CreateClaimsDto,
+  ListClaimsQueryDto,
+  Upload835Dto,
+  VoidClaimDto,
+} from './dto/claims.dto.js';
 import {
   AuthorizationDto,
   EndPayerRateDto,
@@ -240,5 +247,41 @@ export class ClaimsController {
     @Body() dto: VoidClaimDto,
   ) {
     return this.claims.void(caller, id, dto.reason);
+  }
+}
+
+/** 835 remittances and payments (DESIGN.md §6.7, DECISIONS D-054). */
+@ApiTags('billing')
+@Controller('billing')
+export class PaymentsController {
+  constructor(private readonly payments: PaymentsService) {}
+
+  /** Loads an 835: stored, parsed, matched to claims by claim number. Nothing is applied until it's posted. */
+  @Permissions('billing:create')
+  @Audit({ action: 'UPLOAD_835', resourceType: 'payments' })
+  @Post('edi-files/upload-835')
+  upload835(@CurrentUser() caller: AuthUser, @Body() dto: Upload835Dto) {
+    return this.payments.upload835(caller, dto.fileName, dto.content);
+  }
+
+  @Permissions('billing:read')
+  @Get('payments')
+  list(@CurrentUser() caller: AuthUser, @Query() query: PaginationQueryDto) {
+    return this.payments.list(caller, query);
+  }
+
+  @Permissions('billing:read')
+  @Get('payments/:id')
+  get(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string) {
+    return this.payments.get(caller, id);
+  }
+
+  /** Applies the payment to its claims (once): paid, partially paid or denied. */
+  @Permissions('billing:update')
+  @Audit({ action: 'POST_PAYMENT', resourceType: 'payments' })
+  @Post('payments/:id/post')
+  @HttpCode(HttpStatus.OK)
+  post(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string) {
+    return this.payments.post(caller, id);
   }
 }

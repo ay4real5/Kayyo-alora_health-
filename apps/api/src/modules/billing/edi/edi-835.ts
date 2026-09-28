@@ -58,7 +58,8 @@ export interface Remittance {
 export class Edi835Error extends Error {}
 
 const num = (v: string | undefined) => (v === undefined || v === '' ? 0 : Number(v));
-const date8 = (v: string | undefined) => (v && /^\d{8}$/.test(v) ? `${v.slice(0, 4)}-${v.slice(4, 6)}-${v.slice(6, 8)}` : null);
+const date8 = (v: string | undefined) =>
+  v && /^\d{8}$/.test(v) ? `${v.slice(0, 4)}-${v.slice(4, 6)}-${v.slice(6, 8)}` : null;
 
 /** CAS: group, then up to six (reason, amount, quantity) triples. */
 function adjustments(el: string[]): Adjustment[] {
@@ -75,7 +76,8 @@ function adjustments(el: string[]): Adjustment[] {
 export function parse835(text: string): Remittance {
   const raw = text.replace(/^﻿/, '');
   const isaAt = raw.indexOf('ISA');
-  if (isaAt < 0 || raw.length < isaAt + 106) throw new Edi835Error('Not an X12 file (no ISA segment)');
+  if (isaAt < 0 || raw.length < isaAt + 106)
+    throw new Edi835Error('Not an X12 file (no ISA segment)');
   const isa = raw.slice(isaAt, isaAt + 106);
   const elementSep = isa[3]!;
   const componentSep = isa[104]!;
