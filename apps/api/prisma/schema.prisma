@@ -39,26 +39,27 @@ model Agency {
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  users           User[]
-  roles           Role[]
-  patients        Patient[]
-  physicians      Physician[]
-  payers          Payer[]
-  staffProfiles   StaffProfile[]
-  visits          Visit[]
-  recurrenceRules RecurrenceRule[]
-  documents       Document[]
-  evvRecords      EvvRecord[]
-  openShifts      OpenShift[]
-  serviceCodes    ServiceCode[]
-  claims          Claim[]
-  ediFiles        EdiFile[]
-  payments        Payment[]
-  swapRequests    ShiftSwapRequest[]
-  notifications   Notification[]
-  conversations   Conversation[]
-  messages        Message[]
-  invoices        Invoice[]
+  users             User[]
+  roles             Role[]
+  patients          Patient[]
+  physicians        Physician[]
+  payers            Payer[]
+  staffProfiles     StaffProfile[]
+  visits            Visit[]
+  recurrenceRules   RecurrenceRule[]
+  documents         Document[]
+  evvRecords        EvvRecord[]
+  openShifts        OpenShift[]
+  serviceCodes      ServiceCode[]
+  claims            Claim[]
+  ediFiles          EdiFile[]
+  payments          Payment[]
+  swapRequests      ShiftSwapRequest[]
+  notifications     Notification[]
+  conversations     Conversation[]
+  messages          Message[]
+  invoices          Invoice[]
+  eligibilityChecks EligibilityCheck[]
 
   @@map("agencies")
 }
@@ -128,6 +129,7 @@ model User {
   messagesSent         Message[]                 @relation("MessageSender")
   invoicesCreated      Invoice[]                 @relation("InvoiceCreatedBy")
   invoicePayments      InvoicePayment[]          @relation("InvoicePaymentRecordedBy")
+  eligibilityChecks    EligibilityCheck[]        @relation("EligibilityRequestedBy")
 
   @@index([agencyId])
   @@map("users")
@@ -300,12 +302,13 @@ model Patient {
   /// Medical record numbers are unique within an agency (NULLs allowed — MRN is optional).
   claims Claim[]
 
-  medications     Medication[]
-  physicianOrders PhysicianOrder[]
-  carePlans       CarePlan[]
-  assessments     Assessment[]
-  conversations   Conversation[]
-  invoices        Invoice[]
+  medications       Medication[]
+  physicianOrders   PhysicianOrder[]
+  carePlans         CarePlan[]
+  assessments       Assessment[]
+  conversations     Conversation[]
+  invoices          Invoice[]
+  eligibilityChecks EligibilityCheck[]
 
   @@unique([agencyId, mrn])
   @@index([agencyId])
@@ -401,13 +404,14 @@ model Payer {
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency            Agency          @relation(fields: [agencyId], references: [id])
-  primaryPatients   Patient[]       @relation("PatientPayerPrimary")
-  secondaryPatients Patient[]       @relation("PatientPayerSecondary")
+  agency            Agency             @relation(fields: [agencyId], references: [id])
+  primaryPatients   Patient[]          @relation("PatientPayerPrimary")
+  secondaryPatients Patient[]          @relation("PatientPayerSecondary")
   authorizations    Authorization[]
   rates             PayerRate[]
   claims            Claim[]
   invoices          Invoice[]
+  eligibilityChecks EligibilityCheck[]
 
   @@index([agencyId])
   @@map("payers")
@@ -1444,4 +1448,41 @@ model InvoicePayment {
 
   @@index([invoiceId])
   @@map("invoice_payments")
+}
+
+/// Insurance eligibility checks (X12 270 request → 271 response, DECISIONS D-060).
+model EligibilityCheck {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  patientId           String    @map("patient_id") @db.Uuid
+  payerId             String    @map("payer_id") @db.Uuid
+  /// Sent in the 270 (BHT03/TRN02) and echoed in the 271 — how the answer is matched.
+  traceNumber         String    @map("trace_number") @db.VarChar(30)
+  serviceDate         DateTime  @map("service_date") @db.Date
+  memberId            String    @map("member_id") @db.VarChar(80)
+  /// pending (270 made, no answer yet) | active | inactive | rejected | unknown
+  status              String    @default("pending") @db.VarChar(20)
+  request270          String    @map("request_270")
+  responseData        Json?     @map("response_data")
+  coverageActive      Boolean?  @map("coverage_active")
+  planName            String?   @map("plan_name") @db.VarChar(100)
+  coverageStart       DateTime? @map("coverage_start") @db.Date
+  coverageEnd         DateTime? @map("coverage_end") @db.Date
+  copay               Decimal?  @db.Decimal(10, 2)
+  coinsurancePercent  Decimal?  @map("coinsurance_percent") @db.Decimal(5, 2)
+  deductible          Decimal?  @db.Decimal(10, 2)
+  deductibleRemaining Decimal?  @map("deductible_remaining") @db.Decimal(10, 2)
+  errorMessage        String?   @map("error_message")
+  respondedAt         DateTime? @map("responded_at") @db.Timestamptz(6)
+  requestedById       String    @map("requested_by") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency      Agency  @relation(fields: [agencyId], references: [id])
+  patient     Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  payer       Payer   @relation(fields: [payerId], references: [id])
+  requestedBy User    @relation("EligibilityRequestedBy", fields: [requestedById], references: [id])
+
+  @@unique([agencyId, traceNumber])
+  @@index([patientId, createdAt(sort: Desc)])
+  @@map("eligibility_checks")
 }
