@@ -708,3 +708,16 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Audit: 3 moderate findings from `decode-uri-component` (via expo-router → query-string 7); the fixed version is
   ESM-only and can't be forced safely. Risk: slow parsing of a malformed deep link on the user's own phone. Revisit
   on the next Expo update. `uuid` for Expo's `xcode` tool is overridden to ^11.1.1.
+
+### D-046 — Mobile clock-in/out (P2-07)
+2026-09-28 · Claude Code
+- Today's list opens a **visit screen**: patient, time, status, address with **Directions** (opens Apple/Google Maps
+  with the address) and **Call**, and **Clock in** / **Clock out** depending on the visit status.
+- Location: foreground permission only, asked the first time the caregiver clocks in, with a plain explanation (the
+  location is recorded only at clock-in/out). A last-known fix is reused if under 2 minutes old, otherwise a fresh
+  high-accuracy fix. The **timestamp is when the button was pressed**, not when the fix was taken. Denied permission
+  → the caregiver is told EVV needs it (telephony EVV, P2-13, is the fallback later).
+- After clocking, the API's flags are shown in plain words ("Recorded. The office will review: …") — never as an error,
+  because flags don't block (D-038).
+- Offline clocking (queue + sync within 72 h) comes with P2-09; until then an offline clock-in shows the connection error.
+- Logic in `src/lib/evv.ts` is unit-tested (payload, freshness, messages, directions URL).

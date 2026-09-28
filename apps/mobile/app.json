@@ -19,8 +19,27 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      ["expo-local-authentication", { "faceIDPermission": "Unlock Alora with Face ID so patient information stays protected." }],
-      ["expo-splash-screen", { "backgroundColor": "#0f766e", "image": "./assets/splash-icon.png", "imageWidth": 76 }]
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Unlock Alora with Face ID so patient information stays protected."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Alora records your location when you clock in and out of a visit, to verify the visit (electronic visit verification).",
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0f766e",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 76
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,6 +1,7 @@
 import { todayInTimeZone } from '@alora/shared';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { Button, ErrorText, colors, styles } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
 
@@ -65,7 +66,12 @@ export default function TodayScreen() {
         }
         ListEmptyComponent={visits ? <Text style={styles.subtitle}>No visits today.</Text> : null}
         renderItem={({ item }) => (
-          <View style={styles.card} accessible accessibilityLabel={`${time(item.scheduledStart)} ${item.patient.firstName} ${item.patient.lastName}`}>
+          <Pressable
+            style={({ pressed }) => [styles.card, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            accessibilityLabel={`${time(item.scheduledStart)} ${item.patient.firstName} ${item.patient.lastName}, ${humanize(item.status)}`}
+            onPress={() => router.push({ pathname: '/visit/[id]', params: { id: item.id } })}
+          >
             <Text style={{ fontSize: 17, fontWeight: '700', color: colors.text }}>
               {time(item.scheduledStart)} – {time(item.scheduledEnd)}
             </Text>
@@ -75,7 +81,7 @@ export default function TodayScreen() {
             <Text style={{ color: colors.muted }}>
               {humanize(item.visitType)} · {humanize(item.status)}
             </Text>
-          </View>
+          </Pressable>
         )}
         ListFooterComponent={<Button title="Sign out" variant="secondary" onPress={() => void signOut()} />}
       />
