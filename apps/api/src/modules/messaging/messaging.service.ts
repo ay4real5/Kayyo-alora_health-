@@ -286,9 +286,12 @@ export class MessagingService {
    * agency's current portal responders (`messages:portal`) and alerts them in-app (no content in the alert).
    */
   async portalSend(caller: AuthUser, patientId: string, content: string): Promise<MessageView> {
-    const responders = await this.portalResponders(caller.agencyId);
+    const [responders, existing] = await Promise.all([
+      this.portalResponders(caller.agencyId),
+      this.findPortal(caller, patientId),
+    ]);
     const conversationId =
-      (await this.findPortal(caller, patientId))?.id ??
+      existing?.id ??
       (
         await this.prisma.conversation.create({
           data: {
@@ -301,15 +304,17 @@ export class MessagingService {
           select: { id: true },
         })
       ).id;
-    await this.prisma.$transaction(
-      responders.map((userId) =>
-        this.prisma.conversationParticipant.upsert({
-          where: { conversationId_userId: { conversationId, userId } },
-          create: { conversationId, userId },
-          update: { leftAt: null },
-        }),
-      ),
-    );
+    // Two set-based statements instead of an upsert per responder (each is a round trip to the database).
+    await Promise.all([
+      this.prisma.conversationParticipant.createMany({
+        data: responders.map((userId) => ({ conversationId, userId })),
+        skipDuplicates: true,
+      }),
+      this.prisma.conversationParticipant.updateMany({
+        where: { conversationId, userId: { in: responders }, leftAt: { not: null } },
+        data: { leftAt: null },
+      }),
+    ]);
     const message = await this.send(caller, conversationId, { content });
     await this.notifications.notify({
       agencyId: caller.agencyId,

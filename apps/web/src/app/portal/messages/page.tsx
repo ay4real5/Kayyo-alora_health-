@@ -32,8 +32,15 @@ export default function PortalMessages() {
   }, [unread, base, patient.id, request, queryClient]);
 
   const send = useMutation({
-    mutationFn: (content: string) => request(`${base}/messages`, { method: 'POST', body: { content } }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['portal', patient.id] }),
+    mutationFn: async (content: string) =>
+      (await request<PortalMessage>(`${base}/messages`, { method: 'POST', body: { content } })).data,
+    onSuccess: (sent) => {
+      // Show it right away; the refetch then brings the thread fully up to date.
+      queryClient.setQueryData<Thread>(['portal', patient.id, '/messages?limit=100'], (old) =>
+        old ? { ...old, messages: [sent, ...old.messages] } : old,
+      );
+      void queryClient.invalidateQueries({ queryKey: ['portal', patient.id] });
+    },
   });
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

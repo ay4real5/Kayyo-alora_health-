@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
@@ -23,9 +23,11 @@ function LoginForm() {
   const [useRecovery, setUseRecovery] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Set once sign-in has chosen where to go (e.g. the forced password change), so the effect below doesn't override it.
+  const redirected = useRef(false);
 
   useEffect(() => {
-    if (status === 'authenticated' && step === 'password' && !busy) router.replace('/');
+    if (status === 'authenticated' && step === 'password' && !busy && !redirected.current) router.replace('/');
   }, [status, step, busy, router]);
 
   const proceed = (outcome: LoginOutcome) => {
@@ -34,6 +36,7 @@ function LoginForm() {
       setStep('two-factor');
       return;
     }
+    redirected.current = true;
     router.replace(
       outcome.mustChangePassword ? '/change-password?required=1' : outcome.mustEnable2fa ? '/setup-two-factor' : '/',
     );

@@ -394,6 +394,12 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
 
   const messages = options.encryptMessage ? await seedMessages(prisma, options.encryptMessage, patientIds[0]!) : 0;
 
+  // A family member with portal access to the first patient (P3-14/P3-16), and something for them to see.
+  const familyEmail = `family@${DEMO_EMAIL_DOMAIN}`;
+  const familyId = await makeUser('portal_user', familyEmail, 'Fran', 'Family');
+  logins.push({ role: 'portal_user (family of DEMO-0001)', email: familyEmail });
+  await seedPortalFamily(prisma, { patientId: patientIds[0]!, familyId, physicianId: physicianIds[0]!, today, encrypt: options.encryptMessage });
+
   return {
     agencyId: DEMO_AGENCY_ID,
     logins,
@@ -733,4 +739,75 @@ export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   await prisma.user.deleteMany({ where }); // staff profiles, credentials, availability, tokens, roles-links cascade
   await prisma.role.deleteMany({ where });
   await prisma.agency.deleteMany({ where: { id: DEMO_AGENCY_ID } });
+}
+
+/** Portal demo content for the first patient: link the family login, an active plan of care, two medications, and
+ * (with encryption) a short thread with the office. */
+async function seedPortalFamily(
+  prisma: PrismaClient,
+  demo: {
+    patientId: string;
+    familyId: string;
+    physicianId: string;
+    today: string;
+    encrypt?: (text: string, messageId: string) => Uint8Array<ArrayBuffer>;
+  },
+): Promise<void> {
+  const { patientId, familyId } = demo;
+  await prisma.patient.update({ where: { id: patientId }, data: { portalUserId: familyId } });
+  await prisma.carePlan.create({
+    data: {
+      patientId,
+      physicianId: demo.physicianId,
+      status: 'active',
+      certificationPeriodStart: toDate(addDays(demo.today, -10))!,
+      certificationPeriodEnd: toDate(addDays(demo.today, 49))!,
+      physicianSignatureDate: toDate(addDays(demo.today, -8))!,
+      goals: ['Walk safely inside the home with a walker', 'Take medications as prescribed'],
+      interventions: [
+        { discipline: 'HHA', description: 'Help with bathing and dressing' },
+        { discipline: 'RN', description: 'Check blood pressure and review medications' },
+      ],
+      visitFrequency: [
+        { discipline: 'HHA', frequency: '3W8' },
+        { discipline: 'RN', frequency: '1W8' },
+      ],
+      disciplinesRequired: ['HHA', 'RN'],
+    },
+  });
+  await prisma.medication.createMany({
+    data: [
+      { patientId, drugName: 'Lisinopril', dosage: '10 mg', route: 'by mouth', frequency: 'once daily', isActive: true },
+      { patientId, drugName: 'Metformin', dosage: '500 mg', route: 'by mouth', frequency: 'twice daily with meals', isActive: true },
+    ],
+  });
+  if (!demo.encrypt) return;
+  const office = await prisma.user.findFirstOrThrow({ where: { agencyId: DEMO_AGENCY_ID, email: `office.staff@${DEMO_EMAIL_DOMAIN}` } });
+  const supervisor = await prisma.user.findFirstOrThrow({ where: { agencyId: DEMO_AGENCY_ID, email: `supervisor@${DEMO_EMAIL_DOMAIN}` } });
+  const conversation = await prisma.conversation.create({
+    data: {
+      agencyId: DEMO_AGENCY_ID,
+      type: 'portal',
+      patientId,
+      createdById: familyId,
+      participants: { create: [{ userId: familyId }, { userId: office.id }, { userId: supervisor.id }] },
+    },
+  });
+  const lines: [string, string][] = [
+    [familyId, 'Could the aide come a little later on Fridays? Mom has a standing appointment until 9:30.'],
+    [office.id, 'Of course. We will move Friday visits to 10:00 starting next week.'],
+  ];
+  let at = new Date(Date.now() - 26 * 3_600_000);
+  for (const [senderId, text] of lines) {
+    at = new Date(at.getTime() + 45 * 60_000);
+    const id = randomUUID();
+    await prisma.message.create({
+      data: { id, agencyId: DEMO_AGENCY_ID, conversationId: conversation.id, senderId, contentEncrypted: demo.encrypt(text, id), createdAt: at },
+    });
+    await prisma.conversationParticipant.update({
+      where: { conversationId_userId: { conversationId: conversation.id, userId: senderId } },
+      data: { lastReadAt: at },
+    });
+  }
+  await prisma.conversation.update({ where: { id: conversation.id }, data: { lastMessageAt: at } });
 }
