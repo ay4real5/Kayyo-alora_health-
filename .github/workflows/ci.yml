@@ -83,3 +83,56 @@ jobs:
           # Also surface the log tail as an annotation, which is readable without signing in to GitHub.
           echo "::error title=API container log::$(docker logs api 2>&1 | tail -15 | tr '\n' '|')"
           exit 1
+
+  browser:
+    name: Browser tests (dashboard + API + database)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: alora_e2e
+          POSTGRES_USER: alora
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U alora -d alora_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://alora:ci-only-password@localhost:5432/alora_e2e
+      JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-000
+      PHI_ENCRYPTION_KEY: hBu2w8X/qvhzK7L7aRK0fdYGPUDLkz4+wrrfmhaBBEA=
+      CORS_ORIGINS: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Apply migrations
+        run: npm run db:deploy -w @alora/api
+      - name: Start the API and the dashboard
+        run: |
+          (cd apps/api && nohup node dist/main.js > ../../api.log 2>&1 &)
+          (cd apps/web && nohup npx next start --port 3000 > ../../web.log 2>&1 &)
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3001/api/v1/health >/dev/null && curl -fsS http://localhost:3000/login >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          echo "::error title=Servers did not start::$(tail -20 api.log web.log | tr '\n' '|')"
+          exit 1
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - name: Run browser tests (the demo agency is seeded first)
+        run: npx playwright test --reporter=github,list
+        working-directory: apps/web
+      - name: Server logs on failure
+        if: failure()
+        run: |
+          echo "::error title=API log::$(tail -30 api.log | tr '\n' '|')"
+          echo "::error title=Web log::$(tail -30 web.log | tr '\n' '|')"
