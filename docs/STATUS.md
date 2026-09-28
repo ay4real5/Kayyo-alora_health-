@@ -93,6 +93,8 @@
   their own layout. Demo login `family@demo.alora.test`. D-058.
 - **Private-pay invoices (P3-10)**: generate per patient for a period from billable private-pay visits, PDF, mark sent,
   record payments, void; claims refuse private-pay visits; web Billing → Invoices. Demo: one private-pay patient. D-059.
+- **Eligibility (P3-07)**: 270 request builder + 271 parser (fixtures); per-patient checks on the patient page — make the
+  270, download it, upload the 271 (matched by trace number). Automatic send/receive waits for the clearinghouse (P3-08). D-060.
 - CI (P1-22) now also runs the 13 browser tests: Postgres + migrations + API + dashboard + Playwright, seeded demo data.
 - Dev environment: Neon (`alora` DB) + Upstash via git-ignored root `.env` (D-018). Other machines need the
   owner to supply `.env`.
@@ -106,7 +108,6 @@ Nothing.
 
 ## Next up
 
-**P3-07** eligibility,
 **P3-05** 837I, then Phase 4 (reports, payroll, compliance, EVV aggregator for Virginia after DMAS research). The owner asked for autonomous work: go straight on, check in ~every 4 hours.
 
 ## Blockers / waiting on human
@@ -119,6 +120,7 @@ Nothing.
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-28 | Claude Code | P3-07 | 270/271 builder+parser (5 unit), eligibility API (4 e2e), patient panel (browser test). |
 | 2026-09-28 | Claude Code | P3-10 | Private-pay invoices API (4 e2e) + PDF + web pages (browser test). P3-16 merged. |
 | 2026-09-28 | Claude Code | P3-15 | Retired docs/base44-portal and the portal-only OpenAPI export. |
 | 2026-09-28 | Claude Code | P3-14, P3-16 | Portal API (7 e2e) + staff access panel + portal screens (browser test); fixed login race skipping forced password change. P3-13 merged. |

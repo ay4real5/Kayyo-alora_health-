@@ -988,3 +988,21 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Permissions: `billing:read` (list, detail, PDF), `billing:create`, `billing:send`, `billing:update` (payments),
   `billing:void`. Web: Billing → Invoices (create for a period, list with overdue, detail with PDF, send, pay, void).
 - Not yet: showing invoices/balances in the patient portal, card payments online, statements across invoices.
+
+### D-060 — Eligibility verification, X12 270/271 (P3-07)
+2026-09-28 · Claude Code
+- **270** (`edi/edi-270.ts`, 005010X279A1): one subscriber per request — payer (PI payer ID), agency (XX NPI), subscriber
+  (MI member ID from the same rule as claims, `memberIdFor`), DOB/gender, DTP*291 service date, EQ*30 (health benefit
+  plan coverage). TRN originator = "1" + EIN (or NPI tail). Usage `T` until the clearinghouse account is live.
+- **271** (`edi/edi-271.ts`): separators read from ISA; picks up our trace (TRN*2), payer and subscriber, EB benefits
+  (active 1–5 / inactive 6–8, co-insurance A, co-pay B, deductible C with period 29 = remaining, plan name, service
+  types, in-network flag, MSG notes), plan dates (DTP 291/346/347/356/357, D8 or RD8) and AAA rejections with readable
+  reasons. Fixture-tested (active + rejected).
+- **Checks** (`eligibility_checks`): `POST /billing/eligibility {patientId, serviceDate?}` uses the patient's **primary
+  payer** (not private pay), refuses with **422 `ELIGIBILITY_INCOMPLETE`** listing what's missing (member ID, DOB, payer
+  EDI IDs, agency NPI), stores the 270 text; `GET …/:id/270` downloads it; `POST /billing/eligibility/responses
+  {content}` parses a 271 and files it on the check with the **same trace number** (unique per agency) → status
+  active / inactive / rejected / unknown with plan, dates, co-pay, co-insurance, deductible(s). Permissions: request
+  `billing:read` (as DESIGN.md §6.10), recording answers `billing:update`.
+- **Until P3-08** staff send the 270 through the clearinghouse's portal and upload the 271; P3-08 adds a transport that
+  sends and polls automatically, using the same records. Batch checks (many subscribers in one 270) come with it.
