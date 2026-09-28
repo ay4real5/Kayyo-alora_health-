@@ -7,6 +7,7 @@ import { useState, type FormEvent } from 'react';
 import { AuthorizationsPanel } from '@/components/patients/authorizations-panel';
 import { ClinicalPanels } from '@/components/patients/clinical-panels';
 import { DocumentsPanel } from '@/components/patients/documents-panel';
+import { EligibilityPanel } from '@/components/patients/eligibility-panel';
 import { PortalAccessPanel } from '@/components/patients/portal-access-panel';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -112,6 +113,8 @@ export default function PatientDetailPage() {
       <PortalAccessPanel patientId={p.id} />
 
       <AuthorizationsPanel patientId={p.id} />
+
+      {can('billing:read') && <EligibilityPanel patientId={p.id} />}
 
       {p.notes && (
         <Card className="p-5">

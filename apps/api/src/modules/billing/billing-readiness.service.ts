@@ -37,6 +37,10 @@ const VISIT_INCLUDE = {
     where: { active: true },
     select: { claimId: true, claim: { select: { claimNumber: true } } },
   },
+  invoiceLines: {
+    where: { active: true },
+    select: { invoice: { select: { invoiceNumber: true } } },
+  },
   authorization: {
     select: {
       id: true,
@@ -56,7 +60,7 @@ export interface BillableVisit extends Readiness {
   serviceCode: string | null;
   patient: { id: string; firstName: string; lastName: string; mrn: string | null };
   staff: { id: string; firstName: string; lastName: string } | null;
-  payer: { id: string; name: string } | null;
+  payer: { id: string; name: string; payerType: string } | null;
   minutes: number;
 }
 
@@ -175,8 +179,7 @@ export class BillingReadinessService {
       const auth = v.authorization;
       const readiness = evaluate({
         visitStatus: v.status,
-        alreadyBilledOn:
-          v.claimLines.find((l) => l.claimId !== ignoreClaimId)?.claim.claimNumber ?? null,
+        alreadyBilledOn: alreadyBilledOn(v, ignoreClaimId),
         serviceDate: date,
         minutes,
         evvStatus: v.evvRecords[0]?.status ?? null,
@@ -228,7 +231,7 @@ export class BillingReadinessService {
         staff: v.staff
           ? { id: v.staff.id, firstName: v.staff.user.firstName, lastName: v.staff.user.lastName }
           : null,
-        payer: payer ? { id: payer.id, name: payer.name } : null,
+        payer: payer ? { id: payer.id, name: payer.name, payerType: payer.payerType } : null,
         minutes,
         ...readiness,
       };
@@ -304,4 +307,12 @@ function summarise(visits: BillableVisit[]): ReadinessSummary {
     readyAmount: Math.round(ready.reduce((sum, v) => sum + (v.amount ?? 0), 0) * 100) / 100,
     blockers,
   };
+}
+
+/** "claim …" or "invoice …" when the visit is already on an active claim or private-pay invoice (D-059). */
+function alreadyBilledOn(v: VisitRow, ignoreClaimId?: string): string | null {
+  const claim = v.claimLines.find((l) => l.claimId !== ignoreClaimId)?.claim.claimNumber;
+  if (claim) return `claim ${claim}`;
+  const invoice = v.invoiceLines[0]?.invoice.invoiceNumber;
+  return invoice ? `invoice ${invoice}` : null;
 }

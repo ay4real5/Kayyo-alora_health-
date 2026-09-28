@@ -136,6 +136,12 @@ export class EnvironmentVariables {
   @IsBoolean()
   JOBS_ENABLED: boolean = true;
 
+  /** Turns off request rate limits — for the CI browser tests only; refused in production. */
+  @Transform(({ value }) => (value === undefined || value === '' ? undefined : value === 'true' || value === true))
+  @IsOptional()
+  @IsBoolean()
+  RATE_LIMITS_DISABLED: boolean = false;
+
   /** Retired keys still needed to read old values: "1:<base64>,2:<base64>". */
   @Transform(blankToUndefined)
   @IsOptional()
@@ -155,6 +161,9 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   if (env.SESSION_IDLE_TIMEOUT_MINUTES <= env.ACCESS_TOKEN_TTL_MINUTES) {
     // Clients refresh when the access token expires; a shorter idle window would log active users out.
     problems.push('SESSION_IDLE_TIMEOUT_MINUTES: must be greater than ACCESS_TOKEN_TTL_MINUTES');
+  }
+  if (env.APP_ENV === AppEnv.Production && env.RATE_LIMITS_DISABLED) {
+    problems.push('RATE_LIMITS_DISABLED: not allowed in production');
   }
   if (env.APP_ENV === AppEnv.Production && !env.PHI_ENCRYPTION_KEY) {
     problems.push('PHI_ENCRYPTION_KEY: required in production');

@@ -267,7 +267,7 @@ function RatesCard() {
       </div>
       <ErrorAlert error={rates.error ?? end.error} />
       {payerId && (
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm" aria-label="Payer rates">
           <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="py-2 pr-4 font-medium">Code</th>

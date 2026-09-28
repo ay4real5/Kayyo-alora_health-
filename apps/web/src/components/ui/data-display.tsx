@@ -78,6 +78,11 @@ export function StatusBadge({ status }: { status: string }) {
     signed: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
     open: 'bg-sky-50 text-sky-800 ring-sky-600/20',
     filled: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
+    sent: 'bg-sky-50 text-sky-800 ring-sky-600/20',
+    paid: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
+    partially_paid: 'bg-amber-50 text-amber-800 ring-amber-600/20',
+    void: 'bg-slate-100 text-slate-600 ring-slate-500/20',
+    overdue: 'bg-red-50 text-red-800 ring-red-600/20',
   };
   return (
     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${tones[status] ?? tones.discharged}`}>

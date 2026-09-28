@@ -967,3 +967,45 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   "not for emergencies" notice); the staff shell sends portal users to `/portal` and the portal sends staff to `/`.
 - **Known gap**: the forced password change is enforced by the clients only; the API doesn't yet restrict a session
   still on a temporary password (P4-09). Fixed a login-page race that could skip the forced change entirely.
+
+### D-059 — Private-pay invoices (P3-10)
+2026-09-28 · Claude Code
+- **Who gets an invoice**: patients whose primary payer is `private_pay`. `POST /billing/invoices {from, to, patientId?}`
+  takes their completed, uninvoiced visits in the range (≤ 92 days), runs the same pre-billing checks as claims (D-051:
+  EVV verified, note final, service code, rate…), and makes **one invoice per patient**, priced exactly like claim
+  lines (payer rate or the code's default rate × units). Skipped visits come back with reasons. Claims now **refuse
+  private-pay visits** ("bill it on an invoice"), and a visit on an active invoice counts as billed for claims (and
+  vice versa) — `invoice_lines` has the same one-active-line-per-visit unique index as `claim_lines`.
+- **Numbers** `INV-000001…` per agency (sequential, retried on a race). Due date = issue date + 30 days
+  (`INVOICE_TERMS_DAYS`; an agency setting later). Bill-to = the patient's name and address, frozen on the invoice (a
+  separate responsible-party/guarantor is future work). No tax (home care is generally exempt; column kept).
+- **Lifecycle**: draft → **sent** (marked by staff — printing/mailing; emailing waits for an email provider) →
+  partially_paid → paid. Payments (amount, date, method check/cash/card/ACH/other, reference) only once sent, never
+  above the balance, guarded against two people recording at once. **Void** only without payments; releases its visits.
+  Overdue = sent, unpaid, past due (computed).
+- **PDF** made on request with **pdf-lib** (pure JS), not Puppeteer as DESIGN.md §2 suggested — no headless Chrome to
+  install on the owner's laptop, CI or the server. Standard fonts (non-Latin characters are folded or replaced).
+- Permissions: `billing:read` (list, detail, PDF), `billing:create`, `billing:send`, `billing:update` (payments),
+  `billing:void`. Web: Billing → Invoices (create for a period, list with overdue, detail with PDF, send, pay, void).
+- Not yet: showing invoices/balances in the patient portal, card payments online, statements across invoices.
+
+### D-060 — Eligibility verification, X12 270/271 (P3-07)
+2026-09-28 · Claude Code
+- **270** (`edi/edi-270.ts`, 005010X279A1): one subscriber per request — payer (PI payer ID), agency (XX NPI), subscriber
+  (MI member ID from the same rule as claims, `memberIdFor`), DOB/gender, DTP*291 service date, EQ*30 (health benefit
+  plan coverage). TRN originator = "1" + EIN (or NPI tail). Usage `T` until the clearinghouse account is live.
+- **271** (`edi/edi-271.ts`): separators read from ISA; picks up our trace (TRN*2), payer and subscriber, EB benefits
+  (active 1–5 / inactive 6–8, co-insurance A, co-pay B, deductible C with period 29 = remaining, plan name, service
+  types, in-network flag, MSG notes), plan dates (DTP 291/346/347/356/357, D8 or RD8) and AAA rejections with readable
+  reasons. Fixture-tested (active + rejected).
+- **Checks** (`eligibility_checks`): `POST /billing/eligibility {patientId, serviceDate?}` uses the patient's **primary
+  payer** (not private pay), refuses with **422 `ELIGIBILITY_INCOMPLETE`** listing what's missing (member ID, DOB, payer
+  EDI IDs, agency NPI), stores the 270 text; `GET …/:id/270` downloads it; `POST /billing/eligibility/responses
+  {content}` parses a 271 and files it on the check with the **same trace number** (unique per agency) → status
+  active / inactive / rejected / unknown with plan, dates, co-pay, co-insurance, deductible(s). Permissions: request
+  `billing:read` (as DESIGN.md §6.10), recording answers `billing:update`.
+- **Until P3-08** staff send the 270 through the clearinghouse's portal and upload the 271; P3-08 adds a transport that
+  sends and polls automatically, using the same records. Batch checks (many subscribers in one 270) come with it.
+- CI note (same day): the browser suite now signs in more than 30 times a minute from one IP, which the sign-in limit
+  (30/min) rightly refuses. `RATE_LIMITS_DISABLED=true` (env, validated; **refused when APP_ENV=production**) turns the
+  throttler off for that CI job only. Production and the API e2e tests keep the limits.

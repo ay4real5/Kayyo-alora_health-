@@ -642,7 +642,7 @@ async function seedBilling(
   const medicare = await prisma.payer.create({
     data: { agencyId: DEMO_AGENCY_ID, name: 'Demo Medicare (FAKE)', payerType: 'medicare', payerIdCode: 'DEMOMCR' },
   });
-  await prisma.payer.create({ data: { agencyId: DEMO_AGENCY_ID, name: 'Private pay', payerType: 'private_pay' } });
+  const privatePay = await prisma.payer.create({ data: { agencyId: DEMO_AGENCY_ID, name: 'Private pay', payerType: 'private_pay' } });
 
   const codes = [
     { code: 'G0156', description: 'Home health aide, each 15 minutes', unitType: 'unit_15min', rate: 7.5 },
@@ -655,14 +655,17 @@ async function seedBilling(
     const code = await prisma.serviceCode.create({
       data: { agencyId: DEMO_AGENCY_ID, code: c.code, codeType: 'hcpcs', description: c.description, unitType: c.unitType, defaultRate: c.rate },
     });
-    for (const payer of [medicaid, medicare]) {
+    for (const [payer, factor] of [[medicaid, 1], [medicare, 1.2], [privatePay, 1.4]] as const) {
       await prisma.payerRate.create({
-        data: { payerId: payer.id, serviceCodeId: code.id, rate: payer === medicare ? c.rate * 1.2 : c.rate, effectiveDate: toDate(yearStart)! },
+        data: { payerId: payer.id, serviceCodeId: code.id, rate: Math.round(c.rate * factor * 100) / 100, effectiveDate: toDate(yearStart)! },
       });
     }
   }
 
   await prisma.patient.updateMany({ where: { id: { in: opts.patientIds } }, data: { payerPrimaryId: medicaid.id } });
+  // The last EVV-history patient pays privately, so their verified visits go on an invoice, not a claim (P3-10).
+  const privatePatient = opts.evvPatientIds[opts.evvPatientIds.length - 1];
+  if (privatePatient) await prisma.patient.update({ where: { id: privatePatient }, data: { payerPrimaryId: privatePay.id } });
 
   let created = 0;
   for (const [n, patientId] of opts.recurringPatientIds.entries()) {
@@ -687,6 +690,7 @@ async function seedBilling(
   }
   // The EVV-history patients (seedEvvHistory links their visits) — so some past visits are ready to bill.
   for (const [n, patientId] of opts.evvPatientIds.entries()) {
+    if (patientId === privatePatient) continue; // private pay: no payer authorization
     await prisma.authorization.create({
       data: {
         patientId,
@@ -726,6 +730,7 @@ export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   await prisma.auditLog.deleteMany({ where });
   await prisma.payment.deleteMany({ where }); // details cascade
   await prisma.ediFile.deleteMany({ where });
+  await prisma.invoice.deleteMany({ where }); // lines, payments cascade
   await prisma.claim.deleteMany({ where }); // lines cascade
   await prisma.evvRecord.deleteMany({ where }); // EVV exceptions cascade
   await prisma.conversation.deleteMany({ where }); // participants and messages cascade

@@ -105,6 +105,8 @@ jobs:
       PHI_ENCRYPTION_KEY: hBu2w8X/qvhzK7L7aRK0fdYGPUDLkz4+wrrfmhaBBEA=
       CORS_ORIGINS: http://localhost:3000
       NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+      # The suite signs in dozens of times a minute from one IP — more than the sign-in limit allows.
+      RATE_LIMITS_DISABLED: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

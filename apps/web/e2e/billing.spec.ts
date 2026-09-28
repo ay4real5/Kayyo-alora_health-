@@ -32,7 +32,7 @@ test('billing staff see the payers, service codes and rates', async ({ page }) =
   await expect(page.getByRole('cell', { name: 'Demo Medicaid (FAKE)' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'G0156' })).toBeVisible();
   await page.getByLabel('Payer', { exact: true }).selectOption({ label: 'Demo Medicaid (FAKE)' });
-  await expect(page.getByRole('cell', { name: 'T1019' })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Payer rates' }).getByRole('cell', { name: 'T1019' })).toBeVisible();
 });
 
 test('the office sees authorization usage and adds an authorization', async ({ page }) => {

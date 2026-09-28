@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { CryptoModule } from './common/crypto/crypto.module.js';
 import { AppConfigModule } from './config/app-config.module.js';
+import type { EnvironmentVariables } from './config/env.validation.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
@@ -29,8 +31,15 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 @Module({
   imports: [
     AppConfigModule,
-    // General per-IP rate limit; credential endpoints set a stricter one with @Throttle.
-    ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 300 }]),
+    // General per-IP rate limit; credential endpoints set a stricter one with @Throttle. RATE_LIMITS_DISABLED is only
+    // for the CI browser suite (dozens of sign-ins a minute from one IP) and is refused in production.
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<EnvironmentVariables, true>) => ({
+        throttlers: [{ name: 'default', ttl: 60_000, limit: 300 }],
+        skipIf: () => config.get('RATE_LIMITS_DISABLED', { infer: true }),
+      }),
+    }),
     DatabaseModule,
     CryptoModule,
     AuditModule,
