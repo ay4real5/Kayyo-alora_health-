@@ -30,7 +30,7 @@ export default function UnlockScreen() {
 
   return (
     <View style={styles.center}>
-      <Text style={[styles.title, { textAlign: 'center' }]}>Alora is locked</Text>
+      <Text style={[styles.title, { textAlign: 'center' }]}>Kayo Health is locked</Text>
       <Text style={[styles.subtitle, { textAlign: 'center', marginBottom: 24 }]}>
         Unlock with Face ID, fingerprint or your phone passcode.
       </Text>

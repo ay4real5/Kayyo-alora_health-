@@ -1,6 +1,6 @@
 import type { ApiResponse, PaginationMeta } from '@alora/shared';
 
-/** Base URL of the Alora API, e.g. http://localhost:3001/api/v1 (set NEXT_PUBLIC_API_URL). */
+/** Base URL of the Kayo Health API, e.g. http://localhost:3001/api/v1 (set NEXT_PUBLIC_API_URL). */
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
 
 /** A failed API call, carrying the API's error envelope ({ code, message, details }). */

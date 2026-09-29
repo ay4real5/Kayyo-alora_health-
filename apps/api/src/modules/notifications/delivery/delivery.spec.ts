@@ -67,7 +67,7 @@ describe('senders', () => {
     expect(Object.fromEntries(form)).toEqual({
       To: '+15550100001',
       From: '+15550100000',
-      Body: 'Alora: New shift assigned — Tomorrow at 9:00. Open the app for details.',
+      Body: 'Kayo Health: New shift assigned — Tomorrow at 9:00. Open the app for details.',
     });
     sms.fetchImpl = fakeFetch(400, { code: 21211 });
     expect(await sms.send('+15550100001', MESSAGE)).toEqual({ ok: false, retry: false, error: 'twilio 400 code 21211' });
@@ -84,8 +84,8 @@ describe('senders', () => {
     email.fetchImpl = fakeFetch(202, {}, { 'x-message-id': 'abc' });
     expect(await email.send('aide@example.test', MESSAGE)).toEqual({ ok: true, providerMessageId: 'abc' });
     const body = JSON.parse(String(vi.mocked(email.fetchImpl).mock.calls[0]![1].body));
-    expect(body.subject).toBe('Alora: New shift assigned');
-    expect(body.content[0].value).toContain('Open Alora for details: https://app.example.test');
+    expect(body.subject).toBe('Kayo Health: New shift assigned');
+    expect(body.content[0].value).toContain('Open Kayo Health for details: https://app.example.test');
     expect(body.tracking_settings).toEqual({ click_tracking: { enable: false }, open_tracking: { enable: false } });
   });
 
@@ -110,7 +110,7 @@ describe('senders', () => {
   });
 
   it('SMS text stays short and punctuated once', () => {
-    expect(smsText({ ...MESSAGE, title: 'Shift cancelled.', body: null })).toBe('Alora: Shift cancelled. Open the app for details.');
+    expect(smsText({ ...MESSAGE, title: 'Shift cancelled.', body: null })).toBe('Kayo Health: Shift cancelled. Open the app for details.');
     expect(smsText({ ...MESSAGE, body: 'x'.repeat(500) }).length).toBe(320);
   });
 });

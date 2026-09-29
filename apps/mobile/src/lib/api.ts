@@ -1,5 +1,5 @@
 /**
- * Alora API client for the caregiver app. Same envelope as the web ({ success, data, meta } / { success, error }).
+ * Kayo Health API client for the caregiver app. Same envelope as the web ({ success, data, meta } / { success, error }).
  * The app uses body tokens, never cookies (DECISIONS D-043).
  */
 
@@ -21,7 +21,7 @@ export class ApiError extends Error {
 /** The request never reached the API (no signal, airplane mode). Distinct from the API saying no. */
 export class OfflineError extends Error {
   constructor() {
-    super("Can't reach Alora. Check your connection.");
+    super("Can't reach Kayo Health. Check your connection.");
     this.name = 'OfflineError';
   }
 }

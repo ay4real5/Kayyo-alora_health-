@@ -69,7 +69,7 @@ function LoginForm() {
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm p-6">
-        <h1 className="text-xl font-semibold text-slate-900">Alora Health</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Kayo Health</h1>
         <p className="mb-6 text-sm text-slate-600">
           {step === 'password' ? 'Sign in to your agency account' : 'Two-step verification'}
         </p>

@@ -114,7 +114,7 @@ export class IvrService {
         timeout: 10,
         prompt:
           tries === 1
-            ? 'Welcome to Alora visit check-in. Enter your check-in code, then press pound.'
+            ? 'Welcome to Kayo Health visit check-in. Enter your check-in code, then press pound.'
             : 'Please enter your check-in code again, then press pound.',
       },
     };

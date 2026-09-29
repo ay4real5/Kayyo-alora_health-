@@ -49,9 +49,9 @@ describe('TOTP', () => {
   });
 
   it('builds an otpauth URI authenticator apps understand', () => {
-    const uri = otpauthUri('Alora Health', 'nurse@example.test', base32Decode('MZXW6YTBOI'));
+    const uri = otpauthUri('Kayo Health', 'nurse@example.test', base32Decode('MZXW6YTBOI'));
     expect(uri).toBe(
-      'otpauth://totp/Alora%20Health%3Anurse%40example.test?secret=MZXW6YTBOI&issuer=Alora+Health&algorithm=SHA1&digits=6&period=30',
+      'otpauth://totp/Kayo%20Health%3Anurse%40example.test?secret=MZXW6YTBOI&issuer=Kayo+Health&algorithm=SHA1&digits=6&period=30',
     );
   });
 });

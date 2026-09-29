@@ -50,10 +50,10 @@ export function toE164(phone: string | null | undefined): string | null {
   return null;
 }
 
-/** "Alora: New shift assigned — Open the app to see it." — one short, PHI-free SMS. */
+/** "Kayo Health: New shift assigned — Open the app to see it." — one short, PHI-free SMS. */
 export function smsText(message: DeliveryMessage): string {
   const parts = [message.title, message.body].filter((p): p is string => Boolean(p?.trim())).map((p) => p.trim().replace(/[.!]+$/, ''));
-  return `Alora: ${parts.join(' — ')}. Open the app for details.`.slice(0, 320);
+  return `Kayo Health: ${parts.join(' — ')}. Open the app for details.`.slice(0, 320);
 }
 
 @Injectable()
@@ -101,10 +101,10 @@ export class EmailSender extends Sender {
 
   async send(to: string, message: DeliveryMessage): Promise<SendOutcome> {
     const link = this.config.get('FRONTEND_URL', { infer: true });
-    const text = [message.title, message.body, '', link ? `Open Alora for details: ${link}` : 'Open Alora for details.', '', 'You can change which alerts you get by email under Notification settings.']
+    const text = [message.title, message.body, '', link ? `Open Kayo Health for details: ${link}` : 'Open Kayo Health for details.', '', 'You can change which alerts you get by email under Notification settings.']
       .filter((line) => line !== null)
       .join('\n');
-    return this.sendText(to, `Alora: ${message.title}`, text);
+    return this.sendText(to, `Kayo Health: ${message.title}`, text);
   }
 
   /** A plain-text email (notifications, password reset links). */
@@ -113,7 +113,7 @@ export class EmailSender extends Sender {
       headers: { authorization: `Bearer ${this.config.get('SENDGRID_API_KEY', { infer: true })}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: this.config.get('SENDGRID_FROM_EMAIL', { infer: true }), name: 'Alora' },
+        from: { email: this.config.get('SENDGRID_FROM_EMAIL', { infer: true }), name: 'Kayo Health' },
         subject: subject.slice(0, 200),
         content: [{ type: 'text/plain', value: text }],
         // No open/click tracking: it rewrites links (reset links included) and adds pixels.

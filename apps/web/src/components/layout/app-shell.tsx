@@ -45,7 +45,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
-        <div className="px-5 py-4 text-lg font-semibold text-teal-800">Alora Health</div>
+        <div className="px-5 py-4 text-lg font-semibold text-teal-800">Kayo Health</div>
         <nav className="flex flex-col gap-1 px-3" aria-label="Main">
           {items.map((item) => {
             const active = item.href === activeHref;

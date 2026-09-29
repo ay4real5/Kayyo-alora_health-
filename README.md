@@ -1,4 +1,4 @@
-# Alora Health — Home Health Agency Management Platform
+# Kayo Health — Home Health Agency Management Platform
 
 HIPAA-compliant platform for home health agencies: scheduling, EVV (GPS + IVR), live visit monitoring,
 EMR (care plans, assessments, meds), caregiver management, Medicare/Medicaid/private-pay billing with
@@ -85,7 +85,7 @@ Sign in with a demo login (password `Demo-Password-1!`, development only):
 | `rn@demo.alora.test`, `hha@demo.alora.test`, `pt@demo.alora.test`… | only their own patients and visits |
 
 Admins must use two-factor authentication. For the demo admin, add this key to an authenticator app (Google
-Authenticator, Microsoft Authenticator…) as "Alora demo": `JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP` (demo data only).
+Authenticator, Microsoft Authenticator…) as "Kayo Health demo": `JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP` (demo data only).
 
 Tests: `npm run test` (unit), `npm run test:e2e -w @alora/api` (API, needs a database),
 `npm run test:e2e -w @alora/web` (browser, needs the API and dashboard running). More commands:

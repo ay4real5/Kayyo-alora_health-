@@ -62,9 +62,9 @@ export class PasswordResetService {
     const link = `${this.config.get('FRONTEND_URL', { infer: true })!.replace(/\/$/, '')}/reset-password#token=${token}`;
     const sent = await this.email.sendText(
       user.email,
-      'Reset your Alora password',
+      'Reset your Kayo Health password',
       [
-        'Someone — hopefully you — asked to reset the password for your Alora account.',
+        'Someone — hopefully you — asked to reset the password for your Kayo Health account.',
         '',
         `Choose a new password here (the link works once, for ${RESET_LINK_MINUTES} minutes):`,
         link,

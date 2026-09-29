@@ -30,7 +30,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.center}>
-      <Text style={styles.title}>Alora</Text>
+      <Text style={styles.title}>Kayo Health</Text>
       <Text style={styles.subtitle}>
         {twoFactorToken ? 'Enter the 6-digit code from your authenticator app.' : 'Sign in with your work account.'}
       </Text>
