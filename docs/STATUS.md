@@ -127,18 +127,17 @@
 
 ## In progress
 
-- `task/A11Y-accessibility-pass` (P4-13, D-074) — all done; last CI failed only on a mid-hover colour in the portal
-  scan, fixed in 9bf2d96. **Next step**: CI green → merge to main.
+Branches waiting for green CI, merge in this order:
+1. `task/RENAME-kayo-health` — product renamed to Kayo Health (D-075).
+2. `task/P3-09a-claim-files` (from 1) — claim files + 999/277CA (D-076); migration `20260929060000_claim_files`
+   applied to Neon; API e2e, unit and browser tests green locally.
 
 ## Next up
 
-**P3-09a — claim files without the clearinghouse account** (not started): batch 837 file per payer with real
-interchange control numbers (atomic per-agency counter), stored in `edi_files` (outbound) and linked from claims,
-downloadable for manual portal upload, "mark file sent" → claims submitted; parsers for **999** (AK2/IK5/AK9) and
-**277CA** (TRN*2 claim number, STC category A1 accepted / A3–A8 rejected, REF*1K payer claim number) with golden
-fixtures; upload endpoint applies them (rejected → `rejected` + reason, re-checkable by QA; accepted →
-`acknowledged`). Then SFTP transport once the clearinghouse is chosen (P3-08). P4-04c after Q-012. The owner's list is
-[GO_LIVE.md](GO_LIVE.md).
+**P4-04c as options** (owner: "have all options ready to be added at any time"): Virginia personal-care monthly
+hour rounding and the live-in UB modifier as per-payer / per-patient settings, **off by default**, so the agency
+switches them on when its biller confirms (Q-012). Then SFTP transport for P3-09 once a clearinghouse is chosen.
+The owner's list is [GO_LIVE.md](GO_LIVE.md).
 
 ## Blockers / waiting on human
 
@@ -152,6 +151,8 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P3-09a | Claim files (batch 837, control numbers, mark sent) and 999/277CA acknowledgments. |
+| 2026-09-29 | Claude Code | rename | Product renamed to Kayo Health (owner). |
 <<<<<<< HEAD
 | 2026-09-29 | Claude Code | P4-13 | Accessibility: axe WCAG 2.1 AA checks on ~26 pages in CI; contrast fixes. |
 =======

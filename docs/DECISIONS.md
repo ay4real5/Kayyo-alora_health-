@@ -1335,3 +1335,26 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Internal names stay** — `@alora/*` packages, the repo name, `demo.alora.test` demo logins, `alora-*` image names:
   nobody outside sees them, and renaming would churn every import for no user benefit. "Alora" in older decisions
   refers to the same product.
+
+### D-076 — Claim files and acknowledgments before a clearinghouse connection (P3-09a)
+2026-09-29 · Claude Code
+- **Files, not single claims**: Billing → *Claim files* groups ready claims by payer and form (837P/837I); billing
+  picks claims and makes **one 837 file** — the real thing (production indicator, or test for the clearinghouse's
+  test channel), not a preview. It's stored in `edi_files` (outbound, status `generated`) and the claims point to it
+  (`claims.edi_file_id`). Staff download it, upload it to the clearinghouse portal and **mark it sent** → its claims
+  become `submitted` (aging starts). This works with any clearinghouse today; SFTP automation comes once one is
+  chosen (P3-08/P3-09) and will reuse the same files.
+- **Control numbers** (ISA13/GS06): a per-agency counter (`agencies.edi_control_number`) advanced **inside the same
+  transaction** that builds and saves the file, so numbers never repeat and a refused file (mixed payers, missing
+  data → 409/422 listing every problem per claim) doesn't use one up.
+- A claim can't be in **two unsent files** (409 — download the existing one).
+- **Acknowledgments** (Load 999 / 277CA; duplicates refused by content hash):
+  - **999**: matched to our file by its group control number. Accepted → file `accepted`. Rejected → file `rejected`
+    and its waiting claims `rejected` with the reason (IK3/IK4 syntax errors spelled out).
+  - **277CA**: matched claim by claim number (TRN02 = CLM01). Accepted (A1/A2…) → `acknowledged` + the payer's claim
+    number (REF*1K). Rejected (A3/A4/A6/A7/A8) → `rejected` with the category and status codes in words
+    ("A7 Rejected — invalid information, status code 562 (billing provider)"). Claim numbers that aren't ours are
+    listed, not applied.
+- **Rejected claims** never reached adjudication, so they're fixed and resent as new claims (frequency 1): the claim
+  page shows the reason; *Re-check (QA)* puts it back to `ready`; it goes in a new file. They can also be voided.
+- The preview (`GET /billing/claims/:id/837`) and files share one per-claim builder, so they can't drift apart.

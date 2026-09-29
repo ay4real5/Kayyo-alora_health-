@@ -31,6 +31,8 @@ model Agency {
   state                  String?  @db.VarChar(2)
   zip                    String?  @db.VarChar(10)
   timezone               String   @default("America/New_York") @db.VarChar(50)
+  /// Last EDI interchange control number used for outbound files (ISA13/GS06), advanced atomically (D-076).
+  ediControlNumber       Int      @default(0) @map("edi_control_number")
   medicareProviderNumber String?  @map("medicare_provider_number") @db.VarChar(20)
   medicaidProviderNumber String?  @map("medicaid_provider_number") @db.VarChar(20)
   evvStateConfig         Json?    @map("evv_state_config")
@@ -643,6 +645,11 @@ model Claim {
   submittedAt           DateTime? @map("submitted_at") @db.Timestamptz(6)
   submittedById         String?   @map("submitted_by") @db.Uuid
   payerClaimNumber      String?   @map("payer_claim_number") @db.VarChar(100)
+  /// The outbound 837 file this claim was last sent in (D-076).
+  ediFileId             String?   @map("edi_file_id") @db.Uuid
+  /// Why the clearinghouse (999) or payer (277CA) rejected it — fix, re-check, send again.
+  rejectionReason       String?   @map("rejection_reason")
+  rejectedAt            DateTime? @map("rejected_at") @db.Timestamptz(6)
   denialReasonCode      String?   @map("denial_reason_code") @db.VarChar(20)
   denialReason          String?   @map("denial_reason")
   deniedAt              DateTime? @map("denied_at") @db.Timestamptz(6)
@@ -661,6 +668,7 @@ model Claim {
   payer          Payer           @relation(fields: [payerId], references: [id])
   createdBy      User            @relation("ClaimCreatedBy", fields: [createdById], references: [id])
   submittedBy    User?           @relation("ClaimSubmittedBy", fields: [submittedById], references: [id])
+  ediFile        EdiFile?        @relation(fields: [ediFileId], references: [id])
   originalClaim  Claim?          @relation("ClaimReplacements", fields: [originalClaimId], references: [id])
   replacements   Claim[]         @relation("ClaimReplacements")
   lines          ClaimLine[]
@@ -671,6 +679,7 @@ model Claim {
   @@index([agencyId, status])
   @@index([patientId])
   @@index([payerId, status])
+  @@index([ediFileId])
   @@map("claims")
 }
 
@@ -724,7 +733,7 @@ model EdiFile {
   contentHash              String    @map("content_hash") @db.VarChar(64)
   interchangeControlNumber String?   @map("interchange_control_number") @db.VarChar(20)
   recordCount              Int?      @map("record_count")
-  /// received | parsed | error | generated | submitted
+  /// received | parsed | error | generated | submitted | accepted | rejected
   status                   String    @default("received") @db.VarChar(20)
   errorDetails             Json?     @map("error_details")
   processedAt              DateTime? @map("processed_at") @db.Timestamptz(6)
@@ -734,6 +743,7 @@ model EdiFile {
   agency     Agency    @relation(fields: [agencyId], references: [id])
   uploadedBy User?     @relation("EdiFileUploadedBy", fields: [uploadedById], references: [id])
   payments   Payment[]
+  claims     Claim[]
 
   /// The same file can't be loaded twice.
   @@unique([agencyId, contentHash])

@@ -40,6 +40,10 @@ export interface ClaimView {
   qaPassed: boolean | null;
   qaErrors: unknown;
   voidReason: string | null;
+  /** Why the clearinghouse (999) or payer (277CA) rejected it (D-076); fix, re-check, put it in a new file. */
+  rejection: { reason: string; at: Date | null } | null;
+  /** The 837 file it was last put in. */
+  ediFileId: string | null;
   submittedAt: Date | null;
   payerClaimNumber: string | null;
   /** The claim this one replaces (frequency 7 rebill, D-063). */
@@ -192,7 +196,7 @@ export class ClaimsService {
   /** Re-runs pre-billing QA on the claim's visits: ready if they all still pass, back to draft with the reasons if not. */
   async qa(caller: AuthUser, id: string): Promise<ClaimView> {
     const claim = await this.find(caller, id);
-    if (!['draft', 'ready'].includes(claim.status))
+    if (!['draft', 'ready', 'rejected'].includes(claim.status))
       throw new ConflictException(`A ${claim.status} claim can't be re-checked`);
     const visitIds = claim.lines.filter((l) => l.visitId).map((l) => l.visitId!);
     const results = await this.readiness.evaluateVisits(caller.agencyId, visitIds, claim.id);
@@ -223,7 +227,7 @@ export class ClaimsService {
   async setInstitutional(caller: AuthUser, id: string, dto: InstitutionalClaimDto): Promise<ClaimView> {
     const claim = await this.find(caller, id);
     if (claim.claimType !== '837I') throw new ConflictException('Only institutional (837I) claims have these fields');
-    if (!['draft', 'ready'].includes(claim.status)) throw new ConflictException(`A ${claim.status} claim can't be changed`);
+    if (!['draft', 'ready', 'rejected'].includes(claim.status)) throw new ConflictException(`A ${claim.status} claim can't be changed`);
     await this.prisma.claim.update({
       where: { id },
       data: {
@@ -238,7 +242,7 @@ export class ClaimsService {
 
   async void(caller: AuthUser, id: string, reason: string): Promise<ClaimView> {
     const claim = await this.find(caller, id);
-    if (!['draft', 'ready'].includes(claim.status)) {
+    if (!['draft', 'ready', 'rejected'].includes(claim.status)) {
       throw new ConflictException(
         `A ${claim.status} claim can't be voided here — it was sent to the payer`,
       );
@@ -399,6 +403,8 @@ function toView(c: ClaimRow): ClaimView {
     qaPassed: c.qaPassed,
     qaErrors: c.qaErrors,
     voidReason: c.voidReason,
+    rejection: c.rejectionReason ? { reason: c.rejectionReason, at: c.rejectedAt } : null,
+    ediFileId: c.ediFileId,
     submittedAt: c.submittedAt,
     payerClaimNumber: c.payerClaimNumber,
     originalClaimId: c.originalClaimId,

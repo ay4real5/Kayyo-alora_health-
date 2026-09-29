@@ -70,6 +70,7 @@ test('billing pages have no WCAG A/AA violations', async ({ page }) => {
   const found = await scan(page, [
     ['/billing/ready', /Ready to bill/],
     ['/billing/claims', /Claims/],
+    ['/billing/files', /Claim files/],
     ['/billing/aging', /aging/i],
     ['/billing/payments', /Payments|Remittance/],
     ['/billing/invoices', /Invoices/],
