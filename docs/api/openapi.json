@@ -8377,6 +8377,11 @@
             "type": "string",
             "maxLength": 50
           },
+          "ivrCode": {
+            "type": "string",
+            "description": "Digits keyed in to clock in/out by phone from the patient's home line (D-073). 4–8 digits; 6+ recommended.",
+            "pattern": "^\\d{4,8}$"
+          },
           "discipline": {
             "type": "string",
             "enum": [
@@ -8499,6 +8504,11 @@
           "employeeId": {
             "type": "string",
             "maxLength": 50
+          },
+          "ivrCode": {
+            "type": "string",
+            "description": "Digits keyed in to clock in/out by phone from the patient's home line (D-073). 4–8 digits; 6+ recommended.",
+            "pattern": "^\\d{4,8}$"
           },
           "discipline": {
             "enum": [

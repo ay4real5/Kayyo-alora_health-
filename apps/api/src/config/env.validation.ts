@@ -192,6 +192,15 @@ export class EnvironmentVariables {
   @Matches(/^\+[1-9]\d{7,14}$/, { message: 'TWILIO_PHONE_NUMBER must be E.164, e.g. +15551234567' })
   TWILIO_PHONE_NUMBER?: string;
 
+  /**
+   * The public https origin Twilio calls for voice webhooks (telephony EVV, D-073), e.g. https://app.example.com —
+   * part of the signed URL. IVR is off until this and TWILIO_AUTH_TOKEN are set.
+   */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsUrl({ require_protocol: true, require_tld: false, protocols: ['http', 'https'] })
+  TWILIO_WEBHOOK_BASE_URL?: string;
+
   /** SendGrid email: key and sender address, or neither. */
   @Transform(blankToUndefined)
   @IsOptional()

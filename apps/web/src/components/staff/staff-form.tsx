@@ -52,6 +52,9 @@ export function StaffForm({
       if (raw === null) continue;
       body[key] = String(raw).split(',').map((v) => v.trim()).filter(Boolean);
     }
+    // Write-only like the SSN: blank keeps the code on file.
+    const ivrCode = String(form.get('ivrCode') ?? '').trim();
+    if (ivrCode) body.ivrCode = ivrCode;
     const ssn = String(form.get('ssn') ?? '').trim();
     if (ssn) body.ssn = ssn;
     const maxPatients = String(form.get('maxPatients') ?? '').trim();
@@ -104,7 +107,21 @@ export function StaffForm({
             </option>
           ))}
         </SelectField>
-        <Field label="Employee ID" name="employeeId" defaultValue={v('employeeId')} />
+        <Field
+          label="Employee ID"
+          name="employeeId"
+          defaultValue={v('employeeId')}
+          hint="Letters and digits; goes on Virginia Medicaid claims (never the SSN)."
+        />
+        <Field
+          label="Phone check-in code"
+          name="ivrCode"
+          inputMode="numeric"
+          autoComplete="off"
+          pattern="[0-9]{4,8}"
+          placeholder={staff?.hasPhoneCheckInCode ? 'Set — enter a new one to change it' : '4 to 8 digits'}
+          hint="Keyed in when clocking in or out by phone from the patient's home line."
+        />
         <Field label="Hire date" name="hireDate" type="date" defaultValue={v('hireDate')} />
         <Field label="Max patients" name="maxPatients" type="number" min={1} defaultValue={staff?.maxPatients ?? ''} />
       </Card>

@@ -37,6 +37,11 @@ export class CreateStaffDto {
   @MaxLength(50)
   employeeId?: string;
 
+  /** Digits keyed in to clock in/out by phone from the patient's home line (D-073). 4–8 digits; 6+ recommended. */
+  @IsOptional()
+  @Matches(/^\d{4,8}$/, { message: 'The phone check-in code must be 4 to 8 digits' })
+  ivrCode?: string;
+
   @IsIn(DISCIPLINES)
   discipline!: (typeof DISCIPLINES)[number];
 
