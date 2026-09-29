@@ -7527,6 +7527,77 @@
         ]
       }
     },
+    "/api/v1/notifications/channels": {
+      "get": {
+        "operationId": "NotificationsController_channels",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Which channels outside the app are connected for this agency (push / SMS / email, D-071).",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/devices": {
+      "post": {
+        "operationId": "NotificationsController_registerDevice",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The mobile app registers the phone for push notifications after sign-in (D-071).",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/devices/{token}": {
+      "delete": {
+        "operationId": "NotificationsController_unregisterDevice",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "…and removes it on sign-out.",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/api/v1/notifications/unread-count": {
       "get": {
         "operationId": "NotificationsController_unreadCount",
@@ -10663,6 +10734,25 @@
             "type": "boolean"
           }
         }
+      },
+      "RegisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "ios",
+              "android"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "platform"
+        ]
       }
     }
   },

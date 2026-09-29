@@ -191,9 +191,18 @@ export class NotificationsService {
       ...(dto.sms !== undefined ? { channelSms: dto.sms } : {}),
       ...(dto.email !== undefined ? { channelEmail: dto.email } : {}),
     };
+    // A new row starts from the type's defaults (not the columns' all-on defaults), then takes what was sent.
+    const t = type as NotificationType;
     await this.prisma.notificationPreference.upsert({
       where: { userId_notificationType: { userId: caller.userId, notificationType: type } },
-      create: { userId: caller.userId, notificationType: type, ...data },
+      create: {
+        userId: caller.userId,
+        notificationType: type,
+        channelPush: effectiveChannel(t, 'push', null),
+        channelSms: effectiveChannel(t, 'sms', null),
+        channelEmail: effectiveChannel(t, 'email', null),
+        ...data,
+      },
       update: data,
     });
     return this.preferences(caller);

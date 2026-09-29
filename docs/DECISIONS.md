@@ -1240,3 +1240,32 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   and dotenv versions, same files) reports "Database schema is up to date" against the dev database. Docker itself
   isn't run on the owner's laptop (D-011) — CI builds the images.
 =======
+
+### D-071 — Push / SMS / email delivery: database outbox, providers off until connected (P2-12, P3-19 groundwork)
+2026-09-29 · Claude Code
+- **Outbox in Postgres, not BullMQ** (DESIGN §13.1 said BullMQ): `notify()` writes the inbox row and, in the same
+  call, one `notification_deliveries` row per outside channel; a job every 30 s takes due rows with
+  `FOR UPDATE SKIP LOCKED` (safe with several API instances), sends, and records `sent` / retry / `failed`. Why: no
+  Redis to run, secure and back up under a BAA; the database already is; delivery survives restarts. Retries after 1,
+  5, 30 and 120 minutes, then `failed`; rows stuck in `sending` for 10 minutes are taken again; notifications older
+  than 24 h are `skipped` (a day-late shift reminder is noise).
+- **Providers, plain HTTPS, no SDKs** (`notifications/delivery/senders.ts`): Twilio SMS, SendGrid email (no
+  open/click tracking), Expo push (the mobile app is Expo; Expo relays to FCM/APNs). **Each is off until its
+  settings are present** (`TWILIO_*`, `SENDGRID_*`, `PUSH_PROVIDER=expo`) — the owner turns them on after signing
+  the BAAs (P2-11, P3-19). `GET /notifications/channels` says which are connected; Notification settings shows the
+  rest as "not connected yet".
+- **Who gets what**: a channel is used when the person's saved choice says so, or — no choice saved — when the type's
+  default includes it (**DESIGN §13.2 defaults**, `DEFAULT_DELIVERY_CHANNELS` in `@alora/shared`: texts only for a new
+  shift and a missed visit), the provider is connected, and the person is reachable (phone number → E.164, a
+  registered phone for push). A preference row created by one toggle starts from the type's defaults. **Never for
+  portal users** (patients/families): a text or email to a patient itself discloses they're a patient — in-app only
+  until the owner confirms the BAAs cover it. Inactive accounts get nothing outside the app.
+- **In-app off, text on** is allowed: the row is kept for delivery but without `in_app` in `channels`, and the inbox
+  lists only rows with `in_app`.
+- **Content**: the notification's title/body — PHI-free by contract (DESIGN §13.3). SMS: "Alora: <title> — <body>.
+  Open the app for details." (≤ 320 chars). Push data carries ids only. Nothing about the message or the person is
+  logged; `last_error` holds provider status codes only.
+- **Push devices**: the mobile app registers its Expo push token after sign-in (`POST /notifications/devices`) and
+  removes it at sign-out; a token moves to whoever signed in on that phone last; tokens Expo reports as
+  `DeviceNotRegistered` are deleted. Registration is a no-op until the app is built with an EAS project id (owner's
+  Expo account). Expo push receipts (second-stage errors) aren't checked yet.

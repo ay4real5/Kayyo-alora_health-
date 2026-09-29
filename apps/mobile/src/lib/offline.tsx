@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Alert, AppState } from 'react-native';
 import { OfflineError, type ApiResult, type RequestOptions } from './api';
 import { useAuth } from './auth-context';
-import { cancelAllReminders } from './notifications';
+import { cancelAllReminders, registerForPush, unregisterForPush } from './notifications';
 import { classify, OfflineQueue, type NewOp, type QueuedOp } from './offline-queue';
 import { openQueueStore, type ReadCache } from './queue-store';
 
@@ -109,6 +109,11 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     return () => sub.remove();
   }, [flush]);
 
+  // Push notifications for this phone once signed in (D-071; a no-op until the app has an EAS project id).
+  useEffect(() => {
+    if (status === 'signed-in') void registerForPush(requestRef.current);
+  }, [status]);
+
   const waiting = ops.some((op) => !op.failure);
   useEffect(() => {
     if (!waiting) return;
@@ -155,6 +160,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
           if (queue) for (const op of await queue.list()) await queue.remove(op.id);
           await cache?.clear();
           await cancelAllReminders();
+          await unregisterForPush(request);
           setOps([]);
           await auth.signOut();
         };

@@ -38,11 +38,11 @@ const LABELS: Partial<Record<NotificationType, string>> = {
   system: 'Security and serious-incident alerts',
 };
 
-const CHANNELS: { key: NotificationChannel; label: string; live: boolean }[] = [
-  { key: 'inApp', label: 'In the app', live: true },
-  { key: 'push', label: 'Phone push', live: false },
-  { key: 'sms', label: 'Text message', live: false },
-  { key: 'email', label: 'Email', live: false },
+const CHANNELS: { key: NotificationChannel; label: string }[] = [
+  { key: 'inApp', label: 'In the app' },
+  { key: 'push', label: 'Phone push' },
+  { key: 'sms', label: 'Text message' },
+  { key: 'email', label: 'Email' },
 ];
 
 /** Each person chooses which alerts they get, and how (D-066). */
@@ -54,6 +54,12 @@ export default function NotificationSettingsPage() {
     queryKey: key,
     queryFn: async () => (await request<Preference[]>('/notifications/preferences')).data,
   });
+  // Which outside channels the agency has connected (D-071); the others are saved for later.
+  const connected = useQuery({
+    queryKey: ['notifications', 'channels'],
+    queryFn: async () => (await request<Record<'push' | 'sms' | 'email', boolean>>('/notifications/channels')).data,
+  });
+  const live = (channel: NotificationChannel) => channel === 'inApp' || connected.data?.[channel] === true;
   const save = useMutation({
     mutationFn: async ({ type, channel, on }: { type: string; channel: NotificationChannel; on: boolean; before?: Preference[] }) =>
       (await request<Preference[]>(`/notifications/preferences/${type}`, { method: 'PUT', body: { [channel]: on } })).data,
@@ -79,7 +85,9 @@ export default function NotificationSettingsPage() {
               {CHANNELS.map((c) => (
                 <th key={c.key} className="py-2 pr-4 text-center font-medium">
                   {c.label}
-                  {!c.live && <span className="block text-[10px] font-normal normal-case text-slate-400">coming soon</span>}
+                  {connected.data && !live(c.key) && (
+                    <span className="block text-[10px] font-normal normal-case text-slate-400">not connected yet</span>
+                  )}
                 </th>
               ))}
             </tr>
@@ -114,7 +122,8 @@ export default function NotificationSettingsPage() {
           </tbody>
         </table>
         <p className="mt-3 text-xs text-slate-500">
-          Phone push, text and email start working when the agency connects those services; your choices are saved now.
+          Channels marked “not connected yet” start working when the agency connects those services; your choices are saved
+          now. Texts and emails only say that something needs your attention — details are in the app.
         </p>
       </Card>
     </div>
