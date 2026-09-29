@@ -59,9 +59,9 @@ jobs:
         run: |
           IP=$(curl -fsS https://api.ipify.org)
           RULE="gh-${GITHUB_RUN_ID}"
-          az postgres flexible-server firewall-rule create -g "$RG" -n "$PG_SERVER" --rule-name "$RULE" \
+          az postgres flexible-server firewall-rule create -g "$RG" --server-name "$PG_SERVER" --name "$RULE" \
             --start-ip-address "$IP" --end-ip-address "$IP" -o none
-          trap 'az postgres flexible-server firewall-rule delete -g "$RG" -n "$PG_SERVER" --rule-name "$RULE" --yes -o none' EXIT
+          trap 'az postgres flexible-server firewall-rule delete -g "$RG" --server-name "$PG_SERVER" --name "$RULE" --yes -o none' EXIT
           docker run --rm -e DATABASE_URL "$SERVER/primordial-migrate:$TAG"
 
       - name: Roll out the new images
