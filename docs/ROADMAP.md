@@ -57,7 +57,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P2-10** `agent` Mobile: background location during active visit. deps: P2-07
 - [ ] **P2-11** `human` Create Twilio + Firebase accounts, sign Twilio BAA, put keys in `.env`
 - [ ] **P2-12** `agent` Notification queue (BullMQ) + push (FCM) + SMS (Twilio) channels, PHI-free templates. deps: P1-16, P2-11 — *groundwork done (D-071): database outbox + Twilio/SendGrid/Expo senders, off until P2-11 keys are set; left: turn on + test with real accounts, Expo push receipts.*
-- [ ] **P2-13** `agent` Telephony/IVR EVV (TwiML flows, signature-verified webhooks). deps: P2-01, P2-11
+- [x] **P2-13** `agent` Telephony/IVR EVV (TwiML flows, signature-verified webhooks). deps: P2-01, P2-11 — *built and tested with signed fake requests (D-073); goes live with the owner's Twilio account (P2-11).*
 
 ## Phase 3 — Billing, claims, clinical, portal
 

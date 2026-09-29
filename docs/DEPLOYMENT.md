@@ -57,6 +57,10 @@ balancer where nginx is — with the same rules (below).
 
 ## After deploying
 
+- Telephony EVV (optional, D-073): in Twilio, set the check-in number's **Voice → A call comes in** webhook to
+  `https://DOMAIN/api/v1/ivr/voice` (HTTP POST), and set `TWILIO_AUTH_TOKEN` + `TWILIO_WEBHOOK_BASE_URL=https://DOMAIN`.
+  Give each caregiver a phone check-in code (Staff → edit) and make sure patients' home phone numbers are filled in.
+
 - `https://DOMAIN/api/v1/health` → `{"success":true,...}`; the dashboard loads at `https://DOMAIN/login`.
 - Create the first agency admin (the demo seed is for development only — never run `db:seed` against production).
 - Mobile app: build with the production API URL (`EXPO_PUBLIC_API_URL`) and publish through the stores.

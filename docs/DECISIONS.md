@@ -1289,6 +1289,30 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Web: "Forgot your password?" on the sign-in page, `/forgot-password`, `/reset-password` (reads the fragment with
   `useSyncExternalStore`, clears it from history after use).
 
+<<<<<<< HEAD
+### D-073 — Telephony EVV: Twilio voice webhooks (P2-13)
+2026-09-29 · Claude Code
+- **Flow**: the caregiver calls the agency's check-in number **from the patient's home phone** → the caller ID must
+  match an active patient's `phone_home` (digits compared, any agency using the number) → they key their **phone
+  check-in code** + # (3 tries) → the system finds their visit at that home today (one they're clocked into first,
+  else the scheduled one starting soonest) → "press 1 to clock in" / "press 2 to clock out" → "You are clocked in at
+  9:02 AM". Nothing spoken names the patient. EVV's own refusals ("This visit isn't scheduled around this time") are
+  read out — they're PHI-free.
+- **Location**: the landline stands in for GPS (Virginia accepts the member's landline; D-069). Telephony records
+  have `clock_in_method = 'telephony'`, the calling number, no coordinates and no geofence flags. Everything else
+  (time window, open-visit, short-visit checks, supervisor review) is the same code path as the app
+  (`EvvService.clockIn/OutByPhone`).
+- **Security**: routes are public (Twilio can't sign in) but **every request must carry a valid X-Twilio-Signature**
+  (HMAC-SHA1 with the auth token over `TWILIO_WEBHOOK_BASE_URL` + path + query + sorted form fields) — so the step
+  state in the query string (`visit`, `staff`) can't be forged or replayed on another step. Off (404) until
+  `TWILIO_AUTH_TOKEN` and `TWILIO_WEBHOOK_BASE_URL` are set. Hidden from the OpenAPI docs. Clock events by phone are
+  audited (`EVV_CLOCK_IN_BY_PHONE` / `EVV_CLOCK_OUT_BY_PHONE`).
+- **Check-in code**: `staff_profiles.ivr_code`, 4–8 digits, unique per agency, **write-only** (the API only says
+  `hasPhoneCheckInCode`). Stored plain so it can be looked up; a leaked code alone is useless without calling from
+  that patient's home phone during that caregiver's visit. 6+ digits recommended.
+- Needs the owner's Twilio account + BAA (P2-11); tested with signed fake requests.
+>>>>>>> main
+
 ### D-074 — Accessibility checks in the browser suite
 2026-09-29 · Claude Code
 - **WCAG 2.1 A/AA automated checks** (axe-core via `@axe-core/playwright`, helper `apps/web/e2e/axe.ts`) run in CI on
@@ -1301,3 +1325,4 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   `slate-400` (or lighter) text on white.**
 - Automated checks catch about a third of real problems; a manual keyboard + screen-reader pass (NVDA/VoiceOver) is
   still worth doing before launch.
+=======

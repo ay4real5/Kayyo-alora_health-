@@ -44,6 +44,8 @@ export interface StaffSummary {
 export interface StaffDetail extends StaffSummary {
   email: string;
   phone: string | null;
+  /** Whether a phone check-in (IVR) code is set; the code itself is never returned (D-073). */
+  hasPhoneCheckInCode: boolean;
   hireDate: string | null;
   terminationDate: string | null;
   addressLine1: string | null;
@@ -332,6 +334,8 @@ export class StaffService {
       ...toSummary(profile),
       email: profile.user.email,
       phone: profile.user.phone,
+      // The code itself is never sent back (it's a PIN); only whether one is set.
+      hasPhoneCheckInCode: profile.ivrCode !== null,
       hireDate: fromDate(profile.hireDate),
       terminationDate: fromDate(profile.terminationDate),
       addressLine1: profile.addressLine1,
@@ -361,7 +365,7 @@ export class StaffService {
   private fields(dto: UpdateStaffDto): Prisma.StaffProfileUncheckedUpdateInput {
     const data: Record<string, unknown> = {};
     const copy = [
-      'employeeId', 'discipline', 'employmentType', 'hourlyRate', 'perVisitRate', 'overtimeRate', 'mileageRate',
+      'employeeId', 'ivrCode', 'discipline', 'employmentType', 'hourlyRate', 'perVisitRate', 'overtimeRate', 'mileageRate',
       'taxFilingStatus', 'addressLine1', 'city', 'state', 'zip', 'serviceAreaZipCodes', 'maxPatients', 'skills',
       'languages', 'notes',
     ] as const;
@@ -376,7 +380,7 @@ export class StaffService {
       return await save();
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException('Another staff member in this agency already has this employee ID');
+        throw new ConflictException('Another staff member in this agency already has this employee ID or phone check-in code');
       }
       throw error;
     }
