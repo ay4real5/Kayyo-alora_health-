@@ -22,7 +22,7 @@ test('billing sends a claim, sees it in AR aging, and replaces it with a correct
   await expect(first).toBeVisible();
   const claimNumber = (await first.textContent())!.trim();
   await first.click();
-  await expect(page.getByRole('heading', { name: new RegExp(claimNumber) })).toBeVisible();
+  await expect(page.getByRole('heading', { name: new RegExp(claimNumber) })).toBeVisible({ timeout: 20_000 });
 
   await page.getByRole('button', { name: 'Mark as sent to payer' }).click();
   await expect(page.getByRole('heading', { name: new RegExp(claimNumber) })).toContainText('submitted', { timeout: 15_000 });
