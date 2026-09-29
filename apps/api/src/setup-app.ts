@@ -2,6 +2,7 @@ import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
+import { forwardedForMiddleware } from './common/middleware/forwarded-for.js';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js';
 import {
@@ -22,7 +23,10 @@ export function setupApp(app: INestApplication): INestApplication {
   app.setGlobalPrefix(API_PREFIX);
   // Behind nginx / a load balancer: take the client IP (rate limits, audit log) from X-Forwarded-For (D-070).
   const proxyHops = config.get('TRUST_PROXY_HOPS', { infer: true });
-  if (proxyHops > 0) (app as NestExpressApplication).set('trust proxy', proxyHops);
+  if (proxyHops > 0) {
+    (app as NestExpressApplication).set('trust proxy', proxyHops);
+    app.use(forwardedForMiddleware); // "ip:port" entries from Azure's front end (D-081)
+  }
   // 835 remittance uploads can be a few MB (services cap their own sizes; D-054). Express's default is 100 kB.
   (app as NestExpressApplication).useBodyParser('json', { limit: '6mb' });
   app.use(correlationIdMiddleware);

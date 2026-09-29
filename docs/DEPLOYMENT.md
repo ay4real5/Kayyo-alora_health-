@@ -1,4 +1,7 @@
-# Deploying Alora (production)
+# Deploying Kayo Health (production)
+
+**Chosen host: Azure — follow [DEPLOYMENT-AZURE.md](DEPLOYMENT-AZURE.md)** (D-081). This page explains the general
+shape and the rules any host must keep.
 
 How the pieces fit (DECISIONS D-070). The hosting provider is still open (Q-006 / P4-11): whatever it is, it must be
 HIPAA-eligible and sign a BAA covering the servers, the database and backups **before any real patient data goes in**.
