@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { demoDay } from './dates';
 
 const PASSWORD = 'Demo-Password-1!';
 
@@ -47,8 +48,8 @@ test('a supervisor keeps the medication list, orders and plan of care', async ({
   const physician = page.getByLabel('Physician', { exact: true });
   await expect(physician.locator('option').nth(1)).toBeAttached();
   await physician.selectOption({ index: 1 });
-  const today = new Date().toISOString().slice(0, 10);
-  const end = new Date(Date.now() + 59 * 86_400_000).toISOString().slice(0, 10);
+  const today = demoDay();
+  const end = demoDay(59);
   await page.getByLabel('Certification from').fill(today);
   await page.getByLabel('to', { exact: true }).fill(end);
   await page.getByLabel('Goals (one per line)').fill('Safe transfers without help');

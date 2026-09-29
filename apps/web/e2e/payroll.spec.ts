@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { demoDay } from './dates';
 import { answerTwoFactor } from './two-factor';
 
 const PASSWORD = 'Demo-Password-1!';
-const isoDay = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+const isoDay = demoDay;
 
 async function signIn(page: Page, email: string) {
   await page.goto('/login');

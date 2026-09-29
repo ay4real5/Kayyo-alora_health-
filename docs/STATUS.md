@@ -127,16 +127,15 @@
 
 ## In progress
 
-**P4-10 production packaging** — branch `task/P4-10-production-packaging` (from main). Done (D-070): web and migration
+**P4-10 production packaging** — branch `task/P4-10-production-packaging`. Done (D-070): web and migration
 Dockerfiles, `docker-compose.prod.yml`, nginx template with PHI-safe logs, `TRUST_PROXY_HOPS`, `.env.production.example`,
-`docs/DEPLOYMENT.md`, CI builds/starts all images. **Left**: CI green → merge. (P4-04 is on its own branch; merge it
-first if its CI is green.)
+`docs/DEPLOYMENT.md`, CI builds/starts all images (Docker job green). **Left**: CI green after merging main → merge.
 
 ## Next up
 
-P4-04c (after Q-012). Then the remaining agent work is small: Redis adapter for several API instances (only when
-scaling), registry/deploy workflow once hosting is chosen. Most of what's left needs the owner (see below). The owner
-asked for autonomous work: go straight on, check in with questions every ~6 hours.
+P2-12/P3-19 groundwork that needs no accounts: a database outbox for push/SMS/email with senders that stay off until
+keys exist (Twilio, SendGrid, Expo push). P4-04c after Q-012. Most of what's left needs the owner (see below). The
+owner asked for autonomous work: go straight on, check in with questions every ~6 hours.
 
 ## Blockers / waiting on human
 
