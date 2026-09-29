@@ -277,6 +277,58 @@
         ]
       }
     },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "operationId": "AuthController_forgotPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Always the same answer, whether or not the address has an account (D-072).",
+        "tags": [
+          "auth"
+        ],
+        "security": []
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Sets a new password from a reset link; every session is signed out. Sign in afterwards (2FA still applies).",
+        "tags": [
+          "auth"
+        ],
+        "security": []
+      }
+    },
     "/api/v1/auth/change-password": {
       "post": {
         "operationId": "AuthController_changePassword",
@@ -7787,6 +7839,38 @@
         "required": [
           "code",
           "password"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string",
+            "description": "12-128 characters with an uppercase letter, a lowercase letter, a number and a special character.",
+            "minLength": 12,
+            "maxLength": 128
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "newPassword",
+          "token"
         ]
       },
       "ChangePasswordDto": {

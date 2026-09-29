@@ -123,6 +123,7 @@ model User {
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
   pushDevices             PushDevice[]
+  passwordResets          PasswordResetToken[]
 
   ordersTaken         PhysicianOrder[] @relation("OrderTakenBy")
   carePlansSigned     CarePlan[]       @relation("CarePlanSignedBy")
@@ -1748,4 +1749,19 @@ model PushDevice {
 
   @@index([userId])
   @@map("push_devices")
+}
+
+/// "Forgot password" links (D-072): single use, 30 minutes. Only a SHA-256 hash of the token is stored.
+model PasswordResetToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }

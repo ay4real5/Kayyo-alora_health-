@@ -1269,3 +1269,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   removes it at sign-out; a token moves to whoever signed in on that phone last; tokens Expo reports as
   `DeviceNotRegistered` are deleted. Registration is a no-op until the app is built with an EAS project id (owner's
   Expo account). Expo push receipts (second-stage errors) aren't checked yet.
+
+### D-072 — Forgot / reset password by email (P3-19)
+2026-09-29 · Claude Code
+- `POST /auth/forgot-password {email}` answers **the same for every address** (`{accepted, emailAvailable}`) and does
+  the work in the background, so neither the answer nor its timing tells whether an account exists. 5 requests per
+  minute per IP. `emailAvailable` only says whether the agency connected email at all (then the page says "ask your
+  administrator").
+- The link: 256 random bits, **single use, 30 minutes, only the newest works**, stored as a SHA-256 hash
+  (`password_reset_tokens`). It carries the token in the **URL fragment** (`/reset-password#token=…`), which browsers
+  never send to servers — so it can't end up in nginx, CDN or API logs, or in Referer headers.
+- `POST /auth/reset-password {token, newPassword}`: password policy as everywhere, must differ from the current one,
+  **clears a lockout** (the person proved control of the mailbox), revokes every refresh token (all sessions end);
+  they then sign in normally — 2FA still applies. Audited: `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET`,
+  `PASSWORD_RESET_EMAIL_FAILED`.
+- Sent straight through the email sender (not the notification outbox: it mustn't show in an inbox or wait 30 s).
+  Nothing is sent unless SendGrid **and** `FRONTEND_URL` are set (D-071). Portal users can reset too — they asked for
+  the email themselves.
+- Web: "Forgot your password?" on the sign-in page, `/forgot-password`, `/reset-password` (reads the fragment with
+  `useSyncExternalStore`, clears it from history after use).

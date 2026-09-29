@@ -104,14 +104,19 @@ export class EmailSender extends Sender {
     const text = [message.title, message.body, '', link ? `Open Alora for details: ${link}` : 'Open Alora for details.', '', 'You can change which alerts you get by email under Notification settings.']
       .filter((line) => line !== null)
       .join('\n');
+    return this.sendText(to, `Alora: ${message.title}`, text);
+  }
+
+  /** A plain-text email (notifications, password reset links). */
+  async sendText(to: string, subject: string, text: string): Promise<SendOutcome> {
     const { response, error } = await post(this.fetchImpl, 'https://api.sendgrid.com/v3/mail/send', {
       headers: { authorization: `Bearer ${this.config.get('SENDGRID_API_KEY', { infer: true })}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
         from: { email: this.config.get('SENDGRID_FROM_EMAIL', { infer: true }), name: 'Alora' },
-        subject: `Alora: ${message.title}`.slice(0, 200),
+        subject: subject.slice(0, 200),
         content: [{ type: 'text/plain', value: text }],
-        // No open/click tracking: it rewrites links and adds pixels.
+        // No open/click tracking: it rewrites links (reset links included) and adds pixels.
         tracking_settings: { click_tracking: { enable: false }, open_tracking: { enable: false } },
       }),
     });
