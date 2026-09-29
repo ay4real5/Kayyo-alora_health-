@@ -1,10 +1,11 @@
+import { SendEmailCommand, SESv2Client } from '@aws-sdk/client-sesv2';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { DeliveryChannel } from '@alora/shared';
 import type { EnvironmentVariables } from '../../../config/env.validation.js';
 
 /**
- * Senders for the channels outside the app (DECISIONS D-071): Twilio SMS, SendGrid email, Expo push. Each is plain
+ * Senders for the channels outside the app (DECISIONS D-071, D-078): Twilio SMS, Amazon SES / SendGrid email, Expo push. Each is plain
  * HTTPS (no SDKs) and is **off until its settings are present**. They never log message text or contact details.
  */
 
@@ -88,15 +89,40 @@ export class SmsSender extends Sender {
   }
 }
 
+/** Minimal view of the SES v2 client, so tests can stand in for AWS. */
+export interface SesLike {
+  send(command: SendEmailCommand): Promise<{ MessageId?: string }>;
+}
+
+/**
+ * Email (D-071, D-078): **Amazon SES** (covered by the AWS BAA — use this in production) or SendGrid (no BAA —
+ * development only). Chosen by EMAIL_PROVIDER; off until the provider's settings are present.
+ */
 @Injectable()
 export class EmailSender extends Sender {
   readonly channel = 'email' as const;
+  /** Replaced in tests; created on first use with the standard AWS credential chain (task role, env vars). */
+  ses: SesLike | null = null;
+
   constructor(private readonly config: ConfigService<EnvironmentVariables, true>) {
     super();
   }
 
+  get provider(): 'ses' | 'sendgrid' | null {
+    const chosen = this.config.get('EMAIL_PROVIDER', { infer: true });
+    if (chosen) return chosen;
+    return this.config.get('SENDGRID_API_KEY', { infer: true }) ? 'sendgrid' : null;
+  }
+
+  private get from(): string | undefined {
+    return this.config.get('EMAIL_FROM', { infer: true }) ?? this.config.get('SENDGRID_FROM_EMAIL', { infer: true });
+  }
+
   get enabled(): boolean {
-    return Boolean(this.config.get('SENDGRID_API_KEY', { infer: true }) && this.config.get('SENDGRID_FROM_EMAIL', { infer: true }));
+    if (!this.from) return false;
+    if (this.provider === 'ses') return Boolean(this.config.get('AWS_REGION', { infer: true }));
+    if (this.provider === 'sendgrid') return Boolean(this.config.get('SENDGRID_API_KEY', { infer: true }));
+    return false;
   }
 
   async send(to: string, message: DeliveryMessage): Promise<SendOutcome> {
@@ -109,12 +135,35 @@ export class EmailSender extends Sender {
 
   /** A plain-text email (notifications, password reset links). */
   async sendText(to: string, subject: string, text: string): Promise<SendOutcome> {
+    return this.provider === 'ses' ? this.viaSes(to, subject.slice(0, 200), text) : this.viaSendGrid(to, subject.slice(0, 200), text);
+  }
+
+  private async viaSes(to: string, subject: string, text: string): Promise<SendOutcome> {
+    this.ses ??= new SESv2Client({ region: this.config.get('AWS_REGION', { infer: true }) });
+    try {
+      const result = await this.ses.send(
+        new SendEmailCommand({
+          FromEmailAddress: `Kayo Health <${this.from}>`,
+          Destination: { ToAddresses: [to] },
+          Content: { Simple: { Subject: { Data: subject, Charset: 'UTF-8' }, Body: { Text: { Data: text, Charset: 'UTF-8' } } } },
+        }),
+      );
+      return { ok: true, providerMessageId: result.MessageId ?? null };
+    } catch (error) {
+      const e = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+      const status = e.$metadata?.httpStatusCode ?? 0;
+      const throttled = e.name === 'TooManyRequestsException' || e.name === 'ThrottlingException' || e.name === 'LimitExceededException';
+      return { ok: false, retry: throttled || status === 0 || retryable(status), error: `ses ${e.name ?? 'error'}${status ? ` ${status}` : ''}` };
+    }
+  }
+
+  private async viaSendGrid(to: string, subject: string, text: string): Promise<SendOutcome> {
     const { response, error } = await post(this.fetchImpl, 'https://api.sendgrid.com/v3/mail/send', {
       headers: { authorization: `Bearer ${this.config.get('SENDGRID_API_KEY', { infer: true })}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: this.config.get('SENDGRID_FROM_EMAIL', { infer: true }), name: 'Kayo Health' },
-        subject: subject.slice(0, 200),
+        from: { email: this.from, name: 'Kayo Health' },
+        subject,
         content: [{ type: 'text/plain', value: text }],
         // No open/click tracking: it rewrites links (reset links included) and adds pixels.
         tracking_settings: { click_tracking: { enable: false }, open_tracking: { enable: false } },

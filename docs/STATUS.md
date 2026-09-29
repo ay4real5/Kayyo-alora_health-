@@ -128,8 +128,7 @@
 ## In progress
 
 `task/DESIGN-refresh` — new look (D-079 web, D-080 caregiver app: tabs, profile, settings). Typecheck/lint/unit green,
-Android bundle builds; browser suite runs in CI. **Next step**: CI green → merge. (`task/P3-19b-ses-email` also waits
-for green CI → merge.)
+Android bundle builds. **Next step**: CI green → merge. (SES email, D-078, is merged.)
 
 ## Next up
 
@@ -150,14 +149,12 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
 | 2026-09-29 | Claude Code | design | Indigo & violet redesign (web) and caregiver app tabs/profile/settings. |
+| 2026-09-29 | Claude Code | P3-19b | Amazon SES email provider (SendGrid signs no BAA). |
 | 2026-09-29 | Claude Code | P4-04c | Virginia options ready but off: monthly whole-hour rounding (payer), live-in UB (patient). |
 | 2026-09-29 | Claude Code | P3-09a | Claim files (batch 837, control numbers, mark sent) and 999/277CA acknowledgments. |
 | 2026-09-29 | Claude Code | rename | Product renamed to Kayo Health (owner). |
-<<<<<<< HEAD
 | 2026-09-29 | Claude Code | P4-13 | Accessibility: axe WCAG 2.1 AA checks on ~26 pages in CI; contrast fixes. |
-=======
 | 2026-09-29 | Claude Code | P2-13 | Telephony EVV: signed Twilio voice webhooks, caller ID = patient home line + caregiver code. |
->>>>>>> main
 | 2026-09-29 | Claude Code | P3-19 | Forgot/reset password by email (single-use 30-min link in the URL fragment, neutral answers). |
 | 2026-09-29 | Claude Code | P2-12 | Notification delivery outbox + SMS/email/push senders (off until keys), device registration. |
 | 2026-09-29 | Claude Code | P4-10 | Production images (web, migrate), prod compose, PHI-safe nginx, TRUST_PROXY_HOPS, DEPLOYMENT.md; CI builds them. |

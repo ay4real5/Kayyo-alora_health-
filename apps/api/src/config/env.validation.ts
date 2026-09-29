@@ -201,6 +201,27 @@ export class EnvironmentVariables {
   @IsUrl({ require_protocol: true, require_tld: false, protocols: ['http', 'https'] })
   TWILIO_WEBHOOK_BASE_URL?: string;
 
+  /**
+   * Which email service sends (D-078): "ses" (Amazon SES — covered by the AWS BAA; recommended) or "sendgrid"
+   * (SendGrid does NOT sign a BAA — development only). Empty: SendGrid if its key is set, else email is off.
+   */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsEnum(['ses', 'sendgrid'])
+  EMAIL_PROVIDER?: 'ses' | 'sendgrid';
+
+  /** Sender address for every email (a verified identity in SES / SendGrid). Falls back to SENDGRID_FROM_EMAIL. */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Matches(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, { message: 'EMAIL_FROM must be an email address' })
+  EMAIL_FROM?: string;
+
+  /** AWS region for SES (credentials come from the task role / standard AWS variables, never from this repo). */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Matches(/^[a-z]{2}(-[a-z]+)+-\d$/, { message: 'AWS_REGION must look like us-east-1' })
+  AWS_REGION?: string;
+
   /** SendGrid email: key and sender address, or neither. */
   @Transform(blankToUndefined)
   @IsOptional()

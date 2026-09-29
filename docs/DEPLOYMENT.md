@@ -57,6 +57,10 @@ balancer where nginx is — with the same rules (below).
 
 ## After deploying
 
+- Email (D-078): in Amazon SES verify your domain (DKIM), ask AWS to move the account **out of the SES sandbox**
+  (otherwise it only sends to verified addresses), give the API's role `ses:SendEmail`, then set
+  `EMAIL_PROVIDER=ses`, `EMAIL_FROM`, `AWS_REGION`.
+
 - Telephony EVV (optional, D-073): in Twilio, set the check-in number's **Voice → A call comes in** webhook to
   `https://DOMAIN/api/v1/ivr/voice` (HTTP POST), and set `TWILIO_AUTH_TOKEN` + `TWILIO_WEBHOOK_BASE_URL=https://DOMAIN`.
   Give each caregiver a phone check-in code (Staff → edit) and make sure patients' home phone numbers are filled in.

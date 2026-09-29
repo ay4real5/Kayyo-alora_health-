@@ -202,7 +202,8 @@ describe.skipIf(!hasDb)('Claim files and acknowledgments (e2e)', () => {
 
   it('999 accepts the file; the 277CA acknowledges one claim and rejects the other with its reason', async () => {
     const r999 = (await http().post(`${files}/upload-ack`).set(billing).send({ fileName: 'ack.999', content: ack999('1', 'A', '000000501') }).expect(201)).body.data;
-    expect(r999).toMatchObject({ kind: '999', accepted: claimNumbers, rejected: [] });
+    expect(r999).toMatchObject({ kind: '999', rejected: [] });
+    expect([...r999.accepted].sort()).toEqual([...claimNumbers].sort()); // file order is by claim number, which is random
     await http().post(`${files}/upload-ack`).set(billing).send({ fileName: 'ack.999', content: ack999('1', 'A', '000000501') }).expect(409); // same file twice
 
     const content = ack277([{ number: claimNumbers[0]!, stc: 'A2:20:PR', ref: 'PAYER-1' }, { number: claimNumbers[1]!, stc: 'A7:562:85' }, { number: 'NOT-OURS', stc: 'A2:20' }], '000000502');

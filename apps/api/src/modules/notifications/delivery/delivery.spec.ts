@@ -114,3 +114,33 @@ describe('senders', () => {
     expect(smsText({ ...MESSAGE, body: 'x'.repeat(500) }).length).toBe(320);
   });
 });
+
+describe('email through Amazon SES (D-078)', () => {
+  const sesConfig = config({ EMAIL_PROVIDER: 'ses', EMAIL_FROM: 'alerts@example.test', AWS_REGION: 'us-east-1', SENDGRID_API_KEY: undefined });
+
+  it('is chosen by EMAIL_PROVIDER, needs a sender and a region', () => {
+    expect(new EmailSender(sesConfig).provider).toBe('ses');
+    expect(new EmailSender(sesConfig).enabled).toBe(true);
+    expect(new EmailSender(config({ EMAIL_PROVIDER: 'ses', AWS_REGION: undefined })).enabled).toBe(false);
+    expect(new EmailSender(config({ SENDGRID_API_KEY: undefined })).provider).toBeNull(); // nothing chosen → off
+  });
+
+  it('sends plain text from "Kayo Health", and retries only throttling / server errors', async () => {
+    const email = new EmailSender(sesConfig);
+    const send = vi.fn(async (_command: unknown) => ({ MessageId: 'ses-1' }));
+    email.ses = { send } as never;
+    expect(await email.send('aide@example.test', MESSAGE)).toEqual({ ok: true, providerMessageId: 'ses-1' });
+    const input = (send.mock.calls[0]![0] as { input: Record<string, any> }).input;
+    expect(input.FromEmailAddress).toBe('Kayo Health <alerts@example.test>');
+    expect(input.Destination).toEqual({ ToAddresses: ['aide@example.test'] });
+    expect(input.Content.Simple.Subject.Data).toBe('Kayo Health: New shift assigned');
+    expect(input.Content.Simple.Body.Text.Data).toContain('Open Kayo Health for details: https://app.example.test');
+
+    const fail = (name: string, status: number) =>
+      Object.assign(new Error(name), { name, $metadata: { httpStatusCode: status } });
+    send.mockRejectedValueOnce(fail('TooManyRequestsException', 429));
+    expect(await email.sendText('a@example.test', 's', 't')).toEqual({ ok: false, retry: true, error: 'ses TooManyRequestsException 429' });
+    send.mockRejectedValueOnce(fail('MessageRejected', 400));
+    expect(await email.sendText('a@example.test', 's', 't')).toEqual({ ok: false, retry: false, error: 'ses MessageRejected 400' });
+  });
+});
