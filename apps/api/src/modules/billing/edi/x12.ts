@@ -60,3 +60,24 @@ export const ccyymmdd = (isoDate: string) => isoDate.slice(0, 10).replaceAll('-'
 export function amount(value: number): string {
   return String(Math.round(value * 100) / 100);
 }
+
+export class X12Error extends Error {}
+
+/**
+ * Splits an X12 file into segments (arrays of elements). Separators come from the fixed-width ISA segment, so any
+ * valid delimiters work, with or without line breaks.
+ */
+export function readX12(text: string): { segments: string[][]; component: string } {
+  const raw = text.replace(/^﻿/, '');
+  const isaAt = raw.indexOf('ISA');
+  if (isaAt < 0 || raw.length < isaAt + 106) throw new X12Error('Not an X12 file (no ISA segment)');
+  const isa = raw.slice(isaAt, isaAt + 106);
+  const element = isa[3]!;
+  const segments = raw
+    .slice(isaAt)
+    .split(isa[105]!)
+    .map((s) => s.replace(/^[\r\n]+/, '').trim())
+    .filter(Boolean)
+    .map((s) => s.split(element));
+  return { segments, component: isa[104]! };
+}

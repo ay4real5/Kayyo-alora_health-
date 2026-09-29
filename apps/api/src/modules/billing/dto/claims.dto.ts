@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
+  IsBoolean,
   IsIn,
   IsNotEmpty,
   IsOptional,
@@ -159,4 +160,17 @@ export class AgingQueryDto {
   @IsOptional()
   @IsDateOnly()
   asOf?: string;
+}
+
+/** Ready claims for one payer → one 837 file (D-076). */
+export class CreateEdiFileDto {
+  @IsUUID('all', { each: true })
+  @ArrayMinSize(1)
+  @ArrayMaxSize(500)
+  claimIds!: string[];
+
+  /** For the clearinghouse's test channel: the file carries the test indicator (ISA15 = T). */
+  @IsOptional()
+  @IsBoolean()
+  test?: boolean;
 }

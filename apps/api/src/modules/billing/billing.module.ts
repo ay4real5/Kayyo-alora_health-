@@ -8,6 +8,8 @@ import {
   PaymentsController,
 } from './billing.controllers.js';
 import { ClaimsService } from './claims.service.js';
+import { EdiFilesController } from './edi-files.controller.js';
+import { EdiFilesService } from './edi-files.service.js';
 import { EdiService } from './edi.service.js';
 import { BillingReportsController, ClaimWorkflowController } from './claim-workflow.controller.js';
 import { ClaimWorkflowService } from './claim-workflow.service.js';
@@ -21,6 +23,7 @@ import { BillingSetupService } from './billing-setup.service.js';
 /** Billing setup and authorizations (DECISIONS D-050). Claims, EDI and payments build on this (P3-03+). */
 @Module({
   controllers: [
+    EdiFilesController,
     BillingSetupController,
     AuthorizationsController,
     ClaimsController,
@@ -31,6 +34,7 @@ import { BillingSetupService } from './billing-setup.service.js';
     BillingReportsController,
   ],
   providers: [
+    EdiFilesService,
     BillingSetupService,
     AuthorizationsService,
     BillingReadinessService,
