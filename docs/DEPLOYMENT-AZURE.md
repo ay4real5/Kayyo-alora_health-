@@ -27,10 +27,14 @@ first months.
 
 ## 1. Create the Azure pieces (10 minutes)
 
+*New accounts*: register the providers once (`az provider register -n Microsoft.Web --wait`, same for
+`Microsoft.DBforPostgreSQL`, `Microsoft.ContainerRegistry`), and check **Quotas → App Service → B1 VMs** in your
+region is at least 1 — East US often refuses new accounts; **Central US** had 1 available for us.
+
 In Cloud Shell (Bash), upload `infra/azure/main.bicep` (Upload button in the Cloud Shell toolbar), then:
 
 ```bash
-az group create --name primordial-rg --location eastus
+az group create --name primordial-prod --location centralus
 
 # New secrets — copy all three into your password manager NOW. Losing PHI_KEY makes encrypted data unreadable.
 PG_PASSWORD=$(openssl rand -base64 30 | tr -d '/+=')
@@ -38,7 +42,7 @@ JWT_SECRET=$(openssl rand -base64 48)
 PHI_KEY=$(openssl rand -base64 32)
 echo "PG_PASSWORD=$PG_PASSWORD"; echo "JWT_SECRET=$JWT_SECRET"; echo "PHI_KEY=$PHI_KEY"
 
-az deployment group create --resource-group primordial-rg --template-file main.bicep \
+az deployment group create --resource-group primordial-prod --template-file main.bicep \
   --parameters appDomain=app.primordialhealthservices.health apiDomain=api.primordialhealthservices.health \
                postgresPassword="$PG_PASSWORD" jwtSecret="$JWT_SECRET" phiEncryptionKey="$PHI_KEY" \
   --query properties.outputs
@@ -74,7 +78,7 @@ In Cloud Shell (replace the repository name if it changed):
 SUB=$(az account show --query id -o tsv); TENANT=$(az account show --query tenantId -o tsv)
 APP_ID=$(az ad app create --display-name primordial-github-deploy --query appId -o tsv)
 az ad sp create --id "$APP_ID" -o none
-az role assignment create --assignee "$APP_ID" --role Contributor --scope "/subscriptions/$SUB/resourceGroups/primordial-rg" -o none
+az role assignment create --assignee "$APP_ID" --role Contributor --scope "/subscriptions/$SUB/resourceGroups/primordial-prod" -o none
 az ad app federated-credential create --id "$APP_ID" --parameters '{
   "name": "github-production",
   "issuer": "https://token.actions.githubusercontent.com",
@@ -96,7 +100,7 @@ approval before each deploy). Then **Settings → Secrets and variables → Acti
 
 | Variable | Value (from step 1's output) |
 |---|---|
-| `AZURE_RESOURCE_GROUP` | `primordial-rg` |
+| `AZURE_RESOURCE_GROUP` | `primordial-prod` |
 | `AZURE_REGISTRY` | `registryName` |
 | `AZURE_API_APP` / `AZURE_WEB_APP` | `apiAppName` / `webAppName` |
 | `AZURE_POSTGRES_SERVER` | `postgresServerName` |

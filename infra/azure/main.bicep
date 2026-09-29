@@ -1,6 +1,6 @@
 // Primordial Health on Azure — the small, low-cost setup (D-081). One command creates everything in a resource group:
 //
-//   az deployment group create -g primordial-rg -f infra/azure/main.bicep \
+//   az deployment group create -g primordial-prod -f infra/azure/main.bicep \
 //     -p appDomain=app.example.com apiDomain=api.example.com \
 //        postgresPassword=<secret> jwtSecret=<secret> phiEncryptionKey=<secret>
 //
@@ -96,29 +96,26 @@ resource allowAzure 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@202
 
 var databaseUrl = 'postgresql://${postgresAdmin}:${uriComponent(postgresPassword)}@${postgres.properties.fullyQualifiedDomainName}:5432/${databaseName}?sslmode=require'
 
-var commonSite = {
-  httpsOnly: true
-  clientAffinityEnabled: false
-}
-var commonConfig = {
-  alwaysOn: true
-  ftpsState: 'Disabled'
-  minTlsVersion: '1.2'
-  http20Enabled: true
-  acrUseManagedIdentityCreds: true
-  // App Service HTTP logs record query strings (search terms can be PHI, D-035) — leave them off.
-  httpLoggingEnabled: false
-}
-
+// Properties are written out in full (no union()): Microsoft.Web's preflight validation fails with "Object reference
+// not set to an instance of an object" when a site's whole properties block is a runtime expression.
 resource api 'Microsoft.Web/sites@2023-12-01' = {
   name: '${namePrefix}-api-${suffix}'
   location: location
   kind: 'app,linux,container'
   identity: { type: 'SystemAssigned' }
-  properties: union(commonSite, {
+  properties: {
     serverFarmId: plan.id
-    siteConfig: union(commonConfig, {
+    httpsOnly: true
+    clientAffinityEnabled: false
+    siteConfig: {
       linuxFxVersion: 'DOCKER|${registry.properties.loginServer}/primordial-api:${imageTag}'
+      acrUseManagedIdentityCreds: true
+      alwaysOn: true
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      http20Enabled: true
+      // App Service HTTP logs record query strings (search terms can be PHI, D-035) — leave them off.
+      httpLoggingEnabled: false
       webSocketsEnabled: true
       healthCheckPath: '/api/v1/health'
       appSettings: [
@@ -136,8 +133,8 @@ resource api 'Microsoft.Web/sites@2023-12-01' = {
         { name: 'TRUST_PROXY_HOPS', value: '1' }
         { name: 'JOBS_ENABLED', value: 'true' }
       ]
-    })
-  })
+    }
+  }
 }
 
 resource web 'Microsoft.Web/sites@2023-12-01' = {
@@ -145,17 +142,25 @@ resource web 'Microsoft.Web/sites@2023-12-01' = {
   location: location
   kind: 'app,linux,container'
   identity: { type: 'SystemAssigned' }
-  properties: union(commonSite, {
+  properties: {
     serverFarmId: plan.id
-    siteConfig: union(commonConfig, {
+    httpsOnly: true
+    clientAffinityEnabled: false
+    siteConfig: {
       linuxFxVersion: 'DOCKER|${registry.properties.loginServer}/primordial-web:${imageTag}'
+      acrUseManagedIdentityCreds: true
+      alwaysOn: true
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      http20Enabled: true
+      httpLoggingEnabled: false
       healthCheckPath: '/login'
       appSettings: [
         { name: 'WEBSITES_PORT', value: '3000' }
         { name: 'NODE_ENV', value: 'production' }
       ]
-    })
-  })
+    }
+  }
 }
 
 // Both apps pull their images from the private registry with their own identity — no registry passwords.
