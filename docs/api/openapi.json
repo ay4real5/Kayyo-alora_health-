@@ -8180,6 +8180,10 @@
           "phoneHome": {
             "type": "string"
           },
+          "liveIn": {
+            "type": "boolean",
+            "description": "A live-in caregiver lives in the home (Virginia personal care claims get the UB modifier, D-077)."
+          },
           "phoneCell": {
             "type": "string"
           },
@@ -8302,6 +8306,10 @@
           },
           "phoneHome": {
             "type": "string"
+          },
+          "liveIn": {
+            "type": "boolean",
+            "description": "A live-in caregiver lives in the home (Virginia personal care claims get the UB modifier, D-077)."
           },
           "phoneCell": {
             "type": "string"
@@ -9426,6 +9434,14 @@
               "va_dmas"
             ]
           },
+          "hourRounding": {
+            "type": "string",
+            "nullable": true,
+            "description": "Hourly services: empty = quarter hours per visit; monthly = whole hours per month, minutes carried (D-077).",
+            "enum": [
+              "monthly"
+            ]
+          },
           "payerIdCode": {
             "type": "string",
             "description": "The payer's ID for electronic claims (clearinghouse payer ID).",
@@ -9513,6 +9529,14 @@
             "description": "State EVV fields on claims: va_dmas = Virginia Medicaid (DMAS) and its MCOs (D-069). Empty = none.",
             "enum": [
               "va_dmas"
+            ]
+          },
+          "hourRounding": {
+            "type": "string",
+            "nullable": true,
+            "description": "Hourly services: empty = quarter hours per visit; monthly = whole hours per month, minutes carried (D-077).",
+            "enum": [
+              "monthly"
             ]
           },
           "payerIdCode": {

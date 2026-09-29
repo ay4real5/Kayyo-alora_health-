@@ -275,6 +275,8 @@ model Patient {
   gender                   String?   @db.VarChar(10)
   ssnEncrypted             Bytes?    @map("ssn_encrypted") // AES-256-GCM, DECISIONS D-006
   phoneHome                String?   @map("phone_home") @db.VarChar(20)
+  /// A live-in caregiver lives in the home (Virginia personal care: UB modifier on the claim lines, D-077).
+  liveIn                   Boolean   @default(false) @map("live_in")
   phoneCell                String?   @map("phone_cell") @db.VarChar(20)
   email                    String?   @db.VarChar(255)
   addressLine1             String?   @map("address_line1") @db.VarChar(255)
@@ -410,6 +412,8 @@ model Payer {
   claimFormat           String?   @map("claim_format") @db.VarChar(4)
   /// State EVV fields on this payer's claims: va_dmas = Virginia DMAS companion guides (D-069). Null = none.
   evvClaimProfile       String?   @map("evv_claim_profile") @db.VarChar(20)
+  /// Hourly service units: null = quarter hours per visit; "monthly" = whole hours per month with carry-forward (DMAS personal care, D-077).
+  hourRounding          String?   @map("hour_rounding") @db.VarChar(10)
   payerIdCode           String?   @map("payer_id_code") @db.VarChar(50)
   addressLine1          String?   @map("address_line1") @db.VarChar(255)
   city                  String?   @db.VarChar(100)

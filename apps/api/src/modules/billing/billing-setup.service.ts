@@ -27,6 +27,7 @@ export interface PayerView {
   payerType: string;
   claimFormat: string | null;
   evvClaimProfile: string | null;
+  hourRounding: string | null;
   payerIdCode: string | null;
   addressLine1: string | null;
   city: string | null;
@@ -272,6 +273,7 @@ function toPayerView(p: Prisma.PayerGetPayload<object>): PayerView {
     payerType: p.payerType,
     claimFormat: p.claimFormat,
     evvClaimProfile: p.evvClaimProfile,
+    hourRounding: p.hourRounding,
     payerIdCode: p.payerIdCode,
     addressLine1: p.addressLine1,
     city: p.city,

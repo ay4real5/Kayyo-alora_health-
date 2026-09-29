@@ -33,6 +33,8 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
   let personalCareVisit: string;
   let homeHealthVisit: string;
   let overnightVisit: string;
+  let visitFor: (payerPrimaryId: string, mrn: string, serviceCode: string, start?: Date, end?: Date) => Promise<string>;
+  let aideUserId: string;
   const http = () => request(app.getHttpServer());
   const day = addDays(utcTodayString(), -5);
   // 09:00–13:00 Eastern (EDT or EST, whichever applies on that day).
@@ -109,8 +111,9 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
       include: { staffProfile: true },
     });
     aideStaffId = aide.staffProfile!.id;
+    aideUserId = aide.id;
 
-    const visitFor = async (payerPrimaryId: string, mrn: string, serviceCode: string, start = clockIn, end = clockOut) => {
+    visitFor = async (payerPrimaryId: string, mrn: string, serviceCode: string, start = clockIn, end = clockOut) => {
       const p = await prisma.patient.create({
         data: {
           agencyId,
@@ -258,5 +261,40 @@ describe.skipIf(!hasDb)('Virginia EVV on claims (e2e)', () => {
     expect(again.created[0].lines).toHaveLength(2);
     const twice = (await http().post(claims).set(billing).send({ visitIds: [overnightVisit] }).expect(201)).body.data;
     expect(twice.created).toEqual([]);
+  });
+
+  it('options (off by default): whole hours per month with carry-forward, and UB for a live-in client', async () => {
+    const set = await http().patch(`${payers}/${medicaidId}`).set(billing).send({ hourRounding: 'monthly' }).expect(200);
+    expect(set.body.data.hourRounding).toBe('monthly');
+    // Two personal care shifts the same day for one client: 90 and 45 minutes.
+    const first = await visitFor(medicaidId, 'VAEVV-0004', 'T1019', zonedTimeToUtc(day, '08:00', TZ), zonedTimeToUtc(day, '09:30', TZ));
+    const { patientId } = await prisma.visit.findUniqueOrThrow({ where: { id: first } });
+    await prisma.patient.update({ where: { id: patientId }, data: { liveIn: true } });
+    const start = zonedTimeToUtc(day, '13:00', TZ);
+    const end = zonedTimeToUtc(day, '13:45', TZ);
+    const second = await prisma.visit.create({
+      data: {
+        agencyId, patientId, staffId: aideStaffId, visitType: 'personal_care', serviceCode: 'T1019', status: 'completed',
+        scheduledDate: toDate(day)!, scheduledStart: toTime('13:00'), scheduledEnd: toTime('13:45'), actualStart: start, actualEnd: end,
+      },
+    });
+    await prisma.evvRecord.create({
+      data: {
+        visitId: second.id, agencyId, staffId: aideStaffId, patientId, serviceType: 'personal_care', serviceDate: toDate(day)!,
+        clockInMethod: 'gps', clockInTime: start, clockOutTime: end, clockInWithinGeofence: true, clockOutWithinGeofence: true, status: 'verified',
+      },
+    });
+    await prisma.visitNote.create({ data: { visitId: second.id, staffId: aideStaffId, authorId: aideUserId, noteType: 'aide_activity', narrative: 'ok', status: 'submitted' } });
+
+    const claim = (await http().post(claims).set(billing).send({ visitIds: [first, second.id] }).expect(201)).body.data.created[0];
+    // 90 min → 1 hour (30 carried); +45 = 135 → 2 hours in all → the second line gets 1. Quarter hours would be 1.5 + 0.75.
+    expect(claim.lines.map((l: { units: number; chargeAmount: number }) => [l.units, l.chargeAmount])).toEqual([
+      [1, 20],
+      [1, 20],
+    ]);
+    const file = (await http().get(`${claims}/${claim.id}/837`).set(billing).expect(200)).body.data.content;
+    expect(file).toContain('SV1*HC:T1019:UB::::0800-0930*20*UN*1***1~');
+    expect(file).toContain('SV1*HC:T1019:UB:76:::1300-1345*20*UN*1***1~'); // live-in, and the second same-day line
+    await http().patch(`${payers}/${medicaidId}`).set(billing).send({ hourRounding: null }).expect(200);
   });
 });

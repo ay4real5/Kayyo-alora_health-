@@ -43,7 +43,8 @@ patient details, but the providers still see phone numbers and email addresses.
 - [ ] Every patient has a **home phone** (for check-in calls) and a correct address; caregivers who use phone
       check-in have a **phone check-in code** (Staff → edit).
 - [ ] Service codes with the right **revenue codes** for home health (0551 nursing, 0571 aide, 0421 PT, …).
-- [ ] Live-in clients and month-end hour rounding for personal care — confirm with your biller (Q-012, P4-04c).
+- [ ] Switch on what your biller confirms (both ready, off by default — D-077): **whole hours per month** per payer
+      (Billing setup → Hourly units) and **Live-in caregiver** per patient.
 - [ ] Note: from **October 1, 2026** Virginia requires EVV for all agency-directed aide shifts, including live-in.
 
 ## 5. Before the first real claim

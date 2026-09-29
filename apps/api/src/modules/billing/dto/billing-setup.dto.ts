@@ -37,6 +37,7 @@ export const CODE_TYPES = ['hcpcs', 'cpt', 'revenue'] as const;
 export const UNIT_TYPES = ['visit', 'hour', 'unit_15min', 'day'] as const;
 export const CLAIM_FORMATS = ['837P', '837I'] as const;
 export const EVV_CLAIM_PROFILES = ['va_dmas'] as const;
+export const HOUR_ROUNDINGS = ['monthly'] as const;
 
 export class PayerDto {
   @Transform(trimmed)
@@ -57,6 +58,11 @@ export class PayerDto {
   @IsOptional()
   @IsIn(EVV_CLAIM_PROFILES)
   evvClaimProfile?: (typeof EVV_CLAIM_PROFILES)[number] | null;
+
+  /** Hourly services: empty = quarter hours per visit; monthly = whole hours per month, minutes carried (D-077). */
+  @IsOptional()
+  @IsIn(HOUR_ROUNDINGS)
+  hourRounding?: (typeof HOUR_ROUNDINGS)[number] | null;
 
   /** The payer's ID for electronic claims (clearinghouse payer ID). */
   @IsOptional()
@@ -148,6 +154,11 @@ export class UpdatePayerDto implements Partial<PayerDto> {
   @IsOptional()
   @IsIn(EVV_CLAIM_PROFILES)
   evvClaimProfile?: (typeof EVV_CLAIM_PROFILES)[number] | null;
+
+  /** Hourly services: empty = quarter hours per visit; monthly = whole hours per month, minutes carried (D-077). */
+  @IsOptional()
+  @IsIn(HOUR_ROUNDINGS)
+  hourRounding?: (typeof HOUR_ROUNDINGS)[number] | null;
 
   @IsOptional()
   @Transform(upperTrimmed)

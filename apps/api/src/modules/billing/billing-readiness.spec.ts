@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { billingUnits, evaluate, type ReadinessFacts } from './billing-readiness.js';
+import { billingUnits, evaluate, monthlyHourUnits, type ReadinessFacts } from './billing-readiness.js';
 
 const ready: ReadinessFacts = {
   visitStatus: 'completed',
@@ -96,5 +96,17 @@ describe('evaluate', () => {
     expect(
       failing({ payer: { ...ready.payer!, requiresAuthorization: false }, authorization: null }),
     ).toEqual([]);
+  });
+});
+
+describe('monthlyHourUnits', () => {
+  it('bills whole hours, carries minutes forward, rounds 30+ up once the month is over', () => {
+    // 45 + 45 + 100 minutes = 190: 0, 1 (90), 2 (190 → 3 hours so far) — 10 minutes carried.
+    expect(monthlyHourUnits([45, 45, 100], { minutes: 0, units: 0 }, false)).toEqual([0, 1, 2]);
+    // Month over with 40 minutes left → the last line gets one more unit.
+    expect(monthlyHourUnits([100], { minutes: 0, units: 0 }, true)).toEqual([2]);
+    expect(monthlyHourUnits([80], { minutes: 0, units: 0 }, true)).toEqual([1]);
+    // Earlier claims this month already billed 3 units for 200 minutes (20 carried).
+    expect(monthlyHourUnits([50], { minutes: 200, units: 3 }, false)).toEqual([1]);
   });
 });

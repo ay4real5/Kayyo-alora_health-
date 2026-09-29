@@ -56,6 +56,8 @@ export function PatientForm({
       if (value) body[key] = Number(value);
       else if (patient?.[key] !== null && patient?.[key] !== undefined) body[key] = null;
     }
+    const liveIn = form.get('liveIn') === 'on';
+    if (patient ? liveIn !== patient.liveIn : liveIn) body.liveIn = liveIn;
     const radius = String(form.get('geoFenceRadiusMeters') ?? '').trim();
     if (radius) body.geoFenceRadiusMeters = Number(radius);
     if (!patient) {
@@ -107,7 +109,17 @@ export function PatientForm({
 
       <Card className="grid gap-4 p-5 sm:grid-cols-2">
         <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Contact and address</h2>
-        <Field label="Home phone" name="phoneHome" type="tel" defaultValue={v('phoneHome')} />
+        <Field
+          label="Home phone"
+          name="phoneHome"
+          type="tel"
+          defaultValue={v('phoneHome')}
+          hint="Caregivers clock in and out by phone from this number."
+        />
+        <label className="flex items-center gap-2 self-end pb-2 text-sm text-slate-800">
+          <input type="checkbox" name="liveIn" defaultChecked={patient?.liveIn ?? false} /> Live-in caregiver
+          <span className="text-xs text-slate-500">(Virginia personal care claims get the UB modifier)</span>
+        </label>
         <Field label="Cell phone" name="phoneCell" type="tel" defaultValue={v('phoneCell')} />
         <Field label="Email" name="email" type="email" defaultValue={v('email')} className="sm:col-span-2" />
         <Field label="Address" name="addressLine1" defaultValue={v('addressLine1')} />

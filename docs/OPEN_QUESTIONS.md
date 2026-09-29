@@ -32,18 +32,14 @@ HIPAA requires 6 years. The API now permanently deletes audit-log months older t
 longer (7 or 10 years is common)? Should old months be archived (e.g. to S3 Glacier) instead of deleted?
 Default until answered: keep 6 years, then delete.
 
-### Q-012 — Virginia EVV: payers and live-in/overnight care
-2026-09-29 · Claude Code · affects P4-04 (D-069)
-EVV now goes on Virginia claims the way the DMAS companion guides describe (no aggregator in Virginia).
-1. Which **MCOs** do you bill (Anthem HealthKeepers Plus, Aetna Better Health, Humana, Molina, Sentara/Optima,
-   UnitedHealthcare)? Some use their own EVV portals (reported: Humana → HHAeXchange, Anthem → Netsmart/Tellus). If
-   an MCO requires its portal instead of claim fields, we'll add an adapter for it.
-2. Do you have **live-in** personal care clients (they need the UB modifier)? Overnight shifts are already split at
-   midnight. Does your biller round personal care hours **per month** (DMAS rule: whole hours, leftover 30+ minutes
-   round up at month end)? Today hours bill in quarter hours per visit.
-3. Your caregivers' **employee IDs** go on every Virginia claim (DMAS rule: unique, letters/digits, not the SSN).
-   Make sure every aide has one in Staff.
-Default until answered: claim fields for all Virginia Medicaid payers with "EVV on claims" set.
+### Q-012 — Virginia EVV: payers and billing options
+2026-09-29 · Claude Code · affects P4-04 (D-069, D-077)
+Everything is built; these are switches to set once your biller confirms:
+1. Which **MCOs** do you bill? If any needs its own EVV portal instead of claim fields, we add an adapter for it.
+2. **Whole hours per month** for personal care (Billing setup → Hourly units) — on for which payers?
+3. **Live-in clients** — tick "Live-in caregiver" on those patients.
+4. Every aide needs an **employee ID** (goes on every Virginia claim; never the SSN).
+Default until answered: quarter hours per visit, no live-in modifier.
 
 ## Resolved
 

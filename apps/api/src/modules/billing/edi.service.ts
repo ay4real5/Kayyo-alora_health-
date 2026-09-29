@@ -10,7 +10,7 @@ import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { build837I, validate837I, type Edi837IClaim, type Edi837IInput } from './edi/edi-837i.js';
 import { build837, validate837, type Edi837Claim, type Edi837Input } from './edi/edi-837p.js';
-import { addRepeatModifiers, virginiaEvvForLine, virginiaEvvRequired, type LineEvv } from './edi/evv-virginia.js';
+import { addLiveInModifier, addRepeatModifiers, virginiaEvvForLine, virginiaEvvRequired, type LineEvv } from './edi/evv-virginia.js';
 
 const EVV_SELECT = {
   clockInTime: true,
@@ -35,6 +35,7 @@ const CLAIM_INCLUDE = {
       zip: true,
       mrn: true,
       admissionDate: true,
+      liveIn: true,
       primaryPhysician: { select: { firstName: true, lastName: true, npi: true } },
     },
   },
@@ -247,7 +248,10 @@ export class EdiService {
       chargeAmount: Number(l.chargeAmount),
       evv: lineEvv(l, null),
     }));
-    if (claim.payer.evvClaimProfile === 'va_dmas') addRepeatModifiers(lines);
+    if (claim.payer.evvClaimProfile === 'va_dmas') {
+      if (claim.patient.liveIn) addLiveInModifier(lines);
+      addRepeatModifiers(lines);
+    }
     return {
       format: '837P',
       problems,

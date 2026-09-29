@@ -204,3 +204,22 @@ export function evaluate(f: ReadinessFacts): Readiness {
     checks,
   };
 }
+
+/**
+ * Hourly units under "round per month" (DMAS personal care, D-077): whole 1-hour units; minutes that don't make a
+ * full hour carry forward to the next shift in the same month; once the month is over, 30+ leftover minutes round
+ * up on the last line. `prior` is what's already on active claims for that patient, service and month.
+ * Returns the units for each new line, in order (a short shift early in the month can get 0).
+ */
+export function monthlyHourUnits(minutes: number[], prior: { minutes: number; units: number }, monthOver: boolean): number[] {
+  let total = prior.minutes;
+  let billed = prior.units;
+  const units = minutes.map((m) => {
+    total += m;
+    const due = Math.floor(total / 60) - billed;
+    billed += Math.max(0, due);
+    return Math.max(0, due);
+  });
+  if (monthOver && units.length && total - billed * 60 >= 30) units[units.length - 1]! += 1;
+  return units;
+}
