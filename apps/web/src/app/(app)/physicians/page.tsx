@@ -62,7 +62,7 @@ export default function PhysiciansPage() {
         </div>
         <ErrorAlert error={query.error} />
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">Name</th>
               <th className="py-2 pr-4 font-medium">NPI</th>
@@ -75,7 +75,7 @@ export default function PhysiciansPage() {
             {query.data?.data.map((p) => (
               <tr key={p.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/physicians/${p.id}`} className="font-medium text-teal-800 hover:underline">
+                  <Link href={`/physicians/${p.id}`} className="font-medium text-violet-800 hover:underline">
                     Dr. {p.firstName} {p.lastName}
                   </Link>
                 </td>

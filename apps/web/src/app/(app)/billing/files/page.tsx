@@ -140,7 +140,7 @@ export default function ClaimFilesPage() {
         subtitle="Make an 837 file for each payer, upload it to your clearinghouse, then load the acknowledgments it sends back."
         actions={
           can('billing:create') && (
-            <label className="inline-flex cursor-pointer items-center rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800">
+            <label className="inline-flex cursor-pointer items-center rounded-md bg-violet-700 px-4 py-2 text-sm font-medium text-white hover:bg-violet-800">
               Load 999 / 277CA
               <input type="file" accept=".999,.277,.edi,.txt,.x12" className="sr-only" onChange={onFile} aria-label="Acknowledgment file" />
             </label>
@@ -214,7 +214,7 @@ export default function ClaimFilesPage() {
         {files.data?.data.length === 0 && <p className="text-sm text-slate-500">No files yet.</p>}
         {files.data && files.data.data.length > 0 && (
           <table className="w-full text-left text-sm" aria-label="Claim files">
-            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
               <tr>
                 <th className="py-2 pr-4 font-medium">File</th>
                 <th className="py-2 pr-4 font-medium">Payer</th>
@@ -242,7 +242,7 @@ export default function ClaimFilesPage() {
                       ? f.claims.map((c, i) => (
                           <span key={c.id}>
                             {i > 0 && ', '}
-                            <Link href={`/billing/claims/${c.id}`} className="font-mono text-teal-800 hover:underline">
+                            <Link href={`/billing/claims/${c.id}`} className="font-mono text-violet-800 hover:underline">
                               {c.claimNumber}
                             </Link>
                           </span>

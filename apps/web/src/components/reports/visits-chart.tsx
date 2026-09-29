@@ -59,14 +59,14 @@ export function VisitsChart({ daily }: { daily: DailyVisits[] }) {
             </li>
           ))}
         </ul>
-        <button type="button" className="text-xs text-teal-800 underline" onClick={() => setAsTable((v) => !v)}>
+        <button type="button" className="text-xs text-violet-800 underline" onClick={() => setAsTable((v) => !v)}>
           {asTable ? 'Show chart' : 'Show as table'}
         </button>
       </div>
       {asTable ? (
         <div className="max-h-72 overflow-y-auto">
           <table className="w-full text-left text-sm" aria-label="Visits per day">
-            <thead className="sticky top-0 border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-500">
+            <thead className="sticky top-0 border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-600">
               <tr>
                 <th className="py-1.5 pr-4 font-medium">Date</th>
                 {SERIES.map((s) => (

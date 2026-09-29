@@ -8,6 +8,7 @@ import { Alert, Card } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { AuthLayout } from '@/components/layout/auth-layout';
 
 interface Setup {
   otpauthUri: string;
@@ -74,7 +75,7 @@ export default function SetupTwoFactorPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <AuthLayout>
       <Card className="w-full max-w-md p-6">
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Set up two-factor authentication</h1>
         {user.is2faRequired && !recoveryCodes && (
@@ -142,6 +143,6 @@ export default function SetupTwoFactorPage() {
           Sign out
         </button>
       </Card>
-    </main>
+    </AuthLayout>
   );
 }

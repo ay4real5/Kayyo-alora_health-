@@ -39,7 +39,7 @@ export function VisitEvv({ visitId }: { visitId: string }) {
           {r.flags.length > 0 && (
             <p className="text-amber-900">{r.flags.map(flagLabel).join('; ')}</p>
           )}
-          <Link href={`/evv/${r.id}`} className="text-teal-800 underline">
+          <Link href={`/evv/${r.id}`} className="text-violet-800 underline">
             Open the EVV record
           </Link>
         </div>

@@ -79,8 +79,9 @@ function PayersCard() {
     <Card className="flex flex-col gap-3 p-4">
       <h2 className="text-base font-semibold text-slate-900">Payers</h2>
       <ErrorAlert error={payers.error ?? setField.error} />
+      <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+        <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
           <tr>
             <th className="py-2 pr-4 font-medium">Name</th>
             <th className="py-2 pr-4 font-medium">Type</th>
@@ -154,6 +155,7 @@ function PayersCard() {
           ))}
         </tbody>
       </table>
+      </div>
       {can('billing:update') && (
         <form
           onSubmit={submit}
@@ -225,7 +227,7 @@ function ServiceCodesCard() {
       <h2 className="text-base font-semibold text-slate-900">Service codes</h2>
       <ErrorAlert error={codes.error} />
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+        <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
           <tr>
             <th className="py-2 pr-4 font-medium">Code</th>
             <th className="py-2 pr-4 font-medium">Description</th>
@@ -342,7 +344,7 @@ function RatesCard() {
       <ErrorAlert error={rates.error ?? end.error} />
       {payerId && (
         <table className="w-full text-left text-sm" aria-label="Payer rates">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">Code</th>
               <th className="py-2 pr-4 font-medium">Modifier</th>
@@ -368,7 +370,7 @@ function RatesCard() {
                   ) : can('billing:update') ? (
                     <button
                       type="button"
-                      className="text-teal-800 underline"
+                      className="text-violet-800 underline"
                       onClick={() => {
                         const endDate = window.prompt('Last day of this rate (YYYY-MM-DD)');
                         if (endDate) end.mutate({ id: r.id, endDate });

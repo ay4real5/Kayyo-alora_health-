@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import { Button, ErrorText, styles } from '@/components/ui';
+import { Button, ErrorText, GradientHeader, colors } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
 import { useOffline } from '@/lib/offline';
 
@@ -29,14 +30,19 @@ export default function UnlockScreen() {
   });
 
   return (
-    <View style={styles.center}>
-      <Text style={[styles.title, { textAlign: 'center' }]}>Kayo Health is locked</Text>
-      <Text style={[styles.subtitle, { textAlign: 'center', marginBottom: 24 }]}>
-        Unlock with Face ID, fingerprint or your phone passcode.
-      </Text>
+    <GradientHeader style={{ flex: 1, justifyContent: 'center', padding: 28, gap: 16, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
+      <View style={{ alignItems: 'center', gap: 14, marginBottom: 20 }}>
+        <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="lock-closed" size={38} color={colors.white} />
+        </View>
+        <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800', textAlign: 'center' }}>Kayo Health is locked</Text>
+        <Text style={{ color: '#c7d2fe', fontSize: 16, textAlign: 'center' }}>
+          Unlock with Face ID, fingerprint or your phone passcode.
+        </Text>
+      </View>
       <ErrorText>{error}</ErrorText>
-      <Button title="Unlock" onPress={() => void tryUnlock()} busy={busy} />
+      <Button title="Unlock" icon="finger-print" onPress={() => void tryUnlock()} busy={busy} />
       <Button title="Sign out" variant="secondary" onPress={signOut} />
-    </View>
+    </GradientHeader>
   );
 }

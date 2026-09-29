@@ -112,7 +112,7 @@ export default function ReadyToBillPage() {
       />
       <ErrorAlert error={bill.error} />
       {bill.data && (
-        <p role="status" className="text-sm text-teal-800">
+        <p role="status" className="text-sm text-violet-800">
           Created {bill.data.created.length} claim{bill.data.created.length === 1 ? '' : 's'}.{' '}
           <Link href="/billing/claims" className="underline">
             See claims
@@ -127,7 +127,7 @@ export default function ReadyToBillPage() {
           </Card>
           <Card className="p-3">
             <p className="text-xs text-slate-500">Ready</p>
-            <p className="text-2xl font-semibold text-teal-700">{data.summary.ready}</p>
+            <p className="text-2xl font-semibold text-violet-700">{data.summary.ready}</p>
           </Card>
           <Card className="p-3">
             <p className="text-xs text-slate-500">Blocked</p>
@@ -198,7 +198,7 @@ export default function ReadyToBillPage() {
         </div>
         <ErrorAlert error={readiness.error} />
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">Date</th>
               <th className="py-2 pr-4 font-medium">Patient</th>
@@ -216,7 +216,7 @@ export default function ReadyToBillPage() {
                   <td className="py-2 pr-4">
                     <Link
                       href={`/schedule/visits/${v.visitId}`}
-                      className="text-teal-800 hover:underline"
+                      className="text-violet-800 hover:underline"
                     >
                       {formatDate(v.serviceDate)}
                     </Link>
@@ -237,7 +237,7 @@ export default function ReadyToBillPage() {
                   <td className="py-2 pr-4">{money(v.amount)}</td>
                   <td className="py-2">
                     {v.ready ? (
-                      <span className="font-medium text-teal-800">Ready</span>
+                      <span className="font-medium text-violet-800">Ready</span>
                     ) : (
                       <span className="font-medium text-red-700">Blocked</span>
                     )}

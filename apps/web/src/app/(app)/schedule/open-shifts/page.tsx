@@ -99,7 +99,7 @@ function OpenShiftList() {
       {!conflict && <ErrorAlert error={shifts.error ?? act.error} />}
       {conflict && <ConflictList conflicts={conflict.details as ScheduleConflict[]} />}
       {act.data?.data.notified !== undefined && (
-        <p className="text-sm text-teal-800" role="status">
+        <p className="text-sm text-violet-800" role="status">
           Notified {act.data.data.notified} caregiver{act.data.data.notified === 1 ? '' : 's'}.
         </p>
       )}
@@ -111,7 +111,7 @@ function OpenShiftList() {
               <span>
                 <Link
                   href={`/schedule/visits/${s.visit.id}`}
-                  className="font-medium text-teal-800 underline"
+                  className="font-medium text-violet-800 underline"
                 >
                   {formatDate(s.visit.scheduledDate)}, {formatTime(s.visit.scheduledStart)}–
                   {formatTime(s.visit.scheduledEnd)} · {humanize(s.visit.visitType)}
@@ -257,7 +257,7 @@ function SwapRequests() {
                 ? `${s.target.firstName} ${s.target.lastName}`
                 : 'back to the pool (open shift)'}{' '}
               ·{' '}
-              <Link href={`/schedule/visits/${s.visit.id}`} className="text-teal-800 underline">
+              <Link href={`/schedule/visits/${s.visit.id}`} className="text-violet-800 underline">
                 {formatDate(s.visit.scheduledDate)} {formatTime(s.visit.scheduledStart)}
               </Link>
               {s.reason && <span className="text-slate-600"> — “{s.reason}”</span>}

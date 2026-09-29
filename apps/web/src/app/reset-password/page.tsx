@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
 import { ApiError, apiRequest } from '@/lib/api';
+import { AuthLayout } from '@/components/layout/auth-layout';
 
 /** The token travels in the URL fragment (#token=…), which browsers never send to a server (D-072). */
 const readToken = () => /(?:^#|&)token=([A-Za-z0-9_-]+)/.exec(window.location.hash)?.[1] ?? '';
@@ -45,20 +46,20 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6">
+    <AuthLayout>
+      <Card className="w-full p-6 sm:p-8">
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Choose a new password</h1>
         {done ? (
           <div role="status" className="mt-4 flex flex-col gap-4 text-sm text-slate-700">
             <p>Your password was changed and you were signed out everywhere. Sign in with the new password.</p>
-            <Link href="/login" className="text-teal-800 underline">
+            <Link href="/login" className="text-violet-800 underline">
               Sign in
             </Link>
           </div>
         ) : !token ? (
           <div className="mt-4 flex flex-col gap-4 text-sm text-slate-700">
             <Alert>This page needs the link from your reset email. Open the link again, or ask for a new one.</Alert>
-            <Link href="/forgot-password" className="text-teal-800 underline">
+            <Link href="/forgot-password" className="text-violet-800 underline">
               Send me a new link
             </Link>
           </div>
@@ -86,6 +87,6 @@ export default function ResetPasswordPage() {
           </>
         )}
       </Card>
-    </main>
+    </AuthLayout>
   );
 }

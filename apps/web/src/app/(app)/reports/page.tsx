@@ -133,7 +133,7 @@ export default function ReportsPage() {
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-slate-900">Visits per day</h2>
-          <button type="button" className="text-xs text-teal-800 underline" onClick={() => download.mutate('visit-utilization')}>
+          <button type="button" className="text-xs text-violet-800 underline" onClick={() => download.mutate('visit-utilization')}>
             Download CSV
           </button>
         </div>
@@ -174,7 +174,7 @@ export default function ReportsPage() {
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-slate-900">Staff productivity</h2>
-          <button type="button" className="text-xs text-teal-800 underline" onClick={() => download.mutate('staff-productivity')}>
+          <button type="button" className="text-xs text-violet-800 underline" onClick={() => download.mutate('staff-productivity')}>
             Download CSV
           </button>
         </div>
@@ -189,7 +189,7 @@ export default function ReportsPage() {
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-slate-900">Missed and cancelled visits</h2>
-          <button type="button" className="text-xs text-teal-800 underline" onClick={() => download.mutate('missed-visits')}>
+          <button type="button" className="text-xs text-violet-800 underline" onClick={() => download.mutate('missed-visits')}>
             Download CSV
           </button>
         </div>
@@ -231,7 +231,7 @@ function SimpleTable({ label, head, rows, empty }: { label: string; head: string
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm" aria-label={label}>
-        <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+        <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
           <tr>
             {head.map((h) => (
               <th key={h} className="py-2 pr-4 font-medium">

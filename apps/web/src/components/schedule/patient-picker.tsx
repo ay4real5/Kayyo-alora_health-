@@ -43,7 +43,7 @@ export function PatientPicker({
           </span>
           <button
             type="button"
-            className="text-teal-800 underline"
+            className="text-violet-800 underline"
             onClick={() => {
               setChosen(null);
               onChange('');
@@ -68,7 +68,7 @@ export function PatientPicker({
         onChange={(e) => setText(e.target.value)}
         placeholder="Type at least 2 letters of the name or MRN"
         autoComplete="off"
-        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20"
+        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-700/20"
       />
       {results.data && results.data.length > 0 && (
         <ul role="listbox" aria-label="Matching patients" className="rounded-md border border-slate-200 bg-white shadow-sm">
@@ -78,7 +78,7 @@ export function PatientPicker({
                 type="button"
                 role="option"
                 aria-selected={false}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-teal-50"
+                className="w-full px-3 py-2 text-left text-sm hover:bg-violet-50"
                 onClick={() => {
                   setChosen(p);
                   onChange(p.id);

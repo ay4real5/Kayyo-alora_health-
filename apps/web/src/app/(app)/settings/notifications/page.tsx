@@ -79,7 +79,7 @@ export default function NotificationSettingsPage() {
       <ErrorAlert error={prefs.error ?? save.error} />
       <Card className="overflow-x-auto p-4">
         <table className="w-full text-left text-sm" aria-label="Notification settings">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">Alert</th>
               {CHANNELS.map((c) => (

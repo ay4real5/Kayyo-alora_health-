@@ -97,7 +97,7 @@ export default function InvoicesPage() {
         <ErrorAlert error={invoices.error} />
         {invoices.data?.data.length === 0 && <p className="text-sm text-slate-500">No invoices.</p>}
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">Invoice</th>
               <th className="py-2 pr-4 font-medium">Patient</th>
@@ -112,7 +112,7 @@ export default function InvoicesPage() {
             {invoices.data?.data.map((i) => (
               <tr key={i.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/billing/invoices/${i.id}`} className="font-mono text-teal-800 hover:underline">
+                  <Link href={`/billing/invoices/${i.id}`} className="font-mono text-violet-800 hover:underline">
                     {i.invoiceNumber}
                   </Link>
                 </td>

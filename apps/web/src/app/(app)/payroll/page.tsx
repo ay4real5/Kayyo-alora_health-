@@ -57,7 +57,7 @@ export default function PayrollPage() {
         <ErrorAlert error={periods.error} />
         {periods.data?.data.length === 0 && <p className="text-sm text-slate-500">No pay periods yet.</p>}
         <table className="w-full text-left text-sm" aria-label="Pay periods">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">Period</th>
               <th className="py-2 pr-4 font-medium">Pay date</th>
@@ -71,7 +71,7 @@ export default function PayrollPage() {
             {periods.data?.data.map((p) => (
               <tr key={p.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/payroll/${p.id}`} className="text-teal-800 hover:underline">
+                  <Link href={`/payroll/${p.id}`} className="text-violet-800 hover:underline">
                     {formatDate(p.periodStart)} – {formatDate(p.periodEnd)}
                   </Link>
                 </td>

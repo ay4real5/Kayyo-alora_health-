@@ -78,7 +78,7 @@ export default function PatientsPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
               <tr>
                 <th className="py-2 pr-4 font-medium">Name</th>
                 <th className="py-2 pr-4 font-medium">MRN</th>
@@ -92,7 +92,7 @@ export default function PatientsPage() {
               {query.data?.data.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
                   <td className="py-2 pr-4">
-                    <Link href={`/patients/${p.id}`} className="font-medium text-teal-800 hover:underline">
+                    <Link href={`/patients/${p.id}`} className="font-medium text-violet-800 hover:underline">
                       {p.lastName}, {p.firstName}
                     </Link>
                   </td>

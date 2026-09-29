@@ -63,7 +63,7 @@ export default function ClaimPage() {
           items={[
             [
               'Patient',
-              <Link key="p" href={`/patients/${c.patient.id}`} className="text-teal-800 hover:underline">
+              <Link key="p" href={`/patients/${c.patient.id}`} className="text-violet-800 hover:underline">
                 {c.patient.lastName}, {c.patient.firstName} {c.patient.mrn ? `(${c.patient.mrn})` : ''}
               </Link>,
             ],
@@ -105,7 +105,7 @@ export default function ClaimPage() {
       <Card className="p-4">
         <h2 className="mb-2 font-semibold text-slate-900">Lines</h2>
         <table className="w-full text-left text-sm" aria-label="Claim lines">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">#</th>
               <th className="py-2 pr-4 font-medium">Date</th>
@@ -287,7 +287,7 @@ function WorkflowCard({ claim: c }: { claim: Claim }) {
       {c.originalClaimId && (
         <p className="text-sm text-slate-700">
           Corrected claim replacing{' '}
-          <Link href={`/billing/claims/${c.originalClaimId}`} className="text-teal-800 underline">
+          <Link href={`/billing/claims/${c.originalClaimId}`} className="text-violet-800 underline">
             the original
           </Link>
           .
