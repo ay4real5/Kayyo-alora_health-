@@ -1371,3 +1371,15 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Both are **off until the agency switches them on**, after its biller confirms with DMAS / each MCO and a test claim
   goes through (Q-012). Everything else Virginia-specific (EVV fields, midnight split, modifier 76) was already on
   for Virginia payers.
+
+### D-078 — Email through Amazon SES (SendGrid is development only)
+2026-09-29 · Claude Code
+- **Twilio SendGrid does not sign a BAA** and says it isn't a HIPAA-eligible service. Our emails carry no patient
+  details, but a reset email to a portal user still reveals they're a patient — so production email must come from a
+  provider under a BAA. **Amazon SES** is covered by the AWS BAA (self-serve in AWS Artifact) and costs about
+  $0.10 per 1,000 emails.
+- `EMAIL_PROVIDER=ses|sendgrid` picks the service (empty: SendGrid if its key is set — dev convenience), `EMAIL_FROM`
+  is the sender for both. SES uses the AWS SDK (`@aws-sdk/client-sesv2`) with the standard credential chain — the ECS
+  task role on AWS, never keys in the repo. Throttling and server errors are retried by the outbox; rejections
+  (unverified sender, bad address) aren't.
+- Same plain-text content as before; the "from" name is "Kayo Health".
