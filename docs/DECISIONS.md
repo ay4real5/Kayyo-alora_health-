@@ -1425,3 +1425,14 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Azure's front end writes `ip:port` into X-Forwarded-For**: the API strips ports (with `TRUST_PROXY_HOPS=1`) so
   rate limits and audit logs see the real client address.
 - Step-by-step for the owner: `docs/DEPLOYMENT-AZURE.md` (all in Azure Cloud Shell).
+
+### D-082 — Product name: Primordial Health; domain primordialhealthservices.health
+2026-09-29 · owner + Claude Code (replaces the name in D-075)
+- The owner's registered agency is **Primordial Health Services LLC** (domain `primordialhealthservices.health`, at
+  Namecheap); the app carries the agency's name: **Primordial Health** everywhere users see it (web, portal, caregiver
+  app "Primordial Caregiver", texts "Primordial Health: …", emails, IVR greeting, 2FA issuer, API docs title). The
+  logo tile shows **P**.
+- Hosting on that domain (D-081): dashboard **app.primordialhealthservices.health**, API
+  **api.primordialhealthservices.health**; the agency's existing website is untouched. Azure names use the prefix
+  `primordial` (resource group `primordial-rg`, images `primordial-api/-web/-migrate`, database `primordial`).
+- Internal code names stay (`@alora/*` packages, repo name, `demo.alora.test` logins).

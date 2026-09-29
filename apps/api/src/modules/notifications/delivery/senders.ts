@@ -51,10 +51,10 @@ export function toE164(phone: string | null | undefined): string | null {
   return null;
 }
 
-/** "Kayo Health: New shift assigned — Open the app to see it." — one short, PHI-free SMS. */
+/** "Primordial Health: New shift assigned — Open the app to see it." — one short, PHI-free SMS. */
 export function smsText(message: DeliveryMessage): string {
   const parts = [message.title, message.body].filter((p): p is string => Boolean(p?.trim())).map((p) => p.trim().replace(/[.!]+$/, ''));
-  return `Kayo Health: ${parts.join(' — ')}. Open the app for details.`.slice(0, 320);
+  return `Primordial Health: ${parts.join(' — ')}. Open the app for details.`.slice(0, 320);
 }
 
 @Injectable()
@@ -127,10 +127,10 @@ export class EmailSender extends Sender {
 
   async send(to: string, message: DeliveryMessage): Promise<SendOutcome> {
     const link = this.config.get('FRONTEND_URL', { infer: true });
-    const text = [message.title, message.body, '', link ? `Open Kayo Health for details: ${link}` : 'Open Kayo Health for details.', '', 'You can change which alerts you get by email under Notification settings.']
+    const text = [message.title, message.body, '', link ? `Open Primordial Health for details: ${link}` : 'Open Primordial Health for details.', '', 'You can change which alerts you get by email under Notification settings.']
       .filter((line) => line !== null)
       .join('\n');
-    return this.sendText(to, `Kayo Health: ${message.title}`, text);
+    return this.sendText(to, `Primordial Health: ${message.title}`, text);
   }
 
   /** A plain-text email (notifications, password reset links). */
@@ -143,7 +143,7 @@ export class EmailSender extends Sender {
     try {
       const result = await this.ses.send(
         new SendEmailCommand({
-          FromEmailAddress: `Kayo Health <${this.from}>`,
+          FromEmailAddress: `Primordial Health <${this.from}>`,
           Destination: { ToAddresses: [to] },
           Content: { Simple: { Subject: { Data: subject, Charset: 'UTF-8' }, Body: { Text: { Data: text, Charset: 'UTF-8' } } } },
         }),
@@ -162,7 +162,7 @@ export class EmailSender extends Sender {
       headers: { authorization: `Bearer ${this.config.get('SENDGRID_API_KEY', { infer: true })}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: this.from, name: 'Kayo Health' },
+        from: { email: this.from, name: 'Primordial Health' },
         subject,
         content: [{ type: 'text/plain', value: text }],
         // No open/click tracking: it rewrites links (reset links included) and adds pixels.

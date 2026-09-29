@@ -101,7 +101,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
             <BrandMark className="h-10 w-10 text-base" />
             <div className="leading-tight">
               <p className="text-lg font-semibold">{me.data.agency.name}</p>
-              <p className="text-xs text-indigo-200">Patient &amp; family portal · Kayo Health</p>
+              <p className="text-xs text-indigo-200">Patient &amp; family portal · Primordial Health</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

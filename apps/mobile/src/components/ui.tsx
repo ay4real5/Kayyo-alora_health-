@@ -14,7 +14,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-/** Kayo Health palette (D-079/D-080): indigo & violet, like the dashboard. */
+/** Primordial Health palette (D-079/D-080): indigo & violet, like the dashboard. */
 export const colors = {
   brand: '#6d28d9',
   brandDark: '#5b21b6',
@@ -228,7 +228,7 @@ export const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
 });
 
-/** The Kayo Health tile: a violet square with a K. */
+/** The Primordial Health tile: a violet square with a P. */
 export function BrandMark({ size = 56 }: { size?: number }) {
   return (
     <LinearGradient
@@ -237,7 +237,7 @@ export function BrandMark({ size = 56 }: { size?: number }) {
       end={{ x: 1, y: 1 }}
       style={{ width: size, height: size, borderRadius: size * 0.3, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Text style={{ color: colors.white, fontSize: size * 0.45, fontWeight: '800' }}>K</Text>
+      <Text style={{ color: colors.white, fontSize: size * 0.45, fontWeight: '800' }}>P</Text>
     </LinearGradient>
   );
 }

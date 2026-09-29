@@ -43,7 +43,7 @@ const clock = (iso: string | null) =>
 async function currentFix(): Promise<Fix> {
   const permission = await Location.requestForegroundPermissionsAsync();
   if (!permission.granted) {
-    throw new Error('Kayo Health needs your location to clock in and out (electronic visit verification). Allow it in Settings.');
+    throw new Error('Primordial Health needs your location to clock in and out (electronic visit verification). Allow it in Settings.');
   }
   const last = await Location.getLastKnownPositionAsync();
   if (last && isFresh(last, Date.now())) return last;

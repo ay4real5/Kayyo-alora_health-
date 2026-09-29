@@ -13,14 +13,14 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <section
-        aria-label="Kayo Health"
+        aria-label="Primordial Health"
         className="relative hidden overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-800 p-12 text-white lg:flex lg:flex-col"
       >
         <div aria-hidden className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-violet-500/30 blur-3xl" />
         <div aria-hidden className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl" />
         <div className="relative flex items-center gap-3">
           <BrandMark className="h-11 w-11 text-lg" />
-          <span className="text-xl font-semibold">Kayo Health</span>
+          <span className="text-xl font-semibold">Primordial Health</span>
         </div>
         <div className="relative mt-auto max-w-md">
           <p className="text-3xl font-semibold leading-tight tracking-tight">Care at home, run beautifully.</p>
@@ -41,7 +41,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         <div className="w-full max-w-md">
           <div className="mb-6 flex items-center gap-2 lg:hidden">
             <BrandMark className="h-9 w-9 text-sm" />
-            <span className="text-lg font-semibold text-ink">Kayo Health</span>
+            <span className="text-lg font-semibold text-ink">Primordial Health</span>
           </div>
           {children}
         </div>

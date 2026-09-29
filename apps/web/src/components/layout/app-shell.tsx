@@ -10,14 +10,14 @@ import { MessagesBadge } from './messages-badge';
 import { NAV_GROUPS, NAVIGATION } from './navigation';
 import { NotificationBell } from './notification-bell';
 
-/** The Kayo Health mark: a violet tile with a K. */
+/** The Primordial Health mark: a violet tile with a P. */
 export function BrandMark({ className = 'h-9 w-9 text-base' }: { className?: string }) {
   return (
     <span
       aria-hidden
       className={`inline-flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 font-bold text-white shadow-lg shadow-violet-900/30 ${className}`}
     >
-      K
+      P
     </span>
   );
 }
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex items-center gap-3 px-5 py-5">
         <BrandMark />
         <div className="leading-tight">
-          <p className="text-base font-semibold text-white">Kayo Health</p>
+          <p className="text-base font-semibold text-white">Primordial Health</p>
           <p className="text-xs text-indigo-300">Home health, simplified</p>
         </div>
       </div>
@@ -154,7 +154,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {menuOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
           </button>
           <span className="flex items-center gap-2 font-semibold text-ink md:hidden">
-            <BrandMark className="h-7 w-7 text-xs" /> Kayo Health
+            <BrandMark className="h-7 w-7 text-xs" /> Primordial Health
           </span>
           <div className="ml-auto flex items-center gap-3">
             <NotificationBell />
