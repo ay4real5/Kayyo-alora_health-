@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
           <div role="status" className="mt-4 flex flex-col gap-4 text-sm text-slate-700">
             {result.emailAvailable ? (
               <p>
-                If that address belongs to an Alora account, we’ve sent it a link to choose a new password. The link works
+                If that address belongs to an Kayo Health account, we’ve sent it a link to choose a new password. The link works
                 once, for 30 minutes. Check your spam folder if it doesn’t arrive.
               </p>
             ) : (

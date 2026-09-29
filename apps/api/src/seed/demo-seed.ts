@@ -48,7 +48,7 @@ export interface SeedOptions {
 
 /**
  * The demo admins' authenticator secret (FAKE data, development only — the seed refuses to run in production).
- * Add it to an authenticator app as "Alora demo", or compute codes from it in tests.
+ * Add it to an authenticator app as "Kayo Health demo", or compute codes from it in tests.
  */
 export const DEMO_TOTP_SECRET = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
 

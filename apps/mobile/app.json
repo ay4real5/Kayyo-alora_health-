@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Alora Caregiver",
+    "name": "Kayo Caregiver",
     "slug": "alora-caregiver",
     "version": "0.0.1",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Unlock Alora with Face ID so patient information stays protected."
+        "NSFaceIDUsageDescription": "Unlock Kayo Health with Face ID so patient information stays protected."
       }
     },
     "android": {
@@ -22,13 +22,13 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Unlock Alora with Face ID so patient information stays protected."
+          "faceIDPermission": "Unlock Kayo Health with Face ID so patient information stays protected."
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Alora records your location when you clock in and out of a visit, to verify the visit (electronic visit verification).",
+          "locationWhenInUsePermission": "Kayo Health records your location when you clock in and out of a visit, to verify the visit (electronic visit verification).",
           "isAndroidBackgroundLocationEnabled": false
         }
       ],

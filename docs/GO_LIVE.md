@@ -5,13 +5,12 @@ on these items. Tick them as you go; ask an agent to wire up anything once you h
 in [DEPLOYMENT.md](DEPLOYMENT.md) and the decisions (D-numbers) in [DECISIONS.md](DECISIONS.md).
 
 **Rule for every service below:** if it will see or carry patient information, it needs a signed **Business
-Associate Agreement (BAA)** *before* real data goes in. Texts, emails and push messages from Alora never contain
+Associate Agreement (BAA)** *before* real data goes in. Texts, emails and push messages from Kayo Health never contain
 patient details, but the providers still see phone numbers and email addresses.
 
 ## 1. Name and legal
 
-- [ ] **Pick the product name** (Q-004). "Alora Health" is already used by a home health software company that sells
-      EVV software in Virginia — a likely trademark problem. Renaming the screens is quick.
+- [x] Product name: **Kayo Health** (D-075). Worth a quick trademark search before printing anything.
 - [ ] Privacy notice / Notice of Privacy Practices and terms of use for the patient portal (your lawyer).
 - [ ] Decide how long to keep the audit log (Q-011; default 6 years) and payroll rules with your accountant (Q-010).
 

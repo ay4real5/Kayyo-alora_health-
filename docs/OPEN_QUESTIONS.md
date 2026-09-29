@@ -6,14 +6,6 @@ move the item to "Resolved".
 
 ## Open
 
-### Q-004 — Product name
-Repo is "Kayyo-alora_health", design says "Alora". What's the product/brand name for the UI, emails and
-the package scope (`@alora/...` is assumed for now)?
-**Heads-up (2026-09-29, Claude Code):** "Alora Health" is already the name of an existing home health software
-company (alorahealth.com) that sells EVV software to Virginia agencies — the same market. Using the name would very
-likely be a trademark problem; please pick a different brand (or check with a lawyer) before launch. Renaming the UI
-text is easy; the `@alora/` package scope is internal and can stay.
-
 ### Q-006 — Hosting
 Where does production run (AWS, Azure, GCP, other)? Must be HIPAA-eligible with a signed BAA. Needed
 before P4-10/P4-11. *Owner deferred this on 2026-09-28 — ask again before P4-10.*
@@ -54,6 +46,9 @@ EVV now goes on Virginia claims the way the DMAS companion guides describe (no a
 Default until answered: claim fields for all Virginia Medicaid payers with "EVV on claims" set.
 
 ## Resolved
+
+### Q-004 — Product name
+**Kayo Health** (owner, 2026-09-29). See DECISIONS D-075.
 
 ### Q-002 — Base44 portal authentication
 Resolved 2026-09-28: the portal is built in this repo instead of Base44 (per-patient sessions, no third party

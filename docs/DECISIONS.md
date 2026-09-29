@@ -1326,3 +1326,12 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Automated checks catch about a third of real problems; a manual keyboard + screen-reader pass (NVDA/VoiceOver) is
   still worth doing before launch.
 =======
+
+### D-075 — Product name: Kayo Health
+2026-09-29 · owner (answer to Q-004) + Claude Code
+- Everything users see says **Kayo Health**: web title, sign-in, sidebar, mobile app ("Kayo Caregiver"), texts
+  ("Kayo Health: …"), emails, the phone check-in greeting, the API docs title and the 2FA issuer. Existing
+  authenticator entries keep working (the issuer is only a label; the secret didn't change).
+- **Internal names stay** — `@alora/*` packages, the repo name, `demo.alora.test` demo logins, `alora-*` image names:
+  nobody outside sees them, and renaming would churn every import for no user benefit. "Alora" in older decisions
+  refers to the same product.

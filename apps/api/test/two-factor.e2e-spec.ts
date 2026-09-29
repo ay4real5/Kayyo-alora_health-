@@ -87,7 +87,7 @@ describe.skipIf(!hasDb)('Two-factor authentication (e2e)', () => {
     const auth = { Authorization: `Bearer ${(await login(email)).body.data.accessToken}` };
 
     const setup = (await http().post('/api/v1/auth/2fa/setup').set(auth).expect(200)).body.data;
-    expect(setup.otpauthUri).toMatch(/^otpauth:\/\/totp\/Alora%20Health%3A/);
+    expect(setup.otpauthUri).toMatch(/^otpauth:\/\/totp\/Kayo%20Health%3A/);
     expect(setup.secret).toMatch(/^[A-Z2-7]{32}$/);
 
     const stored = await prisma.user.findUniqueOrThrow({ where: { id } });

@@ -84,7 +84,7 @@ describe.skipIf(!hasDb)('Forgot / reset password (e2e)', () => {
     expect(unknown.body.data).toEqual(known.body.data);
     await vi.waitFor(() => expect(email.sendText).toHaveBeenCalledTimes(1), { timeout: 10_000 }); // sent in the background
     const [to, subject, text] = email.sendText.mock.calls[0]!;
-    expect([to, subject]).toEqual([address, 'Reset your Alora password']);
+    expect([to, subject]).toEqual([address, 'Reset your Kayo Health password']);
     // The token is in the fragment (#), which browsers never send to a server — so it can't land in any log.
     expect(text).toMatch(/^http:\/\/localhost:3000\/reset-password#token=[A-Za-z0-9_-]{43}$/m);
     const stored = await prisma.passwordResetToken.findFirstOrThrow({ where: { userId } });
