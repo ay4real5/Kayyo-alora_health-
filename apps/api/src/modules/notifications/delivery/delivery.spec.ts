@@ -2,7 +2,18 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../../../config/env.validation.js';
 import { effectiveChannel, plannedChannels, type DeliveryFacts } from './delivery-plan.js';
-import { EmailSender, PushSender, SmsSender, smsText, toE164, type DeliveryMessage, type FetchLike } from './senders.js';
+import { createHmac } from 'node:crypto';
+import {
+  EmailSender,
+  PushSender,
+  SmsSender,
+  acsSignedHeaders,
+  parseAcsConnectionString,
+  smsText,
+  toE164,
+  type DeliveryMessage,
+  type FetchLike,
+} from './senders.js';
 
 /** FAKE settings — never real credentials. */
 const SETTINGS: Partial<EnvironmentVariables> = {
@@ -142,5 +153,61 @@ describe('email through Amazon SES (D-078)', () => {
     expect(await email.sendText('a@example.test', 's', 't')).toEqual({ ok: false, retry: true, error: 'ses TooManyRequestsException 429' });
     send.mockRejectedValueOnce(fail('MessageRejected', 400));
     expect(await email.sendText('a@example.test', 's', 't')).toEqual({ ok: false, retry: false, error: 'ses MessageRejected 400' });
+  });
+});
+
+describe('email through Azure Communication Services (D-085)', () => {
+  // FAKE key (base64 of "not-a-real-key") — never a real credential.
+  const KEY = Buffer.from('not-a-real-key').toString('base64');
+  const acsConfig = config({
+    EMAIL_PROVIDER: 'azure',
+    EMAIL_FROM: 'DoNotReply@example.test',
+    AZURE_COMMUNICATION_CONNECTION_STRING: `endpoint=https://fake.communication.azure.com/;accesskey=${KEY}`,
+    SENDGRID_API_KEY: undefined,
+  });
+
+  it('parses the connection string, and is off without a valid one', () => {
+    expect(parseAcsConnectionString(`endpoint=https://fake.communication.azure.com/;accesskey=${KEY}`)).toEqual({
+      endpoint: 'https://fake.communication.azure.com',
+      accessKey: KEY,
+    });
+    expect(parseAcsConnectionString('endpoint=http://x;accesskey=a')).toBeNull();
+    expect(parseAcsConnectionString('accesskey=a')).toBeNull();
+    expect(new EmailSender(acsConfig).enabled).toBe(true);
+    expect(new EmailSender(config({ EMAIL_PROVIDER: 'azure', AZURE_COMMUNICATION_CONNECTION_STRING: undefined })).enabled).toBe(false);
+  });
+
+  it('signs requests the documented way (HMAC-SHA256 over method, path+query, date, host, body hash)', () => {
+    const url = new URL('https://fake.communication.azure.com/emails:send?api-version=2023-03-31');
+    const now = new Date('2026-09-29T12:00:00Z');
+    const headers = acsSignedHeaders('POST', url, '{"a":1}', KEY, now);
+    expect(headers['x-ms-date']).toBe('Tue, 29 Sep 2026 12:00:00 GMT');
+    expect(headers['x-ms-content-sha256']).toBe('AVq9f1zFei3ZS3WQ8ErYCEJzkF7jPsXOvq5iJ2qX+GI=');
+    const expected = createHmac('sha256', Buffer.from(KEY, 'base64'))
+      .update(`POST\n/emails:send?api-version=2023-03-31\nTue, 29 Sep 2026 12:00:00 GMT;fake.communication.azure.com;${headers['x-ms-content-sha256']}`)
+      .digest('base64');
+    expect(headers.authorization).toBe(`HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=${expected}`);
+  });
+
+  it('sends plain text without tracking, and retries only throttling / server errors', async () => {
+    const email = new EmailSender(acsConfig);
+    email.fetchImpl = fakeFetch(202, { id: 'op-1', status: 'Running' });
+    expect(await email.send('aide@example.test', MESSAGE)).toEqual({ ok: true, providerMessageId: 'op-1' });
+    const [url, init] = vi.mocked(email.fetchImpl).mock.calls[0]!;
+    expect(url).toBe('https://fake.communication.azure.com/emails:send?api-version=2023-03-31');
+    const body = JSON.parse(String(init.body));
+    expect(body).toMatchObject({
+      senderAddress: 'DoNotReply@example.test',
+      recipients: { to: [{ address: 'aide@example.test' }] },
+      content: { subject: 'Primordial Health: New shift assigned' },
+      userEngagementTrackingDisabled: true,
+    });
+    expect(body.content.plainText).toContain('Open Primordial Health for details: https://app.example.test');
+    expect((init.headers as Record<string, string>).authorization).toMatch(/^HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=/);
+
+    email.fetchImpl = fakeFetch(429, { error: { code: 'TooManyRequests' } });
+    expect(await email.sendText('a@example.test', 's', 't')).toEqual({ ok: false, retry: true, error: 'azure 429 TooManyRequests' });
+    email.fetchImpl = fakeFetch(400, { error: { code: 'InvalidSenderAddress' } });
+    expect(await email.sendText('a@example.test', 's', 't')).toEqual({ ok: false, retry: false, error: 'azure 400 InvalidSenderAddress' });
   });
 });

@@ -1466,9 +1466,31 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 2026-09-29 · owner ("in future we might have agencies that will need to be added") + Claude Code
 - For now new agencies are added with `agency:create` (DEPLOYMENT-AZURE §5). It is run by the owner with a temporary
   database firewall opening and prints a one-time password; the new admin must change it and set up 2FA.
-- Next step, once SES email works: a manual **"Create agency" GitHub workflow**. The owner enters the name, state,
+- Next step, once email works (D-085): a manual **"Create agency" GitHub workflow**. The owner enters the name, state,
   timezone and admin email. It runs inside the deploy pipeline (temporary firewall rule, like migrations) and emails
   the new admin a **set-your-password link** instead of printing a password, so nothing sensitive appears in logs.
 - A signed-in platform-owner console (a `super_admin` who sees every agency) is deliberately **not** built yet. Every
   query is agency-scoped, and cross-agency access is the riskiest thing to add to a HIPAA system. Revisit it when
   there are several paying agencies.
+
+### D-085 — Everything on Azure: email through Azure Communication Services
+2026-09-29 · owner ("since we using azure lets do everything in azure") + Claude Code (refines D-078)
+- **Email**: `EMAIL_PROVIDER=azure` sends through **Azure Communication Services Email**, which is under the same
+  Microsoft agreement and HIPAA BAA as the hosting (D-081). No AWS account is needed.
+  - Plain HTTPS to `{endpoint}/emails:send?api-version=2023-03-31` with the documented HMAC-SHA256 request signing, so
+    no SDK. It is configured with `AZURE_COMMUNICATION_CONNECTION_STRING` (a secret in App Settings).
+  - `EMAIL_FROM` is the plain sender address (`DoNotReply@primordialhealthservices.health`); the display name
+    "Primordial Health" is set on the sender in Azure.
+  - Link and open tracking are off (`userEngagementTrackingDisabled`), because tracking rewrites reset links.
+  - 202 means accepted; 408, 429 and 5xx are retried.
+  - SES and SendGrid stay as options (SES as the fallback; SendGrid is development only).
+  - Owner steps are in DEPLOYMENT-AZURE §6. As part of that, the owner confirms Communication Services is ticked in the
+    HIPAA BAA column of Microsoft's "Azure Compliance Offerings" PDF (Service Trust Portal).
+- **Later, same direction**:
+  - **SMS** can move to Communication Services too: phone number plus toll-free or 10DLC verification. This is a small
+    sender change like this one.
+  - **Phone check-in (IVR)** is built on Twilio's call webhooks (D-073). Moving it means a rewrite onto Call
+    Automation, so Twilio stays for IVR unless the owner decides otherwise.
+  - **Push** stays on Expo's push service (messages carry no patient details).
+- A service-principal/managed-identity login for email (no connection string) is possible later. It needs a custom
+  role on the Communication Services resource.

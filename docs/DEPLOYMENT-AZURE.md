@@ -127,42 +127,43 @@ It prints a **temporary password once**. Remove your IP from the database's Netw
 `https://app.primordialhealthservices.health`: you'll choose your own password and set up two-factor authentication. **Never run the
 demo seed (`db:seed`) against this database.**
 
-## 6. Email with Amazon SES (password resets, alerts) — about 30 minutes plus AWS's review
+## 6. Email with Azure (password resets, alerts) — about 30 minutes plus DNS wait
 
-Amazon SES works from Azure and is covered by AWS's free BAA (D-078).
+Email goes through **Azure Communication Services** (D-085), which is covered by the same Microsoft agreement and BAA
+as the rest of the hosting. Emails never contain patient details. Cost is about $0.25 per 1,000 emails.
 
-1. **AWS account**: create one at aws.amazon.com (as the LLC), and turn on MFA for the root user.
-2. **Sign the BAA**: search for **AWS Artifact**, open **Agreements**, and accept the **AWS Business Associate
-   Addendum**. Do this before any real email is sent.
-3. **Verify the domain**: go to SES (region **US East (N. Virginia) us-east-1**), then **Identities → Create
-   identity → Domain** `primordialhealthservices.health` with Easy DKIM (RSA 2048).
-   - SES shows **3 CNAME records**. Add each at **Namecheap → Advanced DNS** as a CNAME. For the host, enter only the
-     part before `.primordialhealthservices.health` (e.g. `abc123._domainkey`).
+1. **Email service**: in the portal, open **Create a resource**, search **Email Communication Services**, and create
+   it with resource group `primordial-prod`, name `primordial-email`, data location **United States**.
+2. **Your domain**: open it and go to **Provision domains → Add domain → Custom domain**, then enter
+   `primordialhealthservices.health`.
+   - Azure shows a **TXT** record (`ms-domain-verification=…`). Add it at **Namecheap → Advanced DNS** (host `@`),
+     then click **Verify** in Azure.
+   - Azure then shows **SPF** (TXT, host `@`) and **DKIM** / **DKIM2** (two CNAMEs, host
+     `selector1-azurecomm-prod-net._domainkey` and `selector2-…`). Add all three and click **Verify** on each.
+   - **SPF**: if the domain already has a TXT record starting `v=spf1` (for example from your website or mailbox
+     provider), don't add a second one. Add `include:spf.protection.outlook.com` inside the existing record instead,
+     because two SPF records break both.
    - Also add a **TXT** record with host `_dmarc` and value `v=DMARC1; p=none;`.
-   - The identity turns "Verified" within about an hour.
-4. **Leave the sandbox**: SES → **Account dashboard → Request production access**.
-   - Mail type: *Transactional*.
-   - Website: `https://app.primordialhealthservices.health`.
-   - Use case: "Password-reset and account-alert emails to our own staff, who sign up by invitation only. No
-     marketing, no purchased lists; bounces are handled by SES suppression."
-   - Approval usually takes about a day. Until then SES only sends to addresses you've verified.
-5. **A sending-only key**: go to **IAM → Users → Create user** `primordial-ses-sender` (no console access).
-   - Attach an inline policy that allows only `ses:SendEmail` and `ses:SendRawEmail`.
-   - Then open **Security credentials → Create access key** ("Application running outside AWS").
-   - Put the two values straight into your password manager, and never paste them into a chat or screenshot.
-6. **Azure**: open the API app (`primordial-api-…`) → **Settings → Environment variables** and add:
-   - `EMAIL_PROVIDER` = `ses`
-   - `EMAIL_FROM` = `Primordial Health <no-reply@primordialhealthservices.health>`
-   - `AWS_REGION` = `us-east-1`
-   - `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` from step 5
+3. **Sender name**: go to the domain → **MailFrom addresses**. The default `DoNotReply` is fine. Set its display name
+   to **Primordial Health**.
+4. **Communication service**: go to **Create a resource → Communication Services** and create it with resource group
+   `primordial-prod`, name `primordial-comms`, data location **United States**. Open it → **Email → Domains → Connect
+   domain** and choose the domain from step 2.
+5. **Key**: open `primordial-comms` → **Settings → Keys** and copy the **Primary connection string** straight into
+   your password manager. Never paste it into a chat or screenshot it.
+6. **API settings**: open the API app (`primordial-api-…`) → **Settings → Environment variables** and add:
+   - `EMAIL_PROVIDER` = `azure`
+   - `EMAIL_FROM` = `DoNotReply@primordialhealthservices.health` (the plain address, with no name in front)
+   - `AZURE_COMMUNICATION_CONNECTION_STRING` = the connection string from step 5
 
    Click **Apply**. The app restarts by itself.
-7. **Test**: sign out, then use **Forgot password** with your own email.
+7. **Test**: this needs the version with Azure email support deployed (Actions → Deploy to Azure). Then sign out, use
+   **Forgot password** with your own email, and check your spam folder the first time.
+
+Fallback: Amazon SES also works (EMAIL_PROVIDER=ses; see `.env.production.example`) if it's ever needed.
 
 ## Later, when needed
 
-- **Email alternative**: Azure's own email service can replace SES once it's confirmed on Microsoft's HIPAA in-scope
-  list.
 - **Texts / phone check-in**: Twilio App Settings (see `.env.production.example`); the check-in number's webhook is
   `https://api.primordialhealthservices.health/api/v1/ivr/voice`.
 - **Hardening as you grow**: secrets from App Settings into Key Vault; the database on a private network instead of

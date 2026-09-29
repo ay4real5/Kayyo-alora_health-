@@ -1,3 +1,4 @@
+import { createHash, createHmac } from 'node:crypto';
 import { SendEmailCommand, SESv2Client } from '@aws-sdk/client-sesv2';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -5,8 +6,8 @@ import type { DeliveryChannel } from '@alora/shared';
 import type { EnvironmentVariables } from '../../../config/env.validation.js';
 
 /**
- * Senders for the channels outside the app (DECISIONS D-071, D-078): Twilio SMS, Amazon SES / SendGrid email, Expo push. Each is plain
- * HTTPS (no SDKs) and is **off until its settings are present**. They never log message text or contact details.
+ * Senders for the channels outside the app (DECISIONS D-071, D-078, D-085): Twilio SMS, Azure / Amazon SES / SendGrid
+ * email, Expo push. Each is plain HTTPS (SES uses AWS's client) and is **off until its settings are present**. They never log message text or contact details.
  */
 
 /** What a notification says — its title and body, which are PHI-free by contract (DESIGN.md §13.3). */
@@ -94,9 +95,40 @@ export interface SesLike {
   send(command: SendEmailCommand): Promise<{ MessageId?: string }>;
 }
 
+/** "endpoint=https://x.communication.azure.com/;accesskey=…" → its parts, or null if it isn't one. */
+export function parseAcsConnectionString(value: string | undefined): { endpoint: string; accessKey: string } | null {
+  if (!value) return null;
+  const parts = new Map<string, string>();
+  for (const part of value.split(';')) {
+    const at = part.indexOf('=');
+    if (at > 0) parts.set(part.slice(0, at).trim().toLowerCase(), part.slice(at + 1).trim());
+  }
+  const endpoint = parts.get('endpoint');
+  const accessKey = parts.get('accesskey');
+  if (!endpoint || !accessKey || !/^https:\/\/[^/]+/.test(endpoint)) return null;
+  return { endpoint: endpoint.replace(/\/+$/, ''), accessKey };
+}
+
 /**
- * Email (D-071, D-078): **Amazon SES** (covered by the AWS BAA — use this in production) or SendGrid (no BAA —
- * development only). Chosen by EMAIL_PROVIDER; off until the provider's settings are present.
+ * Azure Communication Services request signing (HMAC-SHA256 over method, path, date, host and body hash), as
+ * documented for its REST API. Returns the headers to add.
+ */
+export function acsSignedHeaders(method: string, url: URL, body: string, accessKey: string, now: Date = new Date()): Record<string, string> {
+  const date = now.toUTCString();
+  const contentHash = createHash('sha256').update(body, 'utf8').digest('base64');
+  const toSign = `${method}\n${url.pathname}${url.search}\n${date};${url.host};${contentHash}`;
+  const signature = createHmac('sha256', Buffer.from(accessKey, 'base64')).update(toSign, 'utf8').digest('base64');
+  return {
+    'x-ms-date': date,
+    'x-ms-content-sha256': contentHash,
+    authorization: `HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=${signature}`,
+  };
+}
+
+/**
+ * Email (D-071, D-078, D-085): **Azure Communication Services** (production — same Microsoft agreement and BAA as the
+ * hosting), **Amazon SES** (AWS BAA; the fallback) or SendGrid (no BAA — development only). Chosen by EMAIL_PROVIDER;
+ * off until the provider's settings are present.
  */
 @Injectable()
 export class EmailSender extends Sender {
@@ -108,7 +140,7 @@ export class EmailSender extends Sender {
     super();
   }
 
-  get provider(): 'ses' | 'sendgrid' | null {
+  get provider(): 'azure' | 'ses' | 'sendgrid' | null {
     const chosen = this.config.get('EMAIL_PROVIDER', { infer: true });
     if (chosen) return chosen;
     return this.config.get('SENDGRID_API_KEY', { infer: true }) ? 'sendgrid' : null;
@@ -120,6 +152,7 @@ export class EmailSender extends Sender {
 
   get enabled(): boolean {
     if (!this.from) return false;
+    if (this.provider === 'azure') return parseAcsConnectionString(this.config.get('AZURE_COMMUNICATION_CONNECTION_STRING', { infer: true })) !== null;
     if (this.provider === 'ses') return Boolean(this.config.get('AWS_REGION', { infer: true }));
     if (this.provider === 'sendgrid') return Boolean(this.config.get('SENDGRID_API_KEY', { infer: true }));
     return false;
@@ -135,7 +168,30 @@ export class EmailSender extends Sender {
 
   /** A plain-text email (notifications, password reset links). */
   async sendText(to: string, subject: string, text: string): Promise<SendOutcome> {
-    return this.provider === 'ses' ? this.viaSes(to, subject.slice(0, 200), text) : this.viaSendGrid(to, subject.slice(0, 200), text);
+    const short = subject.slice(0, 200);
+    if (this.provider === 'azure') return this.viaAzure(to, short, text);
+    return this.provider === 'ses' ? this.viaSes(to, short, text) : this.viaSendGrid(to, short, text);
+  }
+
+  /** Azure Communication Services Email: accepted (202) means queued; the display name is set on the sender in Azure. */
+  private async viaAzure(to: string, subject: string, text: string): Promise<SendOutcome> {
+    const acs = parseAcsConnectionString(this.config.get('AZURE_COMMUNICATION_CONNECTION_STRING', { infer: true }))!;
+    const url = new URL(`${acs.endpoint}/emails:send?api-version=2023-03-31`);
+    const body = JSON.stringify({
+      senderAddress: this.from,
+      recipients: { to: [{ address: to }] },
+      content: { subject, plainText: text },
+      // No open/click tracking: it rewrites links (reset links included) and adds pixels.
+      userEngagementTrackingDisabled: true,
+    });
+    const { response, error } = await post(this.fetchImpl, url.toString(), {
+      headers: { 'content-type': 'application/json', ...acsSignedHeaders('POST', url, body, acs.accessKey) },
+      body,
+    });
+    if (!response) return { ok: false, retry: true, error: error! };
+    const json = (await response.json().catch(() => ({}))) as { id?: string; error?: { code?: string } };
+    if (response.ok) return { ok: true, providerMessageId: json.id ?? response.headers.get('operation-id') };
+    return { ok: false, retry: retryable(response.status), error: `azure ${response.status}${json.error?.code ? ` ${json.error.code}` : ''}` };
   }
 
   private async viaSes(to: string, subject: string, text: string): Promise<SendOutcome> {
