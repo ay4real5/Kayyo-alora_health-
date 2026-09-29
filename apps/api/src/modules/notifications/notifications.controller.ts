@@ -1,7 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
-import { ListNotificationsQueryDto, NotificationPreferenceDto } from './dto/notifications.dto.js';
+import { EXPO_PUSH_TOKEN, ListNotificationsQueryDto, NotificationPreferenceDto, RegisterDeviceDto } from './dto/notifications.dto.js';
 import { NotificationsService } from './notifications.service.js';
 
 /**
@@ -27,6 +27,26 @@ export class NotificationsController {
   @Put('preferences/:type')
   setPreference(@CurrentUser() caller: AuthUser, @Param('type') type: string, @Body() dto: NotificationPreferenceDto) {
     return this.notifications.setPreference(caller, type, dto);
+  }
+
+  /** Which channels outside the app are connected for this agency (push / SMS / email, D-071). */
+  @Get('channels')
+  channels() {
+    return this.notifications.channels();
+  }
+
+  /** The mobile app registers the phone for push notifications after sign-in (D-071). */
+  @Post('devices')
+  @HttpCode(HttpStatus.OK)
+  registerDevice(@CurrentUser() caller: AuthUser, @Body() dto: RegisterDeviceDto) {
+    return this.notifications.registerDevice(caller, dto);
+  }
+
+  /** …and removes it on sign-out. */
+  @Delete('devices/:token')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async unregisterDevice(@CurrentUser() caller: AuthUser, @Param('token') token: string) {
+    if (EXPO_PUSH_TOKEN.test(token)) await this.notifications.unregisterDevice(caller, token);
   }
 
   @Get('unread-count')
