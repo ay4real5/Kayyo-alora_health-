@@ -89,6 +89,9 @@ export interface Claim {
   qaPassed: boolean | null;
   qaErrors: { visitId: string; messages: string[] }[] | null;
   voidReason: string | null;
+  /** Rejected by the clearinghouse (999) or payer (277CA), D-076. */
+  rejection: { reason: string; at: string | null } | null;
+  ediFileId: string | null;
   submittedAt: string | null;
   payerClaimNumber: string | null;
   originalClaimId: string | null;

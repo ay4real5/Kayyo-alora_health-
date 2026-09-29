@@ -45,7 +45,8 @@ export default function ClaimPage() {
   if (claim.isLoading) return <p className="text-sm text-slate-500">Loading…</p>;
   if (!claim.data) return <ErrorAlert error={claim.error} />;
   const c = claim.data;
-  const open = c.status === 'draft' || c.status === 'ready';
+  // Rejected claims never reached adjudication: fix, re-check (QA) and put them in a new file (D-076).
+  const open = c.status === 'draft' || c.status === 'ready' || c.status === 'rejected';
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
@@ -76,6 +77,14 @@ export default function ClaimPage() {
           ]}
         />
       </Card>
+
+      {c.rejection && (
+        <Card className="border-red-200 bg-red-50 p-4 text-sm text-red-900" role="note" aria-label="Rejection">
+          <h2 className="mb-1 font-semibold">Rejected{c.rejection.at ? ` on ${new Date(c.rejection.at).toLocaleDateString()}` : ''}</h2>
+          <p>{c.rejection.reason}</p>
+          <p className="mt-1 text-red-800">Fix the cause, run Re-check (QA), then put the claim in a new file under Claim files.</p>
+        </Card>
+      )}
 
       {c.qaErrors && c.qaErrors.length > 0 && (
         <Card className="border-red-200 bg-red-50 p-4 text-sm text-red-900">

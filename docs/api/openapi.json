@@ -2928,6 +2928,190 @@
         ]
       }
     },
+    "/api/v1/billing/edi-files": {
+      "get": {
+        "operationId": "EdiFilesController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/edi-files/837": {
+      "post": {
+        "operationId": "EdiFilesController_create837",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEdiFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "One 837 file from ready claims to one payer, with the agency's next control number. 422 lists what's missing.",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/edi-files/upload-ack": {
+      "post": {
+        "operationId": "EdiFilesController_uploadAck",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Upload835Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "A 999 or 277CA from the clearinghouse, applied to our files and claims.",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/edi-files/{id}": {
+      "get": {
+        "operationId": "EdiFilesController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/edi-files/{id}/download": {
+      "get": {
+        "operationId": "EdiFilesController_download",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/billing/edi-files/{id}/sent": {
+      "post": {
+        "operationId": "EdiFilesController_markSent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The file was uploaded to the clearinghouse: its claims become submitted.",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/api/v1/billing/payers": {
       "get": {
         "operationId": "BillingSetupController_listPayers",
@@ -9169,6 +9353,44 @@
           "status"
         ]
       },
+      "CreateEdiFileDto": {
+        "type": "object",
+        "properties": {
+          "claimIds": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "test": {
+            "type": "boolean",
+            "description": "For the clearinghouse's test channel: the file carries the test indicator (ISA15 = T)."
+          }
+        },
+        "required": [
+          "claimIds"
+        ]
+      },
+      "Upload835Dto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "content": {
+            "type": "string",
+            "description": "The 835 file's text (up to 5 MB)."
+          }
+        },
+        "required": [
+          "fileName",
+          "content"
+        ]
+      },
       "PayerDto": {
         "type": "object",
         "properties": {
@@ -9602,23 +9824,6 @@
         },
         "required": [
           "reason"
-        ]
-      },
-      "Upload835Dto": {
-        "type": "object",
-        "properties": {
-          "fileName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "content": {
-            "type": "string",
-            "description": "The 835 file's text (up to 5 MB)."
-          }
-        },
-        "required": [
-          "fileName",
-          "content"
         ]
       },
       "CreateInvoicesDto": {

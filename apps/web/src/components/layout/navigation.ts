@@ -10,6 +10,7 @@ export const NAVIGATION = [
   { href: '/physicians', label: 'Physicians', permission: 'physicians:read' },
   { href: '/billing/ready', label: 'Ready to bill', permission: 'billing:read' },
   { href: '/billing/claims', label: 'Claims', permission: 'billing:read' },
+  { href: '/billing/files', label: 'Claim files', permission: 'billing:read' },
   { href: '/billing/invoices', label: 'Invoices', permission: 'billing:read' },
   { href: '/billing/payments', label: 'Payments', permission: 'billing:read' },
   { href: '/billing/aging', label: 'AR aging', permission: 'billing:read' },
