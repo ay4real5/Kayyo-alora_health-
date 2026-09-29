@@ -126,6 +126,24 @@ export interface LiveSnapshot {
   unassigned: { visitId: string; visitType: string; scheduledStart: string; patient: PersonRef }[];
 }
 
+/**
+ * How a clock-in/out was captured: the app's GPS, or a call from the patient's registered home phone (IVR, D-073) —
+ * the landline stands in for the location, so there's no geofence check.
+ */
+export type ClockSource =
+  | {
+      method: 'gps';
+      latitude: number;
+      longitude: number;
+      accuracyMeters?: number | null;
+      deviceId?: string | null;
+      deviceModel?: string | null;
+      appVersion?: string | null;
+    }
+  | { method: 'telephony'; phoneNumber: string };
+
+const NO_GEO = { distance: null, within: null } as const;
+
 /** What a caregiver gets back after clocking in or out: enough to show "you're clocked in" and any warnings. */
 export interface ClockResult {
   /** The EVV record id. */
@@ -154,8 +172,25 @@ export class EvvService {
   ) {}
 
   async clockIn(caller: AuthUser, dto: ClockDto): Promise<ClockResult> {
-    const at = parseClockTime(dto.timestamp);
-    const visit = await this.ownVisit(caller, dto.visitId);
+    return this.clockInFrom(caller, dto.visitId, parseClockTime(dto.timestamp), gpsSource(dto));
+  }
+
+  /** Clock-in by phone (IVR, D-073): now, from the patient's registered home line. */
+  async clockInByPhone(caller: AuthUser, visitId: string, phoneNumber: string): Promise<ClockResult> {
+    return this.clockInFrom(caller, visitId, new Date(), { method: 'telephony', phoneNumber });
+  }
+
+  async clockOut(caller: AuthUser, dto: ClockDto): Promise<ClockResult> {
+    return this.clockOutFrom(caller, dto.visitId, parseClockTime(dto.timestamp), gpsSource(dto));
+  }
+
+  /** Clock-out by phone (IVR, D-073). */
+  async clockOutByPhone(caller: AuthUser, visitId: string, phoneNumber: string): Promise<ClockResult> {
+    return this.clockOutFrom(caller, visitId, new Date(), { method: 'telephony', phoneNumber });
+  }
+
+  private async clockInFrom(caller: AuthUser, visitId: string, at: Date, source: ClockSource): Promise<ClockResult> {
+    const visit = await this.ownVisit(caller, visitId);
     if (visit.status !== 'scheduled') {
       throw new ConflictException(
         `This visit is ${visit.status.replace('_', ' ')} and can't be clocked into`,
@@ -172,9 +207,11 @@ export class EvvService {
       throw new ConflictException('Clock out of your current visit before starting another');
 
     const flags: EvvFlag[] = [];
-    const geo = geofence(visit.patient, dto);
-    if (geo.distance === null) flags.push('no_patient_location');
-    else if (!geo.within) flags.push('outside_geofence_in');
+    const geo = source.method === 'gps' ? geofence(visit.patient, source) : NO_GEO;
+    if (source.method === 'gps') {
+      if (geo.distance === null) flags.push('no_patient_location');
+      else if (!geo.within) flags.push('outside_geofence_in');
+    }
     if (
       at.getTime() < window.start - EVV_RULES.earlyClockInMinutes * MINUTE ||
       at.getTime() > window.end
@@ -198,29 +235,29 @@ export class EvvService {
           serviceType: visit.visitType,
           serviceDate: visit.scheduledDate,
           clockInTime: at,
-          clockInMethod: 'gps',
-          clockInLatitude: dto.latitude,
-          clockInLongitude: dto.longitude,
-          clockInAccuracyMeters: dto.accuracyMeters ?? null,
+          clockInMethod: source.method,
+          ...(source.method === 'gps'
+            ? {
+                clockInLatitude: source.latitude,
+                clockInLongitude: source.longitude,
+                clockInAccuracyMeters: source.accuracyMeters ?? null,
+                deviceId: source.deviceId ?? null,
+                deviceModel: source.deviceModel ?? null,
+                appVersion: source.appVersion ?? null,
+              }
+            : { clockInPhoneNumber: source.phoneNumber }),
           clockInWithinGeofence: geo.within,
           clockInDistanceMeters: geo.distance,
           flags,
-          deviceId: dto.deviceId ?? null,
-          deviceModel: dto.deviceModel ?? null,
-          appVersion: dto.appVersion ?? null,
         },
       });
     });
-    this.emit(caller.agencyId, 'visit:clock-in', visit, record, geo, {
-      latitude: dto.latitude,
-      longitude: dto.longitude,
-    });
+    this.emit(caller.agencyId, 'visit:clock-in', visit, record, geo, clockExtra(source));
     return toClockResult(record, geo);
   }
 
-  async clockOut(caller: AuthUser, dto: ClockDto): Promise<ClockResult> {
-    const at = parseClockTime(dto.timestamp);
-    const visit = await this.ownVisit(caller, dto.visitId);
+  private async clockOutFrom(caller: AuthUser, visitId: string, at: Date, source: ClockSource): Promise<ClockResult> {
+    const visit = await this.ownVisit(caller, visitId);
     const record = await this.prisma.evvRecord.findUnique({ where: { visitId: visit.id } });
     if (!record || record.status !== 'in_progress' || !record.clockInTime) {
       throw new ConflictException('You are not clocked into this visit');
@@ -229,9 +266,11 @@ export class EvvService {
     const window = await this.window(caller.agencyId, visit);
 
     const flags = new Set(record.flags as EvvFlag[]);
-    const geo = geofence(visit.patient, dto);
-    if (geo.distance === null) flags.add('no_patient_location');
-    else if (!geo.within) flags.add('outside_geofence_out');
+    const geo = source.method === 'gps' ? geofence(visit.patient, source) : NO_GEO;
+    if (source.method === 'gps') {
+      if (geo.distance === null) flags.add('no_patient_location');
+      else if (!geo.within) flags.add('outside_geofence_out');
+    }
     if (at.getTime() > window.end + EVV_RULES.lateClockOutMinutes * MINUTE)
       flags.add('outside_time_window_out');
     if (
@@ -246,10 +285,14 @@ export class EvvService {
         where: { id: record.id, status: 'in_progress' },
         data: {
           clockOutTime: at,
-          clockOutMethod: 'gps',
-          clockOutLatitude: dto.latitude,
-          clockOutLongitude: dto.longitude,
-          clockOutAccuracyMeters: dto.accuracyMeters ?? null,
+          clockOutMethod: source.method,
+          ...(source.method === 'gps'
+            ? {
+                clockOutLatitude: source.latitude,
+                clockOutLongitude: source.longitude,
+                clockOutAccuracyMeters: source.accuracyMeters ?? null,
+              }
+            : { clockOutPhoneNumber: source.phoneNumber }),
           clockOutWithinGeofence: geo.within,
           clockOutDistanceMeters: geo.distance,
           flags: [...flags],
@@ -264,8 +307,7 @@ export class EvvService {
       return tx.evvRecord.findUniqueOrThrow({ where: { id: record.id } });
     });
     this.emit(caller.agencyId, 'visit:clock-out', visit, updated, geo, {
-      latitude: dto.latitude,
-      longitude: dto.longitude,
+      ...clockExtra(source),
       durationMinutes: Math.round((at.getTime() - record.clockInTime.getTime()) / 60_000),
     });
     return toClockResult(updated, geo);
@@ -610,6 +652,23 @@ export class EvvService {
       end: zonedTimeToUtc(date, fromTime(visit.scheduledEnd), zone).getTime(),
     };
   }
+}
+
+function gpsSource(dto: ClockDto): ClockSource {
+  return {
+    method: 'gps',
+    latitude: dto.latitude,
+    longitude: dto.longitude,
+    accuracyMeters: dto.accuracyMeters,
+    deviceId: dto.deviceId,
+    deviceModel: dto.deviceModel,
+    appVersion: dto.appVersion,
+  };
+}
+
+/** Live-monitor details of a clock event: where (GPS), or that it came by phone. */
+function clockExtra(source: ClockSource): Record<string, unknown> {
+  return source.method === 'gps' ? { latitude: source.latitude, longitude: source.longitude } : { method: 'telephony' };
 }
 
 function parseClockTime(value: string): Date {

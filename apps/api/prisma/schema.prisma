@@ -447,6 +447,8 @@ model StaffProfile {
   userId              String    @unique @map("user_id") @db.Uuid
   agencyId            String    @map("agency_id") @db.Uuid
   employeeId          String?   @map("employee_id") @db.VarChar(50)
+  /// Digits a caregiver keys in when clocking in/out by phone (IVR, D-073). Unique per agency; never returned by the API.
+  ivrCode             String?   @map("ivr_code") @db.VarChar(8)
   discipline          String    @db.VarChar(20)
   hireDate            DateTime? @map("hire_date") @db.Date
   terminationDate     DateTime? @map("termination_date") @db.Date
@@ -488,6 +490,7 @@ model StaffProfile {
   visitNotes        VisitNote[]
 
   @@unique([agencyId, employeeId])
+  @@unique([agencyId, ivrCode])
   @@index([agencyId])
   @@index([agencyId, discipline])
   @@map("staff_profiles")
