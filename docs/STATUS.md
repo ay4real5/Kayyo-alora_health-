@@ -127,9 +127,23 @@
 
 ## In progress
 
-`task/RENAME-primordial-health` — product renamed to Primordial Health, domain primordialhealthservices.health
-(D-082). **Next step**: CI green → merge; then the owner follows DEPLOYMENT-AZURE.md (Azure account exists:
-"Azure subscription 1"; Microsoft for Startups credit not offered to this account).
+**Azure deployment (D-081, D-082) — infrastructure done, first app deploy not finished yet.**
+- Created (Central US, resource group `primordial-prod`): App Service plan B1, apps `primordial-web-2b7tijrpzsjdu`
+  and `primordial-api-2b7tijrpzsjdu`, PostgreSQL `primordial-db-2b7tijrpzsjdu` (db `primordial`), registry
+  `primordial2b7tijrpzsjdu`. East US refused B1 quota for this new account; Central US had 1 (enough — both apps share
+  the plan). Old empty group `primordial-rg` deleted.
+- Domains live with free managed certificates: `app.primordialhealthservices.health` (web),
+  `api.primordialhealthservices.health` (API) — Namecheap CNAME + asuid TXT records. Both answer 503 until deployed.
+- GitHub: secrets `AZURE_CLIENT_ID/TENANT_ID/SUBSCRIPTION_ID/DATABASE_URL` and the six `AZURE_*`/`PUBLIC_API_URL`
+  variables are set; app registration `primordial-github-deploy` (Contributor on the group) has federated credentials
+  for both subject formats (`repo:ay4real5/Kayyo-alora_health-:environment:production` and GitHub's ID-based
+  `repo:ay4real5@124510003/Kayyo-alora_health-@1390625963:environment:production`). `gh` CLI is logged in on the
+  owner's laptop (`C:\Program Files\GitHub CLI\gh.exe`).
+- Deploy run 36604964382: login + image build/push OK; migrations failed on an az CLI flag change — fixed in
+  1c35beb (`--server-name/--name`). **Next step**: run *Deploy to Azure* again (Actions or
+  `gh workflow run deploy-azure.yml --ref main`), watch it, then create the agency + admin with
+  `npm run agency:create` (DEPLOYMENT-AZURE.md step 5; needs the owner's DATABASE_URL and a temporary firewall rule for
+  their IP). Secrets live only in the owner's password manager — never in the repo or chat.
 
 ## Next up
 
@@ -149,6 +163,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | azure | Azure infra + domains + HTTPS + GitHub deploy settings done; first deploy pending (migration flag fixed). |
 | 2026-09-29 | Claude Code | rename | Primordial Health on primordialhealthservices.health (D-082). |
 | 2026-09-29 | Claude Code | azure | Azure hosting prepared: Bicep, deploy workflow, first-agency script (D-081). |
 | 2026-09-29 | Claude Code | design | Indigo & violet redesign (web) and caregiver app tabs/profile/settings. |
