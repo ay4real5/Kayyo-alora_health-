@@ -41,6 +41,11 @@ function Routes() {
         <Stack.Screen name="visit/[id]/tasks" options={{ title: 'Tasks' }} />
         <Stack.Screen name="visit/[id]/vitals" options={{ title: 'Vitals' }} />
         <Stack.Screen name="visit/[id]/note" options={{ title: 'Visit note' }} />
+        <Stack.Screen name="messages/[id]" options={{ title: 'Messages' }} />
+        <Stack.Screen name="messages/new" options={{ title: 'New message' }} />
+        <Stack.Screen name="open-shifts" options={{ title: 'Open shifts' }} />
+        <Stack.Screen name="pay" options={{ title: 'My pay' }} />
+        <Stack.Screen name="pay/[id]" options={{ title: 'Pay stub' }} />
       </Stack.Protected>
     </Stack>
   );

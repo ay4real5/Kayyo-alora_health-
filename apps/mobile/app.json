@@ -1,20 +1,27 @@
 {
   "expo": {
     "name": "Primordial Caregiver",
-    "slug": "alora-caregiver",
-    "version": "0.0.1",
+    "slug": "primordial-caregiver",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "alora",
+    "scheme": "primordial",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
         "NSFaceIDUsageDescription": "Unlock Primordial Health with Face ID so patient information stays protected."
+      },
+      "bundleIdentifier": "health.primordialhealthservices.caregiver",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
-      "allowBackup": false
+      "allowBackup": false,
+      "package": "health.primordialhealthservices.caregiver",
+      "versionCode": 1
     },
     "plugins": [
       "expo-router",
@@ -35,7 +42,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0f766e",
+          "backgroundColor": "#1e1b4b",
           "image": "./assets/splash-icon.png",
           "imageWidth": 76
         }

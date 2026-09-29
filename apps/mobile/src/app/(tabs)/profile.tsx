@@ -102,6 +102,11 @@ export default function ProfileScreen() {
           />
         </Card>
 
+        <Card style={{ paddingVertical: 4 }}>
+          <ListRow icon="wallet-outline" label="My pay" onPress={() => router.push('/pay')} />
+          <ListRow icon="briefcase-outline" label="Open shifts" onPress={() => router.push('/open-shifts')} last />
+        </Card>
+
         <SectionTitle>Credentials</SectionTitle>
         <Card style={{ paddingVertical: credentials?.length ? 4 : 16 }}>
           {credentials?.length === 0 && <Text style={{ color: colors.muted, fontSize: 15 }}>No credentials on file.</Text>}

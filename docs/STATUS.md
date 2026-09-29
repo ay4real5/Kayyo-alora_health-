@@ -133,12 +133,19 @@ https://api.primordialhealthservices.health (API). Central US, resource group `p
 "Primordial Health Services" and its first admin were created with `agency:create`; the owner signed in, changed the
 password and set up 2FA. The DB firewall allows only Azure services (temporary client-IP rules are removed after use).
 
+**Caregiver app (P4-14, D-083)**: Messages tab, Open shifts, My pay are done; `eas.json` targets the production API.
+The owner's next steps are in [MOBILE-RELEASE.md](MOBILE-RELEASE.md) (P4-15). Once the owner has built the app, the
+screens still need checking on a real phone.
+
 **Not connected yet**: email (Amazon SES — D-078), Twilio (SMS + phone check-in), Expo push, clearinghouse, map
 tiles. Forgot-password emails don't send until SES is set. Owner's list: [GO_LIVE.md](GO_LIVE.md).
 
 ## Next up
 
-Agent work left is small and mostly waits on accounts: SFTP transport for claim files once a clearinghouse is chosen
+- **P4-17** "Create agency" workflow (D-084), once SES works (P4-16).
+- Test the caregiver app on a real phone once the owner has a preview build (P4-15). Possible extras: mileage logging
+  in the app (`POST /payroll/mileage` exists), time-off requests, photo attachments in messages.
+- Agent work that waits on accounts: SFTP transport for claim files once a clearinghouse is chosen
 (P3-09), turning on Twilio/SendGrid/Expo when keys exist, Expo push receipts. The owner's list is
 [GO_LIVE.md](GO_LIVE.md).
 
@@ -154,6 +161,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P4-14 | Caregiver app: Messages tab, Open shifts, My pay, alert links; eas.json + store IDs (D-083); SES steps; D-084 agency onboarding plan. |
 | 2026-09-29 | Claude Code | azure | Production live: first deploy green, agency + admin created, owner signed in. |
 | 2026-09-29 | Claude Code | azure | Azure infra + domains + HTTPS + GitHub deploy settings done; first deploy pending (migration flag fixed). |
 | 2026-09-29 | Claude Code | rename | Primordial Health on primordialhealthservices.health (D-082). |

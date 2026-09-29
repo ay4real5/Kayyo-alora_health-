@@ -127,12 +127,42 @@ It prints a **temporary password once**. Remove your IP from the database's Netw
 `https://app.primordialhealthservices.health`: you'll choose your own password and set up two-factor authentication. **Never run the
 demo seed (`db:seed`) against this database.**
 
+## 6. Email with Amazon SES (password resets, alerts) — about 30 minutes plus AWS's review
+
+Amazon SES works from Azure and is covered by AWS's free BAA (D-078).
+
+1. **AWS account**: create one at aws.amazon.com (as the LLC), and turn on MFA for the root user.
+2. **Sign the BAA**: search for **AWS Artifact**, open **Agreements**, and accept the **AWS Business Associate
+   Addendum**. Do this before any real email is sent.
+3. **Verify the domain**: go to SES (region **US East (N. Virginia) us-east-1**), then **Identities → Create
+   identity → Domain** `primordialhealthservices.health` with Easy DKIM (RSA 2048).
+   - SES shows **3 CNAME records**. Add each at **Namecheap → Advanced DNS** as a CNAME. For the host, enter only the
+     part before `.primordialhealthservices.health` (e.g. `abc123._domainkey`).
+   - Also add a **TXT** record with host `_dmarc` and value `v=DMARC1; p=none;`.
+   - The identity turns "Verified" within about an hour.
+4. **Leave the sandbox**: SES → **Account dashboard → Request production access**.
+   - Mail type: *Transactional*.
+   - Website: `https://app.primordialhealthservices.health`.
+   - Use case: "Password-reset and account-alert emails to our own staff, who sign up by invitation only. No
+     marketing, no purchased lists; bounces are handled by SES suppression."
+   - Approval usually takes about a day. Until then SES only sends to addresses you've verified.
+5. **A sending-only key**: go to **IAM → Users → Create user** `primordial-ses-sender` (no console access).
+   - Attach an inline policy that allows only `ses:SendEmail` and `ses:SendRawEmail`.
+   - Then open **Security credentials → Create access key** ("Application running outside AWS").
+   - Put the two values straight into your password manager, and never paste them into a chat or screenshot.
+6. **Azure**: open the API app (`primordial-api-…`) → **Settings → Environment variables** and add:
+   - `EMAIL_PROVIDER` = `ses`
+   - `EMAIL_FROM` = `Primordial Health <no-reply@primordialhealthservices.health>`
+   - `AWS_REGION` = `us-east-1`
+   - `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` from step 5
+
+   Click **Apply**. The app restarts by itself.
+7. **Test**: sign out, then use **Forgot password** with your own email.
+
 ## Later, when needed
 
-- **Email** (password resets, alerts): Amazon SES works from Azure too (its own free AWS BAA) — add the App Settings
-  `EMAIL_PROVIDER=ses`, `EMAIL_FROM`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (an AWS user allowed
-  only `ses:SendEmail`) to the API app. Azure's own email service can replace it once it's confirmed on Microsoft's
-  HIPAA in-scope list.
+- **Email alternative**: Azure's own email service can replace SES once it's confirmed on Microsoft's HIPAA in-scope
+  list.
 - **Texts / phone check-in**: Twilio App Settings (see `.env.production.example`); the check-in number's webhook is
   `https://api.primordialhealthservices.health/api/v1/ivr/voice`.
 - **Hardening as you grow**: secrets from App Settings into Key Vault; the database on a private network instead of
