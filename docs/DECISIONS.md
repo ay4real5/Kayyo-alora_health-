@@ -1288,3 +1288,16 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   the email themselves.
 - Web: "Forgot your password?" on the sign-in page, `/forgot-password`, `/reset-password` (reads the fragment with
   `useSyncExternalStore`, clears it from history after use).
+
+### D-074 — Accessibility checks in the browser suite
+2026-09-29 · Claude Code
+- **WCAG 2.1 A/AA automated checks** (axe-core via `@axe-core/playwright`, helper `apps/web/e2e/axe.ts`) run in CI on
+  the signed-out pages, 13 office pages (incl. patient and EVV record detail, schedule booking, live monitor, reports),
+  6 billing pages and the 4 patient-portal pages. Map tiles are excluded (third-party drawing; the map container is
+  labelled). Why: Medicaid agencies and their patients include people with disabilities, and public programs expect
+  Section 508 / WCAG 2.1 AA.
+- First run found only **colour contrast**: `text-slate-400` on white (≈2.6:1) → `text-slate-500` (≈4.8:1) everywhere
+  it's used for text (incl. placeholders); the 10 px "not connected yet" label is 12 px now. **Rule for new UI: no
+  `slate-400` (or lighter) text on white.**
+- Automated checks catch about a third of real problems; a manual keyboard + screen-reader pass (NVDA/VoiceOver) is
+  still worth doing before launch.

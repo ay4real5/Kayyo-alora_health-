@@ -86,7 +86,7 @@ export default function NotificationSettingsPage() {
                 <th key={c.key} className="py-2 pr-4 text-center font-medium">
                   {c.label}
                   {connected.data && !live(c.key) && (
-                    <span className="block text-[10px] font-normal normal-case text-slate-400">not connected yet</span>
+                    <span className="block text-xs font-normal normal-case text-slate-500">not connected yet</span>
                   )}
                 </th>
               ))}
