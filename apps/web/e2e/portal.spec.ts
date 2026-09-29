@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { wcagViolations } from './axe';
 
 const PASSWORD = 'Demo-Password-1!';
 
@@ -62,6 +63,7 @@ test('office gives a family member portal access; they sign in, read, and messag
   await expect(page).toHaveURL(/\/portal$/, { timeout: 20_000 });
   await expect(page.getByRole('heading', { name: 'Hello, Pat' })).toBeVisible();
   await expect(page.getByText(`You are viewing care information for ${patientName}`)).toBeVisible();
+  expect(await wcagViolations(page), 'portal home').toEqual([]);
 
   // Staff pages are off limits.
   await page.goto('/patients');
@@ -70,9 +72,11 @@ test('office gives a family member portal access; they sign in, read, and messag
   const portalNav = page.getByRole('navigation', { name: 'Portal' });
   await portalNav.getByRole('link', { name: 'Visits' }).click();
   await expect(page.getByRole('heading', { name: 'Visits', exact: true })).toBeVisible();
+  expect(await wcagViolations(page), 'portal visits').toEqual([]);
   await portalNav.getByRole('link', { name: 'Documents' }).click();
   const docs = page.getByRole('list', { name: 'Documents' });
   await expect(docs).toContainText(docTitle);
+  expect(await wcagViolations(page), 'portal documents').toEqual([]);
   const downloading = page.waitForEvent('download');
   await docs.getByRole('listitem').filter({ hasText: docTitle }).getByRole('button', { name: 'Download' }).click();
   expect((await downloading).suggestedFilename()).toBe('welcome.pdf');
@@ -83,6 +87,7 @@ test('office gives a family member portal access; they sign in, read, and messag
   await expect(page.getByRole('list', { name: 'Messages' })).toContainText('Is the nurse coming this week?', {
     timeout: 15_000,
   });
+  expect(await wcagViolations(page), 'portal messages').toEqual([]);
   await signOut(page);
 
   // Office: the message is waiting in Messages, labelled as a portal thread.

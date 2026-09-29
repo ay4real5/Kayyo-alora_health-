@@ -192,7 +192,7 @@ function DocumentRow({
     enabled: showHistory,
   });
   return (
-    <li className={`rounded-md border border-slate-200 p-2 ${d.deleted ? 'text-slate-400' : ''}`}>
+    <li className={`rounded-md border border-slate-200 p-2 ${d.deleted ? 'text-slate-500' : ''}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className={`font-medium ${d.deleted ? 'line-through' : 'text-slate-900'}`}>
           {d.title}

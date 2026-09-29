@@ -127,18 +127,22 @@
 
 ## In progress
 
-Branches waiting for green CI, merge **in this order** (each is based on the previous):
-1. `task/P3-19-password-reset` — forgot/reset password (D-072).
-2. `task/P2-13-ivr-evv` — telephony EVV over Twilio webhooks (D-073): migration `20260929050000_staff_ivr_code`
-   (applied to Neon), `modules/ivr/*`, EVV clock sources, staff "Phone check-in code", tests green.
+- `task/A11Y-accessibility-pass` (P4-13, D-074) — all done; last CI failed only on a mid-hover colour in the portal
+  scan, fixed in 9bf2d96. **Next step**: CI green → merge to main.
 
 ## Next up
 
-P2-12/P3-19 groundwork that needs no accounts: a database outbox for push/SMS/email with senders that stay off until
-keys exist (Twilio, SendGrid, Expo push). P4-04c after Q-012. Most of what's left needs the owner (see below). The
-owner asked for autonomous work: go straight on, check in with questions every ~6 hours.
+**P3-09a — claim files without the clearinghouse account** (not started): batch 837 file per payer with real
+interchange control numbers (atomic per-agency counter), stored in `edi_files` (outbound) and linked from claims,
+downloadable for manual portal upload, "mark file sent" → claims submitted; parsers for **999** (AK2/IK5/AK9) and
+**277CA** (TRN*2 claim number, STC category A1 accepted / A3–A8 rejected, REF*1K payer claim number) with golden
+fixtures; upload endpoint applies them (rejected → `rejected` + reason, re-checkable by QA; accepted →
+`acknowledged`). Then SFTP transport once the clearinghouse is chosen (P3-08). P4-04c after Q-012. The owner's list is
+[GO_LIVE.md](GO_LIVE.md).
 
 ## Blockers / waiting on human
+
+The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security clean-up, Virginia Medicaid set-up).
 
 - Q-006 hosting (owner deferred; needed before P4-10). Google Maps key (owner will provide).
 - Q-009 background location during visits — default is no (D-049).
@@ -148,7 +152,11 @@ owner asked for autonomous work: go straight on, check in with questions every ~
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+<<<<<<< HEAD
+| 2026-09-29 | Claude Code | P4-13 | Accessibility: axe WCAG 2.1 AA checks on ~26 pages in CI; contrast fixes. |
+=======
 | 2026-09-29 | Claude Code | P2-13 | Telephony EVV: signed Twilio voice webhooks, caller ID = patient home line + caregiver code. |
+>>>>>>> main
 | 2026-09-29 | Claude Code | P3-19 | Forgot/reset password by email (single-use 30-min link in the URL fragment, neutral answers). |
 | 2026-09-29 | Claude Code | P2-12 | Notification delivery outbox + SMS/email/push senders (off until keys), device registration. |
 | 2026-09-29 | Claude Code | P4-10 | Production images (web, migrate), prod compose, PHI-safe nginx, TRUST_PROXY_HOPS, DEPLOYMENT.md; CI builds them. |

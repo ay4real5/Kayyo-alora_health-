@@ -19,7 +19,7 @@ export function Field({
         id={id}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy}
-        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20 aria-invalid:border-red-600"
+        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-500 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20 aria-invalid:border-red-600"
         {...props}
       />
       {hint && !error && (

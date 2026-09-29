@@ -108,7 +108,7 @@ export default function ClaimPage() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {c.lines.map((l) => (
-              <tr key={l.id} className={l.active ? '' : 'text-slate-400 line-through'}>
+              <tr key={l.id} className={l.active ? '' : 'text-slate-500 line-through'}>
                 <td className="py-2 pr-4">{l.lineNumber}</td>
                 <td className="py-2 pr-4">
                   {l.visitId ? (

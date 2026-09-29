@@ -24,7 +24,7 @@ export function RolePicker({ selected, onChange }: { selected: string[]; onChang
           const grantable =
             role.permissions.every((p) => mine.has(p)) && (role.name !== 'super_admin' || isSuperAdmin);
           return (
-            <label key={role.id} className={`flex items-start gap-2 text-sm ${grantable ? 'text-slate-800' : 'text-slate-400'}`}>
+            <label key={role.id} className={`flex items-start gap-2 text-sm ${grantable ? 'text-slate-800' : 'text-slate-500'}`}>
               <input
                 type="checkbox"
                 className="mt-0.5"

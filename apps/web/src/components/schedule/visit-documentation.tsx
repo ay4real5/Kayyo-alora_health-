@@ -165,7 +165,7 @@ export function VisitRecords({ visitId }: { visitId: string }) {
         {vitals.data?.length === 0 && <p className="text-sm text-slate-500">None recorded.</p>}
         <ul className="flex flex-col gap-1 text-sm">
           {vitals.data?.map((v) => (
-            <li key={v.id} className={v.enteredInError ? 'text-slate-400 line-through' : ''}>
+            <li key={v.id} className={v.enteredInError ? 'text-slate-500 line-through' : ''}>
               {clockTime(v.recordedAt)}: {vitalText(v)}
               {v.notes && ` — ${v.notes}`}
               {v.enteredInError && (

@@ -133,7 +133,7 @@ function MedicationsPanel({ patientId }: { patientId: string }) {
         {meds.data?.map((m) => (
           <li
             key={m.id}
-            className={`flex items-start justify-between gap-2 ${m.isActive ? '' : 'text-slate-400'}`}
+            className={`flex items-start justify-between gap-2 ${m.isActive ? '' : 'text-slate-500'}`}
           >
             <span>
               <span className={`font-medium ${m.isActive ? 'text-slate-900' : 'line-through'}`}>
