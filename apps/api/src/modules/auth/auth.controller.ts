@@ -9,8 +9,11 @@ import { AllowDuringPasswordChange } from '../../common/decorators/allow-during-
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { AuthService } from './auth.service.js';
+import { PasswordResetService } from './password-reset.service.js';
 import {
   ChangePasswordDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
   DisableTwoFactorDto,
   LoginDto,
   RefreshTokenDto,
@@ -29,6 +32,8 @@ import { TwoFactorService } from './two-factor/two-factor.service.js';
  */
 const SIGN_IN_LIMIT = { default: { limit: 30, ttl: 60_000 } };
 const ACCOUNT_SETTINGS_LIMIT = { default: { limit: 10, ttl: 60_000 } };
+/** Reset emails: few per IP (each can email someone), and the link token is 256 random bits. */
+const PASSWORD_RESET_LIMIT = { default: { limit: 5, ttl: 60_000 } };
 
 @ApiTags('auth')
 @Controller('auth')
@@ -39,6 +44,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly twoFactor: TwoFactorService,
+    private readonly passwordReset: PasswordResetService,
     config: ConfigService<EnvironmentVariables, true>,
   ) {
     const env = config.get('APP_ENV', { infer: true });
@@ -136,6 +142,24 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async disableTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: DisableTwoFactorDto, @Req() req: Request) {
     await this.twoFactor.disable(user, dto.password, dto.code, clientInfo(req));
+  }
+
+  /** Always the same answer, whether or not the address has an account (D-072). */
+  @Public()
+  @Throttle(PASSWORD_RESET_LIMIT)
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body() dto: ForgotPasswordDto, @Req() req: Request) {
+    return this.passwordReset.request(dto.email, clientInfo(req));
+  }
+
+  /** Sets a new password from a reset link; every session is signed out. Sign in afterwards (2FA still applies). */
+  @Public()
+  @Throttle(PASSWORD_RESET_LIMIT)
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
+    return this.passwordReset.reset(dto.token, dto.newPassword, clientInfo(req));
   }
 
   @Throttle(ACCOUNT_SETTINGS_LIMIT)

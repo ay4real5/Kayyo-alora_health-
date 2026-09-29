@@ -79,3 +79,22 @@ export class DisableTwoFactorDto extends TwoFactorCodeDto {
   @MaxLength(128)
   password!: string;
 }
+
+/** "Forgot password": the address to send a reset link to (D-072). */
+export class ForgotPasswordDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @IsEmail()
+  @MaxLength(255)
+  email!: string;
+}
+
+/** The token from the reset link and the new password. */
+export class ResetPasswordDto {
+  @Matches(/^[A-Za-z0-9_-]{43}$/, { message: 'The reset link is incomplete — open it again from the email' })
+  token!: string;
+
+  /** 12-128 characters with an uppercase letter, a lowercase letter, a number and a special character. */
+  @ApiProperty({ minLength: 12, maxLength: 128 })
+  @IsStrongPassword()
+  newPassword!: string;
+}

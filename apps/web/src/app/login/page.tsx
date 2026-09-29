@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,9 @@ function LoginForm() {
             <>
               <Field label="Email" name="email" type="email" autoComplete="username" required autoFocus />
               <Field label="Password" name="password" type="password" autoComplete="current-password" required />
+              <Link href="/forgot-password" className="-mt-2 self-start text-sm text-teal-800 underline">
+                Forgot your password?
+              </Link>
             </>
           ) : (
             <>

@@ -127,10 +127,12 @@
 
 ## In progress
 
-**P2-12 groundwork — notification delivery** — branch `task/P2-12-notification-delivery` (from P4-10; merge P4-10 first).
-Done (D-071): outbox tables + migration `20260929030000_notification_delivery` (applied to Neon), senders (Twilio SMS,
-SendGrid email, Expo push — off until configured), `notify()` channel planning, delivery job, device registration
-(API + mobile), settings page shows connected channels, unit + e2e tests green. **Left**: full checks, push, CI, merge.
+**P2-12 groundwork — notification delivery** — branch `task/P2-12-notification-delivery` (D-071), CI running when
+this was written → merge when green.
+
+**P3-19 — forgot / reset password** — branch `task/P3-19-password-reset` (from the P2-12 branch; merge that first).
+Done (D-072): API routes, `password_reset_tokens` + migration `20260929040000_password_reset_tokens` (applied to Neon),
+web pages + sign-in link, API e2e + browser test green. **Left**: full checks, push, CI, merge.
 
 ## Next up
 
@@ -148,6 +150,7 @@ owner asked for autonomous work: go straight on, check in with questions every ~
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P3-19 | Forgot/reset password by email (single-use 30-min link in the URL fragment, neutral answers). |
 | 2026-09-29 | Claude Code | P2-12 | Notification delivery outbox + SMS/email/push senders (off until keys), device registration. |
 | 2026-09-29 | Claude Code | P4-10 | Production images (web, migrate), prod compose, PHI-safe nginx, TRUST_PROXY_HOPS, DEPLOYMENT.md; CI builds them. |
 | 2026-09-29 | Claude Code | P4-09 | Verified Devin's forced-password-change work; CSV injection, CSP, load test + relationJoins. |

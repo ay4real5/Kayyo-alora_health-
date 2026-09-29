@@ -79,7 +79,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-16** `agent` Build the patient portal screens in `apps/web` (own layout, `portal_user` only) — replaces the Base44 plan (D-044). deps: P3-14
 - [x] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03 — done within P3-03…P3-10 (Billing menu + eligibility panel on the patient page)
 - [x] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12 — done within P3-11/P3-12 (panels on the patient page)
-- [ ] **P3-19** `agent` Email channel (SendGrid). deps: P2-12
+- [ ] **P3-19** `agent` Email channel (SendGrid). deps: P2-12 — *email sender + notification emails (D-071) and forgot/reset password (D-072) done; left: real SendGrid account + BAA (owner), then test delivery.*
 
 ## Phase 4 — Analytics, compliance, hardening
 
