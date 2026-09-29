@@ -155,6 +155,17 @@ export class EnvironmentVariables {
   @Max(200)
   DATABASE_POOL_SIZE: number = 10;
 
+  /**
+   * Reverse proxies in front of the API (nginx, a load balancer). With 1, the client address comes from the
+   * X-Forwarded-For entry the proxy adds — otherwise every request looks like it came from the proxy, and one
+   * shared rate-limit bucket locks everybody out (P4-10, D-070). 0 = the API is reached directly.
+   */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(0)
+  @Max(5)
+  TRUST_PROXY_HOPS: number = 0;
+
   /** Turns off request rate limits — for the CI browser tests only; refused in production. */
   @Transform(({ value }) => (value === undefined || value === '' ? undefined : value === 'true' || value === true))
   @IsOptional()

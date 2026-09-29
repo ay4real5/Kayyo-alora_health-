@@ -1176,3 +1176,29 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   almost every endpoint, 0 errors at 25 concurrent. At 25 concurrent throughput plateaus (~28/s) on the connection
   pool, now configurable: **`DATABASE_POOL_SIZE`** (default 10). Latency here is dominated by the laptop↔Neon
   distance; in production the API must run in the same region as the database.
+
+### D-070 — Production packaging (P4-10)
+2026-09-29 · Claude Code
+- **Three images**: `docker/Dockerfile.api` (existing), `docker/Dockerfile.web` (Next.js `output: 'standalone'`,
+  switched on by `NEXT_OUTPUT=standalone` so `next start`/dev are unchanged; traced from the monorepo root; runs
+  `node apps/web/server.js`), `docker/Dockerfile.migrate` (only the locked Prisma CLI + dotenv versions, the schema
+  and migrations; `prisma migrate deploy` then exit; the schema engine is downloaded at build time, as root).
+- **`NEXT_PUBLIC_API_URL` is a build argument** — Next.js compiles it into the browser code and the CSP, so each
+  environment gets its own dashboard image. Same-host layout recommended: dashboard at `/`, API at `/api/v1`.
+- **`docker-compose.prod.yml`**: migrate → api (healthcheck) → nginx; web alongside. No database container — a
+  managed PostgreSQL under the host's BAA (Q-006). Secrets from `.env.production` (template
+  `.env.production.example`, gitignored real file; `certs/` gitignored too).
+- **nginx** (`docker/nginx/default.conf.template`): TLS 1.2/1.3, HSTS, HTTP→HTTPS, WebSocket upgrade for Socket.IO,
+  12 MB bodies, and **PHI-safe logs**: access log format `phi_safe` with `$uri` (no query string), no referrer, set
+  per server so the image's default `main` format is never used; error log at `crit` only (nginx error entries quote
+  the full request line). `X-Forwarded-For` is *replaced* with the client address, not appended.
+- **`TRUST_PROXY_HOPS`** (new env, default 0; 1 in the prod compose): Express `trust proxy`, so rate limits and the
+  audit log see the client's address rather than the proxy's.
+- **One API instance** until a Redis Socket.IO adapter + shared rate-limit store are added (in-memory today).
+- **CI** builds all three images, migrates a fresh Postgres with the migration image, starts the API and dashboard
+  containers (health + login page + CSP nonce header), and checks the nginx config with `nginx -t`.
+- **Not done**: publishing images to a registry and the actual deploy step — both depend on the host (Q-006) and the
+  owner's approval of where images are published (they'd be public on GHCR while the repo is public).
+- Verified locally: the standalone dashboard server runs and sends the nonce CSP; the migration recipe (same Prisma
+  and dotenv versions, same files) reports "Database schema is up to date" against the dev database. Docker itself
+  isn't run on the owner's laptop (D-011) — CI builds the images.

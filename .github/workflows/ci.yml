@@ -54,35 +54,48 @@ jobs:
       - run: npm run test:e2e -w @alora/api
 
   docker:
-    name: Docker image (API)
+    name: Docker images (API, dashboard, migrations)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Build image
-        run: docker build -f docker/Dockerfile.api -t alora-api:ci .
+      - name: Build images
+        run: |
+          docker build -f docker/Dockerfile.api -t alora-api:ci .
+          docker build -f docker/Dockerfile.migrate -t alora-migrate:ci .
+          docker build -f docker/Dockerfile.web --build-arg NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1 -t alora-web:ci .
       - name: Start stack and check health
         env:
           JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-000
+          DATABASE_URL: postgresql://alora:localdev123@localhost:5432/alora_health
         run: |
           docker compose up -d --no-build --wait postgres redis
-          # The API refuses to start on an unmigrated database, so apply the migrations first.
-          for f in apps/api/prisma/migrations/*/migration.sql; do
-            docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -q -U alora -d alora_health < "$f"
-          done
-          docker run -d --name api --network host \
-            -e DATABASE_URL=postgresql://alora:localdev123@localhost:5432/alora_health \
-            -e JWT_SECRET \
-            alora-api:ci
+          # The API refuses to start on an unmigrated database: the migration image runs first, as in production.
+          docker run --rm --network host -e DATABASE_URL alora-migrate:ci
+          docker run -d --name api --network host -e DATABASE_URL -e JWT_SECRET alora-api:ci
+          docker run -d --name web --network host alora-web:ci
           for i in $(seq 1 30); do
-            if curl -fsS http://localhost:3001/api/v1/health; then echo; exit 0; fi
+            if curl -fsS http://localhost:3001/api/v1/health && curl -fsS -o /dev/null http://localhost:3000/login; then
+              echo; echo "API and dashboard are up"
+              # The dashboard sends its per-request CSP (D-068) from the container too.
+              curl -fsSI http://localhost:3000/login | grep -i "content-security-policy: .*nonce-"
+              exit 0
+            fi
             sleep 2
           done
-          echo "API did not become healthy"
-          docker logs api
-          # Also surface the log tail as an annotation, which is readable without signing in to GitHub.
+          echo "Containers did not become healthy"
+          docker logs api; docker logs web
+          # Also surface the log tails as annotations, which are readable without signing in to GitHub.
           echo "::error title=API container log::$(docker logs api 2>&1 | tail -15 | tr '\n' '|')"
+          echo "::error title=Web container log::$(docker logs web 2>&1 | tail -15 | tr '\n' '|')"
           exit 1
+      - name: nginx config is valid
+        run: |
+          mkdir -p certs
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=localhost" -keyout certs/privkey.pem -out certs/fullchain.pem
+          docker run --rm --add-host api:127.0.0.1 --add-host web:127.0.0.1 -e DOMAIN=localhost -e NGINX_ENVSUBST_FILTER=DOMAIN \
+            -v "$PWD/docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro" \
+            -v "$PWD/certs:/etc/nginx/certs:ro" nginx:1.29-alpine nginx -t
 
   browser:
     name: Browser tests (dashboard + API + database)

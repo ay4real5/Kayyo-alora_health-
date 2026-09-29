@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 
 /**
@@ -19,6 +20,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // The shared package ships compiled ESM; let Next bundle it like app code.
   transpilePackages: ['@alora/shared'],
+  // Docker image (docker/Dockerfile.web, D-070): a self-contained server traced from the monorepo root.
+  ...(process.env.NEXT_OUTPUT === 'standalone'
+    ? { output: 'standalone' as const, outputFileTracingRoot: path.join(__dirname, '../..') }
+    : {}),
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

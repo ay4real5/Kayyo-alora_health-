@@ -1,0 +1,22 @@
+# One-shot job that applies database migrations (`prisma migrate deploy`) — run it before every API start; the API
+# refuses to boot on an unmigrated database, and its image has no Prisma CLI (D-070).
+#   docker build -f docker/Dockerfile.migrate -t alora-migrate .
+#   docker run --rm -e DATABASE_URL=postgresql://… alora-migrate
+FROM node:24-alpine
+# Prisma's schema engine needs OpenSSL to pick the right binary.
+RUN apk add --no-cache openssl
+WORKDIR /migrate
+COPY package-lock.json /tmp/package-lock.json
+# The exact Prisma CLI and dotenv versions the repo is locked to (prisma.config.ts imports both). `prisma version`
+# downloads the schema engine now, while we're root — the job runs as `node` and can't write node_modules.
+RUN PRISMA=$(node -p "require('/tmp/package-lock.json').packages['node_modules/prisma'].version") \
+  && DOTENV=$(node -p "require('/tmp/package-lock.json').packages['node_modules/dotenv'].version") \
+  && echo '{"name":"alora-migrate","private":true,"type":"module"}' > package.json \
+  && npm install --omit=dev --no-audit --no-fund "prisma@$PRISMA" "dotenv@$DOTENV" \
+  && npx --no-install prisma version >/dev/null \
+  && rm /tmp/package-lock.json && npm cache clean --force
+COPY apps/api/prisma/schema.prisma prisma/schema.prisma
+COPY apps/api/prisma/migrations prisma/migrations
+COPY apps/api/prisma.config.ts ./
+USER node
+CMD ["npx", "--no-install", "prisma", "migrate", "deploy"]

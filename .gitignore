@@ -24,6 +24,8 @@ android/
 .env
 .env.*
 !.env.example
+!.env.production.example
+certs/
 *.pem
 
 # local data (never commit PHI)

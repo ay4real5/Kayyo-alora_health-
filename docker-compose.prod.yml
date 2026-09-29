@@ -1,0 +1,62 @@
+# Production stack (D-070): nginx (TLS) → dashboard + API; a one-shot migration job runs before the API starts.
+# PostgreSQL is NOT here — use a managed, HIPAA-eligible database covered by the host's BAA (Q-006 / P4-11).
+# Real-time (Socket.IO) and rate limits are in-memory: run ONE API container until a Redis adapter is added.
+#
+#   cp .env.production.example .env.production   # fill in, never commit
+#   DOMAIN=app.example.com docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Certificates: put fullchain.pem and privkey.pem in ./certs (e.g. from certbot).
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.migrate
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    env_file: .env.production
+    environment:
+      APP_ENV: production
+      APP_PORT: 3001
+      TRUST_PROXY_HOPS: 1
+      CORS_ORIGINS: https://${DOMAIN:?set DOMAIN}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMAIN:?set DOMAIN}/api/v1
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.29-alpine
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+      # Only ${DOMAIN} is substituted — nginx's own $variables stay as they are.
+      NGINX_ENVSUBST_FILTER: DOMAIN
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+    restart: unless-stopped

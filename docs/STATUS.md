@@ -127,12 +127,16 @@
 
 ## In progress
 
-Nothing on this branch — P4-09 is done (D-068; full API e2e 238/238 green with Prisma `relationJoins`).
+**P4-10 production packaging** — branch `task/P4-10-production-packaging` (from main). Done (D-070): web and migration
+Dockerfiles, `docker-compose.prod.yml`, nginx template with PHI-safe logs, `TRUST_PROXY_HOPS`, `.env.production.example`,
+`docs/DEPLOYMENT.md`, CI builds/starts all images. **Left**: CI green → merge. (P4-04 is on its own branch; merge it
+first if its CI is green.)
 
 ## Next up
 
-P4-04 Virginia EVV (branch `task/P4-04-virginia-evv`, see its STATUS); P4-10 production packaging (hosting still
-undecided). The owner asked for autonomous work: go straight on, check in with questions every ~6 hours.
+P4-04c (after Q-012). Then the remaining agent work is small: Redis adapter for several API instances (only when
+scaling), registry/deploy workflow once hosting is chosen. Most of what's left needs the owner (see below). The owner
+asked for autonomous work: go straight on, check in with questions every ~6 hours.
 
 ## Blockers / waiting on human
 
@@ -144,6 +148,7 @@ undecided). The owner asked for autonomous work: go straight on, check in with q
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P4-10 | Production images (web, migrate), prod compose, PHI-safe nginx, TRUST_PROXY_HOPS, DEPLOYMENT.md; CI builds them. |
 | 2026-09-29 | Claude Code | P4-09 | Verified Devin's forced-password-change work; CSV injection, CSP, load test + relationJoins. |
 | 2026-09-28 | Devin | P4-09 (in progress) | Forced-password-change enforcement written (unverified WIP); OWASP review findings in STATUS. Owner switched to Claude Code. |
 | 2026-09-28 | Devin | P4-08 | Audit-log partitions + append-only trigger + retention job; 5 unit + 3 e2e, drift check clean. |
