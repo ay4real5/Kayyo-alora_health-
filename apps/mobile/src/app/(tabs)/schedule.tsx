@@ -63,10 +63,22 @@ export default function ScheduleScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <GradientHeader style={{ paddingTop: insets.top + 16 }}>
-        <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800' }}>Schedule</Text>
-        <Text style={{ color: '#c7d2fe', fontSize: 15, marginTop: 4 }}>
-          {days ? `${total} visit${total === 1 ? '' : 's'} in the next ${DAYS} days` : 'Loading…'}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <View>
+            <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800' }}>Schedule</Text>
+            <Text style={{ color: '#c7d2fe', fontSize: 15, marginTop: 4 }}>
+              {days ? `${total} visit${total === 1 ? '' : 's'} in the next ${DAYS} days` : 'Loading…'}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/open-shifts')}
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center' }}
+          >
+            <Ionicons name="briefcase-outline" size={18} color={colors.white} />
+            <Text style={{ color: colors.white, fontWeight: '700' }}>Open shifts</Text>
+          </Pressable>
+        </View>
       </GradientHeader>
       <SectionList
         sections={sections}

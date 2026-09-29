@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +30,16 @@ const ICONS: Record<string, IconName> = {
   time_off_decided: 'airplane',
   evv_correction_decided: 'time',
   system: 'shield-checkmark',
+};
+
+/** Where tapping an alert goes (alerts carry no patient details, so they link to screens, not records). */
+const TARGETS: Record<string, Href> = {
+  open_shift: '/open-shifts',
+  message_received: '/messages',
+  payroll_ready: '/pay',
+  shift_assigned: '/schedule',
+  shift_updated: '/schedule',
+  shift_reminder: '/',
 };
 
 /** "5 min ago", "3 h ago", or a date. */
@@ -119,7 +129,11 @@ export default function AlertsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${item.isRead ? '' : 'Unread. '}${item.title}${item.body ? `. ${item.body}` : ''}`}
-            onPress={() => !item.isRead && void markRead(item.id)}
+            onPress={() => {
+              if (!item.isRead) void markRead(item.id);
+              const target = TARGETS[item.type];
+              if (target) router.push(target);
+            }}
           >
             <Card style={[{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }, !item.isRead && { borderWidth: 1, borderColor: '#ddd6fe' }]}>
               <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' }}>

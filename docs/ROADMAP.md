@@ -100,5 +100,9 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
   forced password change (like the 2FA-setup restriction, D-045) — today only the web/mobile clients redirect (D-058)
 - [x] **P4-10** `agent` Production Dockerfiles, docker-compose.prod, nginx (must NOT log query strings — search terms can be PHI, D-035), deploy workflows. Deploys must run `prisma migrate deploy` (separate migration image/job — the API image has no Prisma CLI) **before** starting the API, which refuses to boot on an unmigrated DB.
 - [x] **P4-13** `agent` Accessibility: automated WCAG 2.1 A/AA checks in the browser suite, fix findings (D-074). Manual screen-reader pass before launch.
-- [ ] **P4-11** `human` Hosting choice (HIPAA-eligible, BAA), production secrets, domain
+- [x] **P4-11** `human` Hosting choice (HIPAA-eligible, BAA), production secrets, domain — *Azure, live 2026-09-29 (D-081, D-082).*
+- [x] **P4-14** `agent` Caregiver app: Messages tab, Open shifts, My pay; EAS build profiles for the production API (D-083).
+- [ ] **P4-15** `human` Expo, Google Play ($25) and Apple Developer ($99/yr) accounts; first preview build on a phone (MOBILE-RELEASE.md).
+- [ ] **P4-16** `human` Amazon SES: AWS BAA, verify domain, production access, sending key → API app settings (DEPLOYMENT-AZURE §6).
+- [ ] **P4-17** `agent` "Create agency" workflow that emails the new admin a set-password link (D-084). deps: P4-16
 - [ ] **P4-12** `human` Rotate/revoke every dev credential shared during development (DECISIONS D-019); make repo private

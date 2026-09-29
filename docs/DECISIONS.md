@@ -1436,3 +1436,39 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   **api.primordialhealthservices.health**; the agency's existing website is untouched. Azure names use the prefix
   `primordial` (resource group `primordial-rg`, images `primordial-api/-web/-migrate`, database `primordial`).
 - Internal code names stay (`@alora/*` packages, repo name, `demo.alora.test` logins).
+
+### D-083 — Caregiver app: Messages, Open shifts, My pay; store builds
+2026-09-29 · owner ("lets progress to caregiver app and app extras") + Claude Code
+- **Messages** becomes a fifth tab (Today, Schedule, Messages, Alerts, Profile) with an unread badge. The badge
+  refreshes every minute and whenever a tab opens.
+  - The conversation list, one conversation (refreshes every 15 s while open, marks read), and a new message screen
+    (pick a colleague, first message).
+  - An **urgent** toggle uses the API's `isUrgent`, which sends an alert.
+  - Attachments show their title and open on the dashboard.
+  - Uses the existing `/messages` API (D-057).
+  - **Message text is never saved on the phone**: no offline cache, so reading and sending need a connection.
+- **Open shifts** (from the Schedule header, Profile, or an `open_shift` alert):
+  - Shows only what the caregiver could claim (date, time, hours, visit type, city/ZIP, priority). The patient's name
+    appears only once the visit is theirs (D-040).
+  - "Take this shift" asks for confirmation, then claims. First come, first served; the API refuses on conflicts or
+    expired credentials.
+- **My pay** (Profile → My pay, or a `payroll_ready` alert): approved stubs with the latest one highlighted, and each
+  stub's breakdown and visit lines. It is labelled gross pay; the payroll provider issues the official statement.
+- Alerts now open the related screen (open shift → Open shifts, message → Messages, payroll → My pay, shift changes →
+  Schedule).
+- **Store builds**:
+  - `apps/mobile/eas.json` profiles: `preview` (installable Android APK) and `production`, both pointing at the
+    production API.
+  - IDs `health.primordialhealthservices.caregiver`, slug `primordial-caregiver`, scheme `primordial`, version 1.0.0.
+  - Owner steps are in [MOBILE-RELEASE.md](MOBILE-RELEASE.md).
+
+### D-084 — Adding more agencies later
+2026-09-29 · owner ("in future we might have agencies that will need to be added") + Claude Code
+- For now new agencies are added with `agency:create` (DEPLOYMENT-AZURE §5). It is run by the owner with a temporary
+  database firewall opening and prints a one-time password; the new admin must change it and set up 2FA.
+- Next step, once SES email works: a manual **"Create agency" GitHub workflow**. The owner enters the name, state,
+  timezone and admin email. It runs inside the deploy pipeline (temporary firewall rule, like migrations) and emails
+  the new admin a **set-your-password link** instead of printing a password, so nothing sensitive appears in logs.
+- A signed-in platform-owner console (a `super_admin` who sees every agency) is deliberately **not** built yet. Every
+  query is agency-scoped, and cross-agency access is the riskiest thing to add to a HIPAA system. Revisit it when
+  there are several paying agencies.
