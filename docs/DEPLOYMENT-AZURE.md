@@ -130,7 +130,8 @@ demo seed (`db:seed`) against this database.**
 ## 6. Email with Azure (password resets, alerts) — about 30 minutes plus DNS wait
 
 Email goes through **Azure Communication Services** (D-085), which is covered by the same Microsoft agreement and BAA
-as the rest of the hosting. Emails never contain patient details. Cost is about $0.25 per 1,000 emails.
+as the rest of the hosting. Microsoft is retiring it on **2028-09-30**, so email moves to another provider before
+then (ROADMAP P4-19). Emails never contain patient details. Cost is about $0.25 per 1,000 emails.
 
 1. **Email service**: in the portal, open **Create a resource**, search **Email Communication Services**, and create
    it with resource group `primordial-prod`, name `primordial-email`, data location **United States**.

@@ -1486,9 +1486,19 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - SES and SendGrid stay as options (SES as the fallback; SendGrid is development only).
   - Owner steps are in DEPLOYMENT-AZURE §6. As part of that, the owner confirms Communication Services is ticked in the
     HIPAA BAA column of Microsoft's "Azure Compliance Offerings" PDF (Service Trust Portal).
-- **Later, same direction**:
-  - **SMS** can move to Communication Services too: phone number plus toll-free or 10DLC verification. This is a small
-    sender change like this one.
+- **Retirement notice (found during setup, 2026-09-29)**: Microsoft is retiring ACS **Email and SMS**. Existing
+  resources and verified domains keep working and are supported until **2028-09-30**, but Microsoft advises against new
+  workloads (https://aka.ms/acs-retirement). The owner's domain and resources were already set up, so ACS Email is used
+  now, with a planned move before mid-2028 (ROADMAP P4-19). Replacement options:
+  - Amazon SES, which is already built;
+  - Microsoft 365 / Exchange Online sending through Graph, which is under the Microsoft BAA but needs an M365 licence
+    and has lower limits;
+  - a Marketplace provider that signs a BAA.
+
+  M365 High Volume Email is internal-only, so it can't mail caregivers' own addresses. The sender is one class, so the
+  move is small.
+- **Later**:
+  - **SMS stays on Twilio**, because ACS SMS is retiring too.
   - **Phone check-in (IVR)** is built on Twilio's call webhooks (D-073). Moving it means a rewrite onto Call
     Automation, so Twilio stays for IVR unless the owner decides otherwise.
   - **Push** stays on Expo's push service (messages carry no patient details).

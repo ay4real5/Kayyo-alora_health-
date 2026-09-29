@@ -105,5 +105,6 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P4-15** `human` Expo, Google Play ($25) and Apple Developer ($99/yr) accounts; first preview build on a phone (MOBILE-RELEASE.md).
 - [ ] **P4-16** `human` Azure email: Email Communication Services + domain verification in Namecheap, Communication Services, connection string → API app settings (DEPLOYMENT-AZURE §6, D-085).
 - [x] **P4-18** `agent` Azure Communication Services email provider (D-085).
+- [ ] **P4-19** `agent` Move email off Azure Communication Services before it retires on 2028-09-30 (D-085): SES (already built) or Microsoft 365 via Graph. Target 2027-12.
 - [ ] **P4-17** `agent` "Create agency" workflow that emails the new admin a set-password link (D-084). deps: P4-16
 - [ ] **P4-12** `human` Rotate/revoke every dev credential shared during development (DECISIONS D-019); make repo private
