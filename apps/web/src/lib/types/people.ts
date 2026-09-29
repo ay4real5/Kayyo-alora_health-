@@ -67,6 +67,8 @@ export interface StaffSummary {
 export interface StaffDetail extends StaffSummary {
   email: string;
   phone: string | null;
+  /** A phone check-in (IVR) code is set; the code itself is never sent (D-073). */
+  hasPhoneCheckInCode: boolean;
   hireDate: string | null;
   terminationDate: string | null;
   addressLine1: string | null;

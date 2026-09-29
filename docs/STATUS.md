@@ -127,12 +127,10 @@
 
 ## In progress
 
-**P2-12 groundwork — notification delivery** — branch `task/P2-12-notification-delivery` (D-071), CI running when
-this was written → merge when green.
-
-**P3-19 — forgot / reset password** — branch `task/P3-19-password-reset` (from the P2-12 branch; merge that first).
-Done (D-072): API routes, `password_reset_tokens` + migration `20260929040000_password_reset_tokens` (applied to Neon),
-web pages + sign-in link, API e2e + browser test green. **Left**: full checks, push, CI, merge.
+Branches waiting for green CI, merge **in this order** (each is based on the previous):
+1. `task/P3-19-password-reset` — forgot/reset password (D-072).
+2. `task/P2-13-ivr-evv` — telephony EVV over Twilio webhooks (D-073): migration `20260929050000_staff_ivr_code`
+   (applied to Neon), `modules/ivr/*`, EVV clock sources, staff "Phone check-in code", tests green.
 
 ## Next up
 
@@ -150,6 +148,7 @@ owner asked for autonomous work: go straight on, check in with questions every ~
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P2-13 | Telephony EVV: signed Twilio voice webhooks, caller ID = patient home line + caregiver code. |
 | 2026-09-29 | Claude Code | P3-19 | Forgot/reset password by email (single-use 30-min link in the URL fragment, neutral answers). |
 | 2026-09-29 | Claude Code | P2-12 | Notification delivery outbox + SMS/email/push senders (off until keys), device registration. |
 | 2026-09-29 | Claude Code | P4-10 | Production images (web, migrate), prod compose, PHI-safe nginx, TRUST_PROXY_HOPS, DEPLOYMENT.md; CI builds them. |
