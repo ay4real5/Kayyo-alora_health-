@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { demoDay } from './dates';
 
 const PASSWORD = 'Demo-Password-1!';
 
@@ -48,7 +49,7 @@ test('the office sees authorization usage and adds an authorization', async ({ p
   await page.getByLabel('Payer', { exact: true }).selectOption({ label: 'Demo Medicaid (FAKE)' });
   await page.getByLabel('Service code').selectOption('T1019');
   await page.getByLabel('Authorization number').fill('PW-NEW-1');
-  const end = new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
+  const end = demoDay(90);
   await page.getByLabel('End', { exact: true }).fill(end);
   await page.getByLabel('Authorized hours').fill('20');
   await page.getByRole('button', { name: 'Save authorization' }).click();

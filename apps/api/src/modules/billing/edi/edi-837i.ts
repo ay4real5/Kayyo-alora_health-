@@ -1,4 +1,5 @@
 import type { Edi837Party, Edi837Provider } from './edi-837p.js';
+import { VA_HH_EVV_LOCATION_NAME, type EvvAddress, type LineEvv } from './evv-virginia.js';
 import { amount, ccyymmdd, clean, composite, digits, pad, segment, zeroPad, COMPONENT, REPETITION } from './x12.js';
 
 /**
@@ -14,6 +15,8 @@ export interface Edi837ILine {
   serviceDate: string;
   units: number;
   chargeAmount: number;
+  /** Virginia Medicaid home health EVV (D-069): SV202-7 times and the 2420D attendant. The location is per claim. */
+  evv?: Pick<LineEvv, 'times' | 'attendant'> | null;
 }
 
 export interface Edi837IClaim {
@@ -47,6 +50,8 @@ export interface Edi837IClaim {
     zip: string | null;
   };
   attending: { lastName: string; firstName: string; npi: string } | null;
+  /** Virginia Medicaid home health EVV: where the visits happened (2310E). Required when any line has `evv`. */
+  evvServiceLocation?: EvvAddress | null;
   lines: Edi837ILine[];
 }
 
@@ -99,7 +104,11 @@ export function validate837I(input: Edi837IInput): string[] {
     if (/[78]$/.test(c.typeOfBill) && !clean(c.originalReference))
       problems.push(`${who}: a corrected claim needs the payer's claim number of the original`);
     if (c.lines.length > 999) problems.push(`${who}: more than 999 lines`);
+    if (c.lines.some((l) => l.evv) && !c.evvServiceLocation)
+      problems.push(`${who}: EVV lines need the service location (patient address)`);
     for (const l of c.lines) {
+      if (l.evv && !/^([01]\d|2[0-4])[0-5]\d-([01]\d|2[0-4])[0-5]\d$/.test(l.evv.times))
+        problems.push(`${who}: ${l.serviceCode ?? l.revenueCode} on ${l.serviceDate}: EVV times must be HHMM-HHMM`);
       if (!/^\d{4}$/.test(l.revenueCode))
         problems.push(`${who}: ${l.serviceCode ?? 'a line'} has no 4-digit revenue code (set it on the service code)`);
     }
@@ -174,23 +183,39 @@ export function build837I(input: Edi837IInput): string {
     }
     // 2310A attending provider
     st.push(segment('NM1', '71', '1', clean(c.attending!.lastName, 60), clean(c.attending!.firstName, 35), '', '', '', 'XX', digits(c.attending!.npi)));
+    // 2310E service facility = the Virginia HH EVV service location (DMAS literal name, REF*LU*99999).
+    if (c.evvServiceLocation) {
+      const loc = c.evvServiceLocation;
+      st.push(segment('NM1', '77', '2', VA_HH_EVV_LOCATION_NAME));
+      st.push(segment('N3', clean(loc.addressLine1, 55)));
+      st.push(segment('N4', clean(loc.city, 30), clean(loc.state), digits(loc.zip)));
+      st.push(segment('REF', 'LU', '99999'));
+    }
 
     // 2400 service lines; Medicare HH puts the HIPPS code first on revenue code 0023 with a zero charge.
     const lines = [
       ...(c.hippsCode
-        ? [{ revenueCode: '0023', serviceCode: null, hipps: c.hippsCode, modifiers: [], serviceDate: c.statementFrom, units: 1, chargeAmount: 0 }]
+        ? [{ revenueCode: '0023', serviceCode: null, hipps: c.hippsCode, modifiers: [], serviceDate: c.statementFrom, units: 1, chargeAmount: 0, evv: null }]
         : []),
-      ...c.lines.map((l) => ({ ...l, hipps: null as string | null })),
+      ...c.lines.map((l) => ({ ...l, hipps: null as string | null, evv: l.evv ?? null })),
     ];
     lines.forEach((l, i) => {
       st.push(segment('LX', i + 1));
       const procedure = l.hipps
         ? composite('HP', l.hipps)
         : l.serviceCode
-          ? composite('HC', clean(l.serviceCode), ...l.modifiers.map((m) => clean(m, 2)))
+          ? l.evv
+            ? // SV202-7 (description) carries the EVV begin-end time, after the four modifier slots.
+              composite('HC', clean(l.serviceCode), ...[...l.modifiers.map((m) => clean(m, 2)), '', '', '', ''].slice(0, 4), l.evv.times)
+            : composite('HC', clean(l.serviceCode), ...l.modifiers.map((m) => clean(m, 2)))
           : '';
       st.push(segment('SV2', l.revenueCode, procedure, amount(l.chargeAmount), 'UN', amount(l.units)));
       st.push(segment('DTP', '472', 'D8', ccyymmdd(l.serviceDate)));
+      if (l.evv) {
+        // 2420D referring provider = the HH attendant (DMAS), REF*G2 = attendant ID.
+        st.push(segment('NM1', 'DN', '1', clean(l.evv.attendant.lastName, 60), clean(l.evv.attendant.firstName, 35)));
+        st.push(segment('REF', 'G2', clean(l.evv.attendant.id, 50)));
+      }
     });
   }
   st.push(segment('SE', st.length + 1, '0001'));

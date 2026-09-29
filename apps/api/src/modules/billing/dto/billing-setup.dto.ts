@@ -36,6 +36,7 @@ export const PAYER_TYPES = [
 export const CODE_TYPES = ['hcpcs', 'cpt', 'revenue'] as const;
 export const UNIT_TYPES = ['visit', 'hour', 'unit_15min', 'day'] as const;
 export const CLAIM_FORMATS = ['837P', '837I'] as const;
+export const EVV_CLAIM_PROFILES = ['va_dmas'] as const;
 
 export class PayerDto {
   @Transform(trimmed)
@@ -51,6 +52,11 @@ export class PayerDto {
   @IsOptional()
   @IsIn(CLAIM_FORMATS)
   claimFormat?: (typeof CLAIM_FORMATS)[number];
+
+  /** State EVV fields on claims: va_dmas = Virginia Medicaid (DMAS) and its MCOs (D-069). Empty = none. */
+  @IsOptional()
+  @IsIn(EVV_CLAIM_PROFILES)
+  evvClaimProfile?: (typeof EVV_CLAIM_PROFILES)[number] | null;
 
   /** The payer's ID for electronic claims (clearinghouse payer ID). */
   @IsOptional()
@@ -137,6 +143,11 @@ export class UpdatePayerDto implements Partial<PayerDto> {
   @IsOptional()
   @IsIn(CLAIM_FORMATS)
   claimFormat?: (typeof CLAIM_FORMATS)[number];
+
+  /** State EVV fields on claims: va_dmas = Virginia Medicaid (DMAS) and its MCOs (D-069). Empty = none. */
+  @IsOptional()
+  @IsIn(EVV_CLAIM_PROFILES)
+  evvClaimProfile?: (typeof EVV_CLAIM_PROFILES)[number] | null;
 
   @IsOptional()
   @Transform(upperTrimmed)

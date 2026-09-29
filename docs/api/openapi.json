@@ -9031,6 +9031,14 @@
               "837I"
             ]
           },
+          "evvClaimProfile": {
+            "type": "string",
+            "nullable": true,
+            "description": "State EVV fields on claims: va_dmas = Virginia Medicaid (DMAS) and its MCOs (D-069). Empty = none.",
+            "enum": [
+              "va_dmas"
+            ]
+          },
           "payerIdCode": {
             "type": "string",
             "description": "The payer's ID for electronic claims (clearinghouse payer ID).",
@@ -9110,6 +9118,14 @@
             "enum": [
               "837P",
               "837I"
+            ]
+          },
+          "evvClaimProfile": {
+            "type": "string",
+            "nullable": true,
+            "description": "State EVV fields on claims: va_dmas = Virginia Medicaid (DMAS) and its MCOs (D-069). Empty = none.",
+            "enum": [
+              "va_dmas"
             ]
           },
           "payerIdCode": {

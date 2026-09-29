@@ -9,6 +9,10 @@ move the item to "Resolved".
 ### Q-004 — Product name
 Repo is "Kayyo-alora_health", design says "Alora". What's the product/brand name for the UI, emails and
 the package scope (`@alora/...` is assumed for now)?
+**Heads-up (2026-09-29, Claude Code):** "Alora Health" is already the name of an existing home health software
+company (alorahealth.com) that sells EVV software to Virginia agencies — the same market. Using the name would very
+likely be a trademark problem; please pick a different brand (or check with a lawyer) before launch. Renaming the UI
+text is easy; the `@alora/` package scope is internal and can stay.
 
 ### Q-006 — Hosting
 Where does production run (AWS, Azure, GCP, other)? Must be HIPAA-eligible with a signed BAA. Needed
@@ -35,6 +39,19 @@ HIPAA requires 6 years. The API now permanently deletes audit-log months older t
 72 = 6 years; it refuses anything lower). Do Virginia rules, your payers (Medicaid/MCO contracts) or your lawyer want
 longer (7 or 10 years is common)? Should old months be archived (e.g. to S3 Glacier) instead of deleted?
 Default until answered: keep 6 years, then delete.
+
+### Q-012 — Virginia EVV: payers and live-in/overnight care
+2026-09-29 · Claude Code · affects P4-04 (D-069)
+EVV now goes on Virginia claims the way the DMAS companion guides describe (no aggregator in Virginia).
+1. Which **MCOs** do you bill (Anthem HealthKeepers Plus, Aetna Better Health, Humana, Molina, Sentara/Optima,
+   UnitedHealthcare)? Some use their own EVV portals (reported: Humana → HHAeXchange, Anthem → Netsmart/Tellus). If
+   an MCO requires its portal instead of claim fields, we'll add an adapter for it.
+2. Do you have **live-in** personal care clients (they need the UB modifier)? Overnight shifts are already split at
+   midnight. Does your biller round personal care hours **per month** (DMAS rule: whole hours, leftover 30+ minutes
+   round up at month end)? Today hours bill in quarter hours per visit.
+3. Your caregivers' **employee IDs** go on every Virginia claim (DMAS rule: unique, letters/digits, not the SSN).
+   Make sure every aide has one in Staff.
+Default until answered: claim fields for all Virginia Medicaid payers with "EVV on claims" set.
 
 ## Resolved
 

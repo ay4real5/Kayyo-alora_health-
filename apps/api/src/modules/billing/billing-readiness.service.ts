@@ -4,7 +4,8 @@ import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
-import { evaluate, type Readiness } from './billing-readiness.js';
+import { claimFormatFor, evaluate, type Readiness } from './billing-readiness.js';
+import { splitAtMidnight, virginiaEvvForLine, virginiaEvvRequired } from './edi/evv-virginia.js';
 import type { ReadinessQueryDto } from './dto/billing-setup.dto.js';
 
 const VISIT_INCLUDE = {
@@ -17,11 +18,17 @@ const VISIT_INCLUDE = {
       medicaidId: true,
       medicareBeneficiaryId: true,
       insuranceMemberId: true,
+      addressLine1: true,
+      city: true,
+      state: true,
+      zip: true,
       payerPrimary: {
         select: {
           id: true,
           name: true,
           payerType: true,
+          claimFormat: true,
+          evvClaimProfile: true,
           requiresAuthorization: true,
           timelyFilingDays: true,
           isActive: true,
@@ -30,8 +37,10 @@ const VISIT_INCLUDE = {
       diagnoses: { where: { isPrimary: true }, select: { id: true }, take: 1 },
     },
   },
-  staff: { select: { id: true, user: { select: { firstName: true, lastName: true } } } },
-  evvRecords: { select: { status: true } },
+  staff: { select: { id: true, employeeId: true, user: { select: { firstName: true, lastName: true } } } },
+  evvRecords: {
+    select: { status: true, clockInTime: true, clockOutTime: true, clockInWithinGeofence: true, clockOutWithinGeofence: true },
+  },
   visitNotes: { where: { status: { in: ['signed', 'submitted'] } }, select: { id: true }, take: 1 },
   claimLines: {
     where: { active: true },
@@ -62,6 +71,12 @@ export interface BillableVisit extends Readiness {
   staff: { id: string; firstName: string; lastName: string } | null;
   payer: { id: string; name: string; payerType: string } | null;
   minutes: number;
+  unitType: string | null;
+  /**
+   * Virginia EVV (D-069): a shift that crosses midnight is billed as one line per day — the pieces, in order. Null
+   * when the visit is one line.
+   */
+  lineSplits: { date: string; start: Date; end: Date; minutes: number }[] | null;
 }
 
 const minutesBetween = (a: Date, b: Date) =>
@@ -142,7 +157,7 @@ export class BillingReadinessService {
     ignoreClaimId?: string,
   ): Promise<BillableVisit[]> {
     const [agency, codes] = await Promise.all([
-      this.prisma.agency.findUniqueOrThrow({ where: { id: agencyId }, select: { npi: true } }),
+      this.prisma.agency.findUniqueOrThrow({ where: { id: agencyId }, select: { npi: true, timezone: true } }),
       this.prisma.serviceCode.findMany({ where: { agencyId, isActive: true } }),
     ]);
     const codeByName = new Map(codes.map((c) => [c.code, c]));
@@ -177,6 +192,42 @@ export class BillingReadinessService {
           ? minutesBetween(v.actualStart, v.actualEnd)
           : minutesBetween(v.scheduledStart, v.scheduledEnd);
       const auth = v.authorization;
+      const evv = v.evvRecords[0];
+      // Virginia Medicaid: the EVV data must be on the claim (D-069) — check it now, not when the claim is sent.
+      // 837I claims start as bill type 0329 (home health), which is what decides the HH EVV fields.
+      const vaEvv =
+        payer?.evvClaimProfile === 'va_dmas' &&
+        code !== undefined &&
+        virginiaEvvRequired(claimFormatFor(payer), { serviceCode: code.code, revenueCode: code.revenueCode }, '0329');
+      const pieces = vaEvv && evv?.clockInTime && evv.clockOutTime ? splitAtMidnight(evv.clockInTime, evv.clockOutTime, agency.timezone) : [];
+      const evvClaimProblems = vaEvv
+        ? [
+            ...new Set(
+              (pieces.length ? pieces : [null]).flatMap(
+                (piece) =>
+                  virginiaEvvForLine({
+                    format: claimFormatFor(payer),
+                    serviceDate: pieces.length > 1 ? piece!.date : date,
+                    timeZone: agency.timezone,
+                    window: pieces.length > 1 ? piece : null,
+                    record: evv
+                      ? {
+                          clockIn: evv.clockInTime,
+                          clockOut: evv.clockOutTime,
+                          status: evv.status,
+                          clockInWithinGeofence: evv.clockInWithinGeofence,
+                          clockOutWithinGeofence: evv.clockOutWithinGeofence,
+                        }
+                      : null,
+                    attendant: v.staff
+                      ? { lastName: v.staff.user.lastName, firstName: v.staff.user.firstName, employeeId: v.staff.employeeId }
+                      : null,
+                    serviceAddress: v.patient,
+                  }).problems,
+              ),
+            ),
+          ]
+        : null;
       const readiness = evaluate({
         visitStatus: v.status,
         alreadyBilledOn: alreadyBilledOn(v, ignoreClaimId),
@@ -217,6 +268,7 @@ export class BillingReadinessService {
         payerRate: rate ? Number(rate.rate) : null,
         agencyNpi: agency.npi,
         today,
+        evvClaimProblems,
       });
       return {
         visitId: v.id,
@@ -233,6 +285,8 @@ export class BillingReadinessService {
           : null,
         payer: payer ? { id: payer.id, name: payer.name, payerType: payer.payerType } : null,
         minutes,
+        unitType: code?.unitType ?? null,
+        lineSplits: pieces.length > 1 ? pieces : null,
         ...readiness,
       };
     });

@@ -1176,3 +1176,38 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   almost every endpoint, 0 errors at 25 concurrent. At 25 concurrent throughput plateaus (~28/s) on the connection
   pool, now configurable: **`DATABASE_POOL_SIZE`** (default 10). Latency here is dominated by the laptop↔Neon
   distance; in production the API must run in the same region as the database.
+
+### D-069 — Virginia EVV: data on the claim, no aggregator (P4-04)
+2026-09-29 · Claude Code
+- **Virginia has no EVV aggregator** (DMAS EVV FAQ, 11/2023: "Virginia does not use the term aggregator"). It is a
+  provider-choice state: DMAS approves no vendors, and the EVV data travels **on the claim** in fields the DMAS
+  companion guides assign. So P4-04 is "EVV data on Virginia claims", not an aggregator upload. The
+  `evv_records.aggregator_*` columns stay unused until a state that has an aggregator (Sandata, HHAeXchange, …) is added.
+- **Which lines**: 837P personal care / respite / companion **T1019, T1005, S5135** (S9125 excluded); 837I home health
+  (facility type **32 or 34**) on revenue codes **0550, 0551, 0559, 0571, 0421, 0424, 0431, 0434, 0441, 0444**
+  (`edi/evv-virginia.ts`).
+- **Fields** (DMAS MES EDI 837P guide v1.9+, 837I guide 02/03/2023):
+  - 837P: SV101-7 = begin-end time `HHMM-HHMM` (hours 00–23); 2420D NM1*DQ = attendant last/first name, REF*LU =
+    attendant ID; 2420G NM1*PW + N3/N4 = begin location; 2420H NM1*45 + N3/N4 = end location.
+  - 837I: 2310E NM1*77 NM103 = the literal `HH EVV Service Location` (sent in mixed case exactly as DMAS writes it) +
+    N3/N4 + REF*LU*99999; SV202-7 = `HHMM-HHMM` (00–24, within the line's date); 2420D NM1*DN = attendant name,
+    REF*G2 = attendant ID. One service location per claim.
+  - Times are local clock times in the agency's time zone from the EVV record's clock-in/out.
+- **Attendant ID** = `staff_profiles.employee_id` (DMAS: provider-assigned, unique, letters/digits, never an SSN — we
+  refuse 9-digit IDs). **Location** = the patient's home address; a clock-in/out outside the geofence is accepted
+  only after a supervisor verified the record (status `verified`), otherwise it's listed as edit 2095/2096.
+- **Turned on per payer**: `payers.evv_claim_profile = 'va_dmas'` (Billing setup → "EVV on claims"). Virginia MCOs
+  take the same claim fields as far as we know (each MCO's companion guide should be checked when the agency
+  contracts with it — Q-012). Other states get their own profile value later.
+- **Problems name the DMAS edit** the claim would be denied with (EOB 2094 data missing … 2100 end time invalid), in
+  the claim's EDI preview (422 `EDI_INCOMPLETE`), so billers can fix them before submitting.
+- **Checked before billing**: for these payers "Ready to bill" runs the same rules (check `evv_claim_data`), so a
+  visit missing EVV claim data is skipped with the reason instead of making a claim that would be denied.
+- **Overnight shifts**: a shift crossing local midnight becomes one line per day (`claim_lines.evv_start/evv_end`
+  hold each piece; units per piece). "One active line per visit" became **one active line per visit and service
+  date** (`claim_lines_one_active_per_visit_day`) — still no double billing.
+- **Modifier 76**: on Virginia 837P claims, a second line for the same service on the same day gets 76 (added when
+  the file is built).
+- **Not done yet** (ROADMAP P4-04b): personal care hours round per **month** (DMAS: whole 1-hour units, accrued
+  minutes carried forward, 30+ leftover minutes round up at month end) — today `hour` codes bill quarter hours per
+  visit; the UB modifier for live-in / exempt settings.

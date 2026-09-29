@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { demoDay } from './dates';
 
 const PASSWORD = 'Demo-Password-1!';
-const isoDay = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+const isoDay = demoDay;
 
 test('billing invoices the private-pay patient, downloads the PDF and records the payment', async ({ page }) => {
   test.setTimeout(120_000);
