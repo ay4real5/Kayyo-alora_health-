@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { DeliveryChannel } from '@alora/shared';
 import type { EnvironmentVariables } from '../../../config/env.validation.js';
+import { emailHtml } from './email-html.js';
 
 /**
  * Senders for the channels outside the app (DECISIONS D-071, D-078, D-085): Twilio SMS, Azure / Amazon SES / SendGrid
@@ -166,21 +167,22 @@ export class EmailSender extends Sender {
     return this.sendText(to, `Primordial Health: ${message.title}`, text);
   }
 
-  /** A plain-text email (notifications, password reset links). */
+  /** An email from plain text (notifications, password reset links), sent with a matching HTML version. */
   async sendText(to: string, subject: string, text: string): Promise<SendOutcome> {
     const short = subject.slice(0, 200);
-    if (this.provider === 'azure') return this.viaAzure(to, short, text);
-    return this.provider === 'ses' ? this.viaSes(to, short, text) : this.viaSendGrid(to, short, text);
+    const html = emailHtml(short, text);
+    if (this.provider === 'azure') return this.viaAzure(to, short, text, html);
+    return this.provider === 'ses' ? this.viaSes(to, short, text, html) : this.viaSendGrid(to, short, text, html);
   }
 
   /** Azure Communication Services Email: accepted (202) means queued; the display name is set on the sender in Azure. */
-  private async viaAzure(to: string, subject: string, text: string): Promise<SendOutcome> {
+  private async viaAzure(to: string, subject: string, text: string, html: string): Promise<SendOutcome> {
     const acs = parseAcsConnectionString(this.config.get('AZURE_COMMUNICATION_CONNECTION_STRING', { infer: true }))!;
     const url = new URL(`${acs.endpoint}/emails:send?api-version=2023-03-31`);
     const body = JSON.stringify({
       senderAddress: this.from,
       recipients: { to: [{ address: to }] },
-      content: { subject, plainText: text },
+      content: { subject, plainText: text, html },
       // No open/click tracking: it rewrites links (reset links included) and adds pixels.
       userEngagementTrackingDisabled: true,
     });
@@ -194,14 +196,14 @@ export class EmailSender extends Sender {
     return { ok: false, retry: retryable(response.status), error: `azure ${response.status}${json.error?.code ? ` ${json.error.code}` : ''}` };
   }
 
-  private async viaSes(to: string, subject: string, text: string): Promise<SendOutcome> {
+  private async viaSes(to: string, subject: string, text: string, html: string): Promise<SendOutcome> {
     this.ses ??= new SESv2Client({ region: this.config.get('AWS_REGION', { infer: true }) });
     try {
       const result = await this.ses.send(
         new SendEmailCommand({
           FromEmailAddress: `Primordial Health <${this.from}>`,
           Destination: { ToAddresses: [to] },
-          Content: { Simple: { Subject: { Data: subject, Charset: 'UTF-8' }, Body: { Text: { Data: text, Charset: 'UTF-8' } } } },
+          Content: { Simple: { Subject: { Data: subject, Charset: 'UTF-8' }, Body: { Text: { Data: text, Charset: 'UTF-8' }, Html: { Data: html, Charset: 'UTF-8' } } } },
         }),
       );
       return { ok: true, providerMessageId: result.MessageId ?? null };
@@ -213,14 +215,17 @@ export class EmailSender extends Sender {
     }
   }
 
-  private async viaSendGrid(to: string, subject: string, text: string): Promise<SendOutcome> {
+  private async viaSendGrid(to: string, subject: string, text: string, html: string): Promise<SendOutcome> {
     const { response, error } = await post(this.fetchImpl, 'https://api.sendgrid.com/v3/mail/send', {
       headers: { authorization: `Bearer ${this.config.get('SENDGRID_API_KEY', { infer: true })}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
         from: { email: this.from, name: 'Primordial Health' },
         subject,
-        content: [{ type: 'text/plain', value: text }],
+        content: [
+          { type: 'text/plain', value: text },
+          { type: 'text/html', value: html },
+        ],
         // No open/click tracking: it rewrites links (reset links included) and adds pixels.
         tracking_settings: { click_tracking: { enable: false }, open_tracking: { enable: false } },
       }),

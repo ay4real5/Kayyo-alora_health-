@@ -97,6 +97,7 @@ describe('senders', () => {
     const body = JSON.parse(String(vi.mocked(email.fetchImpl).mock.calls[0]![1].body));
     expect(body.subject).toBe('Primordial Health: New shift assigned');
     expect(body.content[0].value).toContain('Open Primordial Health for details: https://app.example.test');
+    expect(body.content[1].type).toBe('text/html');
     expect(body.tracking_settings).toEqual({ click_tracking: { enable: false }, open_tracking: { enable: false } });
   });
 
@@ -146,6 +147,7 @@ describe('email through Amazon SES (D-078)', () => {
     expect(input.Destination).toEqual({ ToAddresses: ['aide@example.test'] });
     expect(input.Content.Simple.Subject.Data).toBe('Primordial Health: New shift assigned');
     expect(input.Content.Simple.Body.Text.Data).toContain('Open Primordial Health for details: https://app.example.test');
+    expect(input.Content.Simple.Body.Html.Data).toContain('Primordial Health');
 
     const fail = (name: string, status: number) =>
       Object.assign(new Error(name), { name, $metadata: { httpStatusCode: status } });
@@ -203,6 +205,7 @@ describe('email through Azure Communication Services (D-085)', () => {
       userEngagementTrackingDisabled: true,
     });
     expect(body.content.plainText).toContain('Open Primordial Health for details: https://app.example.test');
+    expect(body.content.html).toContain('<a href="https://app.example.test"');
     expect((init.headers as Record<string, string>).authorization).toMatch(/^HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=/);
 
     email.fetchImpl = fakeFetch(429, { error: { code: 'TooManyRequests' } });
