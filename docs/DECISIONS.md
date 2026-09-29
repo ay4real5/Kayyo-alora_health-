@@ -1358,3 +1358,16 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Rejected claims** never reached adjudication, so they're fixed and resent as new claims (frequency 1): the claim
   page shows the reason; *Re-check (QA)* puts it back to `ready`; it goes in a new file. They can also be voided.
 - The preview (`GET /billing/claims/:id/837`) and files share one per-claim builder, so they can't drift apart.
+
+### D-077 — Virginia billing options, ready but off (P4-04c)
+2026-09-29 · owner ("have all options ready to be added at any time") + Claude Code
+- **Whole hours per month** (payer setting `hour_rounding = 'monthly'`, Billing setup → "Hourly units"): for hourly
+  service codes, each claim line gets whole 1-hour units; minutes that don't make a full hour carry forward to the
+  next shift of the same client, service and month (after what's already on active claims), and once the month is
+  over 30+ leftover minutes round up on the last line (`monthlyHourUnits`). A short early shift can get 0 units —
+  its EVV still goes on the claim. Default stays quarter hours per visit.
+- **Live-in caregiver** (patient checkbox `live_in`): Virginia personal care lines (T1019/T1005/S5135) for that
+  client get the **UB** modifier on "EVV on claims: Virginia" payers.
+- Both are **off until the agency switches them on**, after its biller confirms with DMAS / each MCO and a test claim
+  goes through (Q-012). Everything else Virginia-specific (EVV fields, midnight split, modifier 76) was already on
+  for Virginia payers.

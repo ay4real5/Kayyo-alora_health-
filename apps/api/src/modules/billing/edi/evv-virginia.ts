@@ -211,3 +211,14 @@ export function addRepeatModifiers(lines: { serviceCode: string; serviceDate: st
     seen.add(key);
   }
 }
+
+/**
+ * Virginia personal care for a client with a live-in caregiver: the UB modifier on the EVV-covered lines (D-077 —
+ * an agency option on the patient, off unless set). Changes the lines in place.
+ */
+export function addLiveInModifier(lines: { serviceCode: string; modifiers: string[] }[]): void {
+  for (const line of lines) {
+    if (VA_EVV_PROCEDURE_CODES.has(line.serviceCode.toUpperCase()) && !line.modifiers.includes('UB') && line.modifiers.length < 4)
+      line.modifiers.push('UB');
+  }
+}

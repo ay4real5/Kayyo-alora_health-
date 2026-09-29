@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { build837I, type Edi837IInput } from './edi-837i.js';
 import { build837, type Edi837Input } from './edi-837p.js';
-import { addRepeatModifiers, localDateTime, splitAtMidnight, virginiaEvvForLine, virginiaEvvRequired, type EvvLineFacts } from './evv-virginia.js';
+import { addLiveInModifier, addRepeatModifiers, localDateTime, splitAtMidnight, virginiaEvvForLine, virginiaEvvRequired, type EvvLineFacts } from './evv-virginia.js';
 
 /** FAKE data only. Times are Eastern (UTC-4 in September). */
 const FACTS: EvvLineFacts = {
@@ -229,5 +229,17 @@ describe('addRepeatModifiers', () => {
     ];
     addRepeatModifiers(lines);
     expect(lines.map((l) => l.modifiers)).toEqual([['U1'], ['U1', '76'], [], []]);
+  });
+});
+
+describe('addLiveInModifier', () => {
+  it('marks personal care lines UB, once', () => {
+    const lines = [
+      { serviceCode: 'T1019', modifiers: ['U1'] },
+      { serviceCode: 'T1019', modifiers: ['UB'] },
+      { serviceCode: 'G0156', modifiers: [] },
+    ];
+    addLiveInModifier(lines);
+    expect(lines.map((l) => l.modifiers)).toEqual([['U1', 'UB'], ['UB'], []]);
   });
 });

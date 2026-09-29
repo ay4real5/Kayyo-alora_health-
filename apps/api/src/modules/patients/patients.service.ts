@@ -37,6 +37,7 @@ export interface PatientDetail extends PatientSummary {
   /** Never the full SSN. */
   ssnLast4: string | null;
   phoneHome: string | null;
+  liveIn: boolean;
   phoneCell: string | null;
   email: string | null;
   addressLine1: string | null;
@@ -283,7 +284,7 @@ export class PatientsService {
   private fields(dto: UpdatePatientDto): Prisma.PatientUncheckedUpdateInput & Prisma.PatientUncheckedCreateInput {
     const data: Record<string, unknown> = {};
     const copy = [
-      'firstName', 'lastName', 'gender', 'mrn', 'phoneHome', 'phoneCell', 'email', 'addressLine1',
+      'firstName', 'lastName', 'gender', 'mrn', 'phoneHome', 'liveIn', 'phoneCell', 'email', 'addressLine1',
       'addressLine2', 'city', 'state', 'zip', 'latitude', 'longitude', 'geoFenceRadiusMeters', 'emergencyContactName',
       'emergencyContactPhone', 'emergencyContactRelation', 'primaryPhysicianId', 'medicareBeneficiaryId',
       'medicaidId', 'insuranceMemberId', 'insuranceGroupNumber', 'notes',
@@ -314,6 +315,7 @@ export class PatientsService {
       gender: patient.gender,
       ssnLast4: ssn ? ssn.slice(-4) : null,
       phoneHome: patient.phoneHome,
+      liveIn: patient.liveIn,
       phoneCell: patient.phoneCell,
       email: patient.email,
       addressLine1: patient.addressLine1,

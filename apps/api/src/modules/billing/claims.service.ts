@@ -11,7 +11,7 @@ import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
-import { billingUnits, claimFormatFor, memberIdFor } from './billing-readiness.js';
+import { billingUnits, claimFormatFor, memberIdFor, monthlyHourUnits } from './billing-readiness.js';
 import { BillingReadinessService, type BillableVisit } from './billing-readiness.service.js';
 import type { CreateClaimsDto, InstitutionalClaimDto, ListClaimsQueryDto } from './dto/claims.dto.js';
 
@@ -277,7 +277,7 @@ export class ClaimsService {
       }),
       this.prisma.payer.findUniqueOrThrow({
         where: { id: first.payer!.id },
-        select: { id: true, payerType: true, claimFormat: true },
+        select: { id: true, payerType: true, claimFormat: true, hourRounding: true },
       }),
     ]);
     // One line per visit — or per day, for a Virginia shift that crosses midnight (D-069).
@@ -309,6 +309,7 @@ export class ClaimsService {
             },
           ],
     );
+    if (payer.hourRounding === 'monthly') await this.roundHoursMonthly(lines, visits, first.patient.id, payer.id, today);
     const dates = lines.map((l) => fromDate(l.serviceDate)!).sort();
     const memberId = memberIdFor(payer.payerType, patient);
 
@@ -353,6 +354,57 @@ export class ClaimsService {
           continue;
         throw error;
       }
+    }
+  }
+
+  /**
+   * "Round per month" payers (D-077): hourly lines get whole hours with minutes carried forward within the patient's
+   * month (after what's already on active claims), and 30+ leftover minutes round up once the month is over.
+   * Changes `lines` in place (units and charges).
+   */
+  private async roundHoursMonthly(lines: NewLine[], visits: BillableVisit[], patientId: string, payerId: string, today: string) {
+    const byVisit = new Map(visits.map((v) => [v.visitId, v]));
+    const minutesOf = (l: { evvStart: Date | null; evvEnd: Date | null; visitId: string | null }, fallback: number) =>
+      l.evvStart && l.evvEnd ? Math.round((l.evvEnd.getTime() - l.evvStart.getTime()) / 60_000) : fallback;
+    const groups = new Map<string, NewLine[]>();
+    for (const l of lines) {
+      if (byVisit.get(l.visitId)?.unitType !== 'hour') continue;
+      const key = `${l.serviceCode}|${fromDate(l.serviceDate)!.slice(0, 7)}`;
+      groups.set(key, [...(groups.get(key) ?? []), l]);
+    }
+    for (const [key, group] of groups) {
+      const [code, month] = key.split('|') as [string, string];
+      const [year, monthNo] = month.split('-').map(Number) as [number, number];
+      const start = `${month}-01`;
+      const end = new Date(Date.UTC(year, monthNo, 0)).toISOString().slice(0, 10); // day 0 of next month = last day
+      const earlier = await this.prisma.claimLine.findMany({
+        where: {
+          active: true,
+          serviceCode: code,
+          serviceDate: { gte: toDate(start), lte: toDate(end) },
+          claim: { patientId, payerId },
+        },
+        select: { units: true, evvStart: true, evvEnd: true, visitId: true, visit: { select: { actualStart: true, actualEnd: true } } },
+      });
+      const prior = earlier.reduce(
+        (sum, l) => ({
+          units: sum.units + Number(l.units),
+          minutes:
+            sum.minutes +
+            minutesOf(l, l.visit?.actualStart && l.visit.actualEnd ? Math.round((l.visit.actualEnd.getTime() - l.visit.actualStart.getTime()) / 60_000) : 0),
+        }),
+        { units: 0, minutes: 0 },
+      );
+      group.sort((a, b) => a.serviceDate.getTime() - b.serviceDate.getTime() || (a.evvStart?.getTime() ?? 0) - (b.evvStart?.getTime() ?? 0));
+      const units = monthlyHourUnits(
+        group.map((l) => minutesOf(l, byVisit.get(l.visitId)!.minutes)),
+        prior,
+        month < today.slice(0, 7),
+      );
+      group.forEach((l, i) => {
+        l.units = units[i]!;
+        l.chargeAmount = money(units[i]! * l.unitRate);
+      });
     }
   }
 

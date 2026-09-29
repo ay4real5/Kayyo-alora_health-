@@ -61,6 +61,11 @@ export class CreatePatientDto {
   @Matches(PHONE, { message: 'phoneHome must be a valid phone number' })
   phoneHome?: string;
 
+  /** A live-in caregiver lives in the home (Virginia personal care claims get the UB modifier, D-077). */
+  @IsOptional()
+  @IsBoolean()
+  liveIn?: boolean;
+
   @IsOptional()
   @Matches(PHONE, { message: 'phoneCell must be a valid phone number' })
   phoneCell?: string;

@@ -54,7 +54,7 @@ function PayersCard() {
   });
   // Empty = back to the default (claim form: by payer type; EVV: none) — sent as null.
   const setField = useMutation({
-    mutationFn: ({ id, field, value }: { id: string; field: 'claimFormat' | 'evvClaimProfile'; value: string }) =>
+    mutationFn: ({ id, field, value }: { id: string; field: 'claimFormat' | 'evvClaimProfile' | 'hourRounding'; value: string }) =>
       request(`/billing/payers/${id}`, { method: 'PATCH', body: { [field]: value || null } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['billing', 'payers'] }),
   });
@@ -87,6 +87,7 @@ function PayersCard() {
             <th className="py-2 pr-4 font-medium">Payer ID</th>
             <th className="py-2 pr-4 font-medium">Claim form</th>
             <th className="py-2 pr-4 font-medium">EVV on claims</th>
+            <th className="py-2 pr-4 font-medium">Hourly units</th>
             <th className="py-2 pr-4 font-medium">Needs authorization</th>
             <th className="py-2 font-medium">Timely filing</th>
           </tr>
@@ -128,6 +129,23 @@ function PayersCard() {
                   'Virginia Medicaid (DMAS)'
                 ) : (
                   '—'
+                )}
+              </td>
+              <td className="py-2 pr-4">
+                {can('billing:update') && p.payerType !== 'private_pay' ? (
+                  <select
+                    aria-label={`Hourly units for ${p.name}`}
+                    value={p.hourRounding ?? ''}
+                    onChange={(e) => setField.mutate({ id: p.id, field: 'hourRounding', value: e.target.value })}
+                    className="rounded border border-slate-300 bg-white px-1 py-0.5 text-sm"
+                  >
+                    <option value="">Quarter hours per visit</option>
+                    <option value="monthly">Whole hours per month (DMAS)</option>
+                  </select>
+                ) : p.hourRounding === 'monthly' ? (
+                  'Whole hours per month'
+                ) : (
+                  'Quarter hours per visit'
                 )}
               </td>
               <td className="py-2 pr-4">{p.requiresAuthorization ? 'Yes' : 'No'}</td>

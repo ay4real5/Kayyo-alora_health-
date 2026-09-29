@@ -8,6 +8,8 @@ export interface Payer {
   claimFormat: string | null;
   /** va_dmas = Virginia Medicaid EVV fields on claims (D-069). */
   evvClaimProfile: string | null;
+  /** monthly = whole hours per month with carry-forward (DMAS personal care, D-077). */
+  hourRounding: string | null;
   payerIdCode: string | null;
   state: string | null;
   phone: string | null;

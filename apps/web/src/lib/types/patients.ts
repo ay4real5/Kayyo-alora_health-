@@ -34,6 +34,7 @@ export interface PatientDetail extends PatientSummary {
   gender: string | null;
   ssnLast4: string | null;
   phoneHome: string | null;
+  liveIn: boolean;
   phoneCell: string | null;
   email: string | null;
   addressLine1: string | null;

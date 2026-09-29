@@ -127,17 +127,16 @@
 
 ## In progress
 
-Branches waiting for green CI, merge in this order:
-1. `task/RENAME-kayo-health` — product renamed to Kayo Health (D-075).
-2. `task/P3-09a-claim-files` (from 1) — claim files + 999/277CA (D-076); migration `20260929060000_claim_files`
-   applied to Neon; API e2e, unit and browser tests green locally.
+Branches waiting for green CI, merge in this order (each based on the previous):
+1. `task/P3-09a-claim-files` — claim files + 999/277CA (D-076).
+2. `task/P4-04c-va-options` — Virginia options, off by default (D-077); migration `20260929070000_va_billing_options`
+   applied to Neon; tests green locally.
 
 ## Next up
 
-**P4-04c as options** (owner: "have all options ready to be added at any time"): Virginia personal-care monthly
-hour rounding and the live-in UB modifier as per-payer / per-patient settings, **off by default**, so the agency
-switches them on when its biller confirms (Q-012). Then SFTP transport for P3-09 once a clearinghouse is chosen.
-The owner's list is [GO_LIVE.md](GO_LIVE.md).
+Agent work left is small and mostly waits on accounts: SFTP transport for claim files once a clearinghouse is chosen
+(P3-09), turning on Twilio/SendGrid/Expo when keys exist, Expo push receipts. The owner's list is
+[GO_LIVE.md](GO_LIVE.md).
 
 ## Blockers / waiting on human
 
@@ -151,6 +150,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P4-04c | Virginia options ready but off: monthly whole-hour rounding (payer), live-in UB (patient). |
 | 2026-09-29 | Claude Code | P3-09a | Claim files (batch 837, control numbers, mark sent) and 999/277CA acknowledgments. |
 | 2026-09-29 | Claude Code | rename | Product renamed to Kayo Health (owner). |
 <<<<<<< HEAD
