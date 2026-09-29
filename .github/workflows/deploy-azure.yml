@@ -1,0 +1,85 @@
+# Deploys Kayo Health to Azure (D-081). Runs only when started by hand (Actions → Deploy to Azure → Run workflow).
+# Images go to the agency's PRIVATE Azure Container Registry — nothing is published publicly.
+#
+# Needs (Settings → Secrets and variables → Actions), set up per docs/DEPLOYMENT-AZURE.md:
+#   secrets:   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID (OpenID Connect — no stored Azure password),
+#              AZURE_DATABASE_URL (for migrations)
+#   variables: AZURE_RESOURCE_GROUP, AZURE_REGISTRY, AZURE_API_APP, AZURE_WEB_APP, AZURE_POSTGRES_SERVER,
+#              PUBLIC_API_URL (e.g. https://api.kayohealth.com/api/v1)
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, migrate, roll out
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: production
+    env:
+      RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+      REGISTRY: ${{ vars.AZURE_REGISTRY }}
+      API_APP: ${{ vars.AZURE_API_APP }}
+      WEB_APP: ${{ vars.AZURE_WEB_APP }}
+      PG_SERVER: ${{ vars.AZURE_POSTGRES_SERVER }}
+      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push images to the private registry
+        run: |
+          TAG=${GITHUB_SHA::12}
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          az acr login --name "$REGISTRY"
+          SERVER=$(az acr show --name "$REGISTRY" --query loginServer -o tsv)
+          echo "SERVER=$SERVER" >> "$GITHUB_ENV"
+          docker build -f docker/Dockerfile.api -t "$SERVER/kayo-api:$TAG" .
+          docker build -f docker/Dockerfile.migrate -t "$SERVER/kayo-migrate:$TAG" .
+          docker build -f docker/Dockerfile.web --build-arg NEXT_PUBLIC_API_URL="$PUBLIC_API_URL" -t "$SERVER/kayo-web:$TAG" .
+          for image in kayo-api kayo-migrate kayo-web; do docker push "$SERVER/$image:$TAG"; done
+
+      - name: Apply database migrations (before the new API starts)
+        env:
+          DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
+        run: |
+          IP=$(curl -fsS https://api.ipify.org)
+          RULE="gh-${GITHUB_RUN_ID}"
+          az postgres flexible-server firewall-rule create -g "$RG" -n "$PG_SERVER" --rule-name "$RULE" \
+            --start-ip-address "$IP" --end-ip-address "$IP" -o none
+          trap 'az postgres flexible-server firewall-rule delete -g "$RG" -n "$PG_SERVER" --rule-name "$RULE" --yes -o none' EXIT
+          docker run --rm -e DATABASE_URL "$SERVER/kayo-migrate:$TAG"
+
+      - name: Roll out the new images
+        run: |
+          az webapp config container set -g "$RG" -n "$API_APP" --container-image-name "$SERVER/kayo-api:$TAG" -o none
+          az webapp config container set -g "$RG" -n "$WEB_APP" --container-image-name "$SERVER/kayo-web:$TAG" -o none
+          az webapp restart -g "$RG" -n "$API_APP"
+          az webapp restart -g "$RG" -n "$WEB_APP"
+
+      - name: Check health
+        run: |
+          API_HOST=$(az webapp show -g "$RG" -n "$API_APP" --query defaultHostName -o tsv)
+          WEB_HOST=$(az webapp show -g "$RG" -n "$WEB_APP" --query defaultHostName -o tsv)
+          for i in $(seq 1 60); do
+            if curl -fsS "https://$API_HOST/api/v1/health" && curl -fsS -o /dev/null "https://$WEB_HOST/login"; then
+              echo; echo "Deployed $TAG — API and dashboard are healthy"; exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::The new version did not become healthy — check the App Service logs (Log stream) in the portal"
+          exit 1

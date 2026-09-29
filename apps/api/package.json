@@ -24,7 +24,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "openapi": "node dist/openapi/export.js",
-    "db:seed": "node dist/seed/seed.js"
+    "db:seed": "node dist/seed/seed.js",
+    "agency:create": "node dist/seed/create-agency.js"
   },
   "dependencies": {
     "@alora/shared": "*",

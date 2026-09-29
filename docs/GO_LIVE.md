@@ -18,22 +18,22 @@ patient details, but the providers still see phone numbers and email addresses.
 
 | What | Why | Status in the software |
 |---|---|---|
-| [ ] **Hosting** with a BAA (AWS, Azure or Google Cloud), managed PostgreSQL, a domain + certificate (Q-006, P4-11) | Runs everything | Ready to deploy ([DEPLOYMENT.md](DEPLOYMENT.md)) |
+| [ ] **Hosting on Azure** (BAA included automatically), a domain — follow [DEPLOYMENT-AZURE.md](DEPLOYMENT-AZURE.md) | Runs everything, ≈ $33–38/month to start | Ready: template + deploy workflow (D-081) |
 | [ ] **Clearinghouse** (Availity, Waystar, …) + BAA + SFTP login (P3-08) | Sends claims, gets 835 remittances and 271 eligibility | 837P/837I files, 835 import and 270 built; sending waits on the account (P3-09) |
 | [ ] **Twilio** + BAA: a phone number for texts and one for visit check-in calls (P2-11) | SMS alerts; clock-in/out by phone | Built, off until keys are set (D-071, D-073) |
 | [ ] **Amazon SES** (under the AWS BAA), your domain verified, out of the sandbox — *not SendGrid: it signs no BAA* | Alert emails, "forgot password" | Built, off until set (D-071, D-072, D-078) |
 | [ ] **Expo (EAS)** account, **Apple Developer** and **Google Play** accounts | Publish the caregiver app; push notifications | App built; push registers once the app has an EAS project id |
 | [ ] **Map tiles** for production (Google Maps key, or a paid OpenStreetMap tile provider) | Live monitor map; later, address → map point | Uses free OpenStreetMap tiles now — fine for testing only |
 
-### Estimated monthly costs (small agency, September 2026 list prices — check before buying)
+### Estimated monthly costs (small agency, September 2026 list prices — check before buying; details in DEPLOYMENT-AZURE.md)
 
 | Item | Estimate |
 |---|---|
-| AWS: API + dashboard containers (Fargate, 0.5 vCPU / 1 GB each, $0.04048 per vCPU-hour + $0.004445 per GB-hour) | ≈ $36 |
-| AWS: PostgreSQL (RDS db.t4g.small, ≈ $0.032/hour, + 20 GB storage and backups); about double for a standby copy (Multi-AZ) | ≈ $30–60 |
-| AWS: load balancer, logs, network | ≈ $25–60 |
-| Amazon SES email ($0.10 per 1,000) | ≈ $1 |
-| **Hosting total on AWS** | **≈ $90–160 / month** (Aptible instead: $499 / month flat) |
+| Azure: dashboard + API (App Service B1, one plan) | ≈ $13 |
+| Azure: PostgreSQL Flexible Server B1ms + storage and 14-day backups | ≈ $15–20 |
+| Azure: private container registry (Basic) | ≈ $5 |
+| Email: Amazon SES ($0.10 per 1,000, own free AWS BAA) | ≈ $1 |
+| **Hosting total on Azure** | **≈ $33–38 / month** (Microsoft for Startups credit can cover the start) |
 | Twilio: 2 numbers ($1.15 each), texts ≈ $0.011 each incl. carrier fee, A2P 10DLC campaign ≈ $10 / month, check-in call minutes | ≈ $20–40 / month |
 | Clearinghouse: Office Ally (claims free, remittances ≈ $35 / month) or Availity (free for sponsoring payers; ≈ $35 / month for more payers); Waystar by quote | ≈ $0–35 / month |
 | Apple Developer / Google Play / Expo | $99 / year, $25 once, free plan |

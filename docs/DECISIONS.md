@@ -1403,3 +1403,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - `/auth/me` now includes the agency's name and phone (no patient data) for "call the office".
 - Sign-in and unlock screens got the brand header. Forced password change still comes first; Profile → Change
   password reuses the same form.
+
+### D-081 — Hosting: Azure, small start
+2026-09-29 · owner ("start small… later Azure… can we use Vercel") + Claude Code
+- **Azure, not Vercel**: Vercel only hosts the dashboard (the API needs to run all the time: sockets, jobs, IVR) and
+  its HIPAA BAA is a $350/month add-on; Azure's BAA is included in the Product Terms for every customer. Starting on
+  the target platform avoids a second migration.
+- **Small setup** (`infra/azure/main.bicep`, ≈ $33–38/month): Container Registry Basic (private images), one Linux
+  App Service plan **B1** running two container apps (dashboard, API — always on, WebSockets on, health checks,
+  HTTPS only, TLS 1.2+, FTP off, **HTTP logging off** because it records query strings), PostgreSQL Flexible Server
+  **B1ms** 17 (TLS required, 14-day backups, reachable only by Azure services). Apps pull images with their own
+  managed identity (AcrPull) — no registry passwords. Secrets are App Settings for now (Key Vault later).
+- **Custom domain required**: `app.<domain>` + `api.<domain>` (free managed certificates). On
+  `*.azurewebsites.net` the two apps are different *sites* (public suffix), so the SameSite=strict refresh cookie
+  wouldn't be sent and Safari would block it anyway.
+- **Deploy** (`.github/workflows/deploy-azure.yml`, manual only): OpenID Connect login (no stored Azure password),
+  build → push to the private registry, open the database to the runner's IP just for `prisma migrate deploy`
+  (migration image), roll out both apps, health check. CI compiles the Bicep on every push.
+- **First agency**: `npm run agency:create -w @alora/api -- --name … --email …` creates the agency and an admin with a
+  one-time temporary password (forced change, then 2FA). The demo seed stays development-only.
+- **Azure's front end writes `ip:port` into X-Forwarded-For**: the API strips ports (with `TRUST_PROXY_HOPS=1`) so
+  rate limits and audit logs see the real client address.
+- Step-by-step for the owner: `docs/DEPLOYMENT-AZURE.md` (all in Azure Cloud Shell).

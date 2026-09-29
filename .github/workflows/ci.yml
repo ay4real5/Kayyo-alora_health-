@@ -89,6 +89,8 @@ jobs:
           echo "::error title=API container log::$(docker logs api 2>&1 | tail -15 | tr '\n' '|')"
           echo "::error title=Web container log::$(docker logs web 2>&1 | tail -15 | tr '\n' '|')"
           exit 1
+      - name: Azure template compiles (infra/azure/main.bicep)
+        run: az bicep build --file infra/azure/main.bicep --stdout > /dev/null
       - name: nginx config is valid
         run: |
           mkdir -p certs

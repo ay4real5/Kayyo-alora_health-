@@ -127,8 +127,10 @@
 
 ## In progress
 
-`task/DESIGN-refresh` — new look (D-079 web, D-080 caregiver app: tabs, profile, settings). Typecheck/lint/unit green,
-Android bundle builds. **Next step**: CI green → merge. (SES email, D-078, is merged.)
+Branches waiting for green CI, merge in this order:
+1. `task/DESIGN-refresh` — new look (D-079/D-080).
+2. `task/AZURE-deploy` (from 1) — Azure template, deploy workflow, `agency:create`, X-Forwarded-For port fix,
+   DEPLOYMENT-AZURE.md (D-081). Bicep compiles locally (bicep 0.47); not deployed yet — needs the owner's Azure account.
 
 ## Next up
 
@@ -148,6 +150,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | azure | Azure hosting prepared: Bicep, deploy workflow, first-agency script (D-081). |
 | 2026-09-29 | Claude Code | design | Indigo & violet redesign (web) and caregiver app tabs/profile/settings. |
 | 2026-09-29 | Claude Code | P3-19b | Amazon SES email provider (SendGrid signs no BAA). |
 | 2026-09-29 | Claude Code | P4-04c | Virginia options ready but off: monthly whole-hour rounding (payer), live-in UB (patient). |
