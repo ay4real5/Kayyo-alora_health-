@@ -1,4 +1,4 @@
-# AGENTS.md — Kayo Health platform (code name "Alora": the `@alora/*` packages)
+# AGENTS.md — Primordial Health platform (code name "Alora": the `@alora/*` packages)
 
 This repo is built by several AI agents taking turns (Claude Code, Devin, others) plus a human owner.
 No agent remembers the previous session. **The repo is the only memory.** Follow the protocol below

@@ -45,7 +45,7 @@ export async function scheduleClockOutReminder(visitId: string, at: Date): Promi
       identifier: reminderId(visitId),
       content: {
         title: 'Still on a visit?',
-        body: 'Your visit was scheduled to end. Remember to clock out in Kayo Health.',
+        body: 'Your visit was scheduled to end. Remember to clock out in Primordial Health.',
         data: { visitId },
       },
       trigger: {
@@ -96,7 +96,7 @@ export async function unregisterForPush(request: Request): Promise<void> {
   await request(`/notifications/devices/${encodeURIComponent(token)}`, { method: 'DELETE' }).catch(() => undefined);
 }
 
-const REMINDERS_KEY = 'kayo.visitReminders';
+const REMINDERS_KEY = 'primordial.visitReminders';
 
 /** The caregiver's choice (Profile → Visit reminders), on unless switched off. Kept on this phone only. */
 export async function remindersEnabled(): Promise<boolean> {

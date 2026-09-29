@@ -44,7 +44,7 @@ Default until answered: quarter hours per visit, no live-in modifier.
 ## Resolved
 
 ### Q-004 — Product name
-**Kayo Health** (owner, 2026-09-29). See DECISIONS D-075.
+**Primordial Health** (owner, 2026-09-29) — first Kayo Health (D-075), then the agency's own name (D-082).
 
 ### Q-002 — Base44 portal authentication
 Resolved 2026-09-28: the portal is built in this repo instead of Base44 (per-patient sessions, no third party

@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data } = await session.request<Me>('/auth/me');
       if (data.is2faRequired && !data.is2faEnabled) {
         await session.signOut();
-        throw new Error('Your role needs two-factor authentication. Set it up in the Kayo Health web dashboard first.');
+        throw new Error('Your role needs two-factor authentication. Set it up in the Primordial Health web dashboard first.');
       }
       setUser(data);
       setMustChangePassword(Boolean(data.mustChangePassword));
@@ -105,8 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login: async (email, password) => finish(await session.login(email, password)),
       verifyTwoFactor: async (token, code) => finish(await session.verifyTwoFactor(token, { code })),
       unlock: async () => {
-        const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Unlock Kayo Health' });
-        if (!result.success) return result.error === 'not_enrolled' ? 'Set a passcode on this phone to unlock Kayo Health.' : null;
+        const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Unlock Primordial Health' });
+        if (!result.success) return result.error === 'not_enrolled' ? 'Set a passcode on this phone to unlock Primordial Health.' : null;
         try {
           const token = await session.renew();
           if (!token) {

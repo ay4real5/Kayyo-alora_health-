@@ -1,6 +1,6 @@
 # @alora/api
 
-NestJS API for Kayo Health. Conventions and commands: see the root [AGENTS.md](../../AGENTS.md).
+NestJS API for Primordial Health. Conventions and commands: see the root [AGENTS.md](../../AGENTS.md).
 
 ```bash
 npm run start:dev -w @alora/api    # http://localhost:3001/api/v1/health

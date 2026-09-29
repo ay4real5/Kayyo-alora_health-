@@ -1,4 +1,4 @@
-# Deploying Kayo Health (production)
+# Deploying Primordial Health (production)
 
 **Chosen host: Azure — follow [DEPLOYMENT-AZURE.md](DEPLOYMENT-AZURE.md)** (D-081). This page explains the general
 shape and the rules any host must keep.

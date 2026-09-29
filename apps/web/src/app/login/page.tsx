@@ -70,7 +70,7 @@ function LoginForm() {
   return (
     <AuthLayout>
       <Card className="w-full p-6 sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{step === 'password' ? 'Sign in to Kayo Health' : 'Two-step verification'}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{step === 'password' ? 'Sign in to Primordial Health' : 'Two-step verification'}</h1>
         <p className="mb-6 mt-1 text-sm text-slate-500">
           {step === 'password' ? 'Use your agency email and password' : 'Enter the code from your authenticator app'}
         </p>

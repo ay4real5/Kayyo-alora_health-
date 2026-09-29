@@ -1,11 +1,11 @@
-# Deploys Kayo Health to Azure (D-081). Runs only when started by hand (Actions → Deploy to Azure → Run workflow).
+# Deploys Primordial Health to Azure (D-081). Runs only when started by hand (Actions → Deploy to Azure → Run workflow).
 # Images go to the agency's PRIVATE Azure Container Registry — nothing is published publicly.
 #
 # Needs (Settings → Secrets and variables → Actions), set up per docs/DEPLOYMENT-AZURE.md:
 #   secrets:   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID (OpenID Connect — no stored Azure password),
 #              AZURE_DATABASE_URL (for migrations)
 #   variables: AZURE_RESOURCE_GROUP, AZURE_REGISTRY, AZURE_API_APP, AZURE_WEB_APP, AZURE_POSTGRES_SERVER,
-#              PUBLIC_API_URL (e.g. https://api.kayohealth.com/api/v1)
+#              PUBLIC_API_URL (e.g. https://api.primordialhealthservices.health/api/v1)
 name: Deploy to Azure
 
 on:
@@ -48,10 +48,10 @@ jobs:
           az acr login --name "$REGISTRY"
           SERVER=$(az acr show --name "$REGISTRY" --query loginServer -o tsv)
           echo "SERVER=$SERVER" >> "$GITHUB_ENV"
-          docker build -f docker/Dockerfile.api -t "$SERVER/kayo-api:$TAG" .
-          docker build -f docker/Dockerfile.migrate -t "$SERVER/kayo-migrate:$TAG" .
-          docker build -f docker/Dockerfile.web --build-arg NEXT_PUBLIC_API_URL="$PUBLIC_API_URL" -t "$SERVER/kayo-web:$TAG" .
-          for image in kayo-api kayo-migrate kayo-web; do docker push "$SERVER/$image:$TAG"; done
+          docker build -f docker/Dockerfile.api -t "$SERVER/primordial-api:$TAG" .
+          docker build -f docker/Dockerfile.migrate -t "$SERVER/primordial-migrate:$TAG" .
+          docker build -f docker/Dockerfile.web --build-arg NEXT_PUBLIC_API_URL="$PUBLIC_API_URL" -t "$SERVER/primordial-web:$TAG" .
+          for image in primordial-api primordial-migrate primordial-web; do docker push "$SERVER/$image:$TAG"; done
 
       - name: Apply database migrations (before the new API starts)
         env:
@@ -62,12 +62,12 @@ jobs:
           az postgres flexible-server firewall-rule create -g "$RG" -n "$PG_SERVER" --rule-name "$RULE" \
             --start-ip-address "$IP" --end-ip-address "$IP" -o none
           trap 'az postgres flexible-server firewall-rule delete -g "$RG" -n "$PG_SERVER" --rule-name "$RULE" --yes -o none' EXIT
-          docker run --rm -e DATABASE_URL "$SERVER/kayo-migrate:$TAG"
+          docker run --rm -e DATABASE_URL "$SERVER/primordial-migrate:$TAG"
 
       - name: Roll out the new images
         run: |
-          az webapp config container set -g "$RG" -n "$API_APP" --container-image-name "$SERVER/kayo-api:$TAG" -o none
-          az webapp config container set -g "$RG" -n "$WEB_APP" --container-image-name "$SERVER/kayo-web:$TAG" -o none
+          az webapp config container set -g "$RG" -n "$API_APP" --container-image-name "$SERVER/primordial-api:$TAG" -o none
+          az webapp config container set -g "$RG" -n "$WEB_APP" --container-image-name "$SERVER/primordial-web:$TAG" -o none
           az webapp restart -g "$RG" -n "$API_APP"
           az webapp restart -g "$RG" -n "$WEB_APP"
 

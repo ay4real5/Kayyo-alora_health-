@@ -11,7 +11,7 @@ export const DOCS_PATH = `${API_PREFIX}/docs`;
  */
 export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
-    .setTitle('Kayo Health API')
+    .setTitle('Primordial Health API')
     .setDescription(
       [
         'Home health agency management API. All routes are under `/api/v1`.',

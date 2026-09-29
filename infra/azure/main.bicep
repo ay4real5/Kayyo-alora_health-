@@ -1,6 +1,6 @@
-// Kayo Health on Azure — the small, low-cost setup (D-081). One command creates everything in a resource group:
+// Primordial Health on Azure — the small, low-cost setup (D-081). One command creates everything in a resource group:
 //
-//   az deployment group create -g kayo-rg -f infra/azure/main.bicep \
+//   az deployment group create -g primordial-rg -f infra/azure/main.bicep \
 //     -p appDomain=app.example.com apiDomain=api.example.com \
 //        postgresPassword=<secret> jwtSecret=<secret> phiEncryptionKey=<secret>
 //
@@ -11,22 +11,22 @@
 @description('Short name used in every resource name (letters and digits).')
 @minLength(3)
 @maxLength(12)
-param namePrefix string = 'kayo'
+param namePrefix string = 'primordial'
 
 @description('Azure region. East US is usually the cheapest.')
 param location string = resourceGroup().location
 
-@description('The dashboard host name people will use, e.g. app.kayohealth.com.')
+@description('The dashboard host name people will use, e.g. app.primordialhealthservices.health.')
 param appDomain string
 
-@description('The API host name, e.g. api.kayohealth.com (same parent domain as appDomain, so sign-in cookies work).')
+@description('The API host name, e.g. api.primordialhealthservices.health (same parent domain as appDomain, so sign-in cookies work).')
 param apiDomain string
 
 @description('Container image tag to run (the deploy workflow sets it).')
 param imageTag string = 'initial'
 
 @description('PostgreSQL administrator login.')
-param postgresAdmin string = 'kayoadmin'
+param postgresAdmin string = 'primordialadmin'
 
 @secure()
 @minLength(16)
@@ -46,7 +46,7 @@ param postgresVersion string = '17'
 // Registry names must be globally unique, lowercase, alphanumeric.
 var suffix = uniqueString(resourceGroup().id)
 var registryName = toLower('${namePrefix}${suffix}')
-var databaseName = 'kayo'
+var databaseName = 'primordial'
 var acrPullRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
 
 resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
@@ -118,7 +118,7 @@ resource api 'Microsoft.Web/sites@2023-12-01' = {
   properties: union(commonSite, {
     serverFarmId: plan.id
     siteConfig: union(commonConfig, {
-      linuxFxVersion: 'DOCKER|${registry.properties.loginServer}/kayo-api:${imageTag}'
+      linuxFxVersion: 'DOCKER|${registry.properties.loginServer}/primordial-api:${imageTag}'
       webSocketsEnabled: true
       healthCheckPath: '/api/v1/health'
       appSettings: [
@@ -148,7 +148,7 @@ resource web 'Microsoft.Web/sites@2023-12-01' = {
   properties: union(commonSite, {
     serverFarmId: plan.id
     siteConfig: union(commonConfig, {
-      linuxFxVersion: 'DOCKER|${registry.properties.loginServer}/kayo-web:${imageTag}'
+      linuxFxVersion: 'DOCKER|${registry.properties.loginServer}/primordial-web:${imageTag}'
       healthCheckPath: '/login'
       appSettings: [
         { name: 'WEBSITES_PORT', value: '3000' }

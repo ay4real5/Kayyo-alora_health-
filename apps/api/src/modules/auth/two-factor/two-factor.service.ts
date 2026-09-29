@@ -21,7 +21,7 @@ import { twoFactorPolicy } from './two-factor-policy.js';
 import { base32Decode, base32Encode, generateSecret, otpauthUri, verifyTotp } from './totp.js';
 
 /** Shown as the account name in authenticator apps. Rename when the product name is final (Q-004). */
-export const TOTP_ISSUER = 'Kayo Health';
+export const TOTP_ISSUER = 'Primordial Health';
 
 export interface RecoveryCodes {
   /** Shown once. Each works one time at login in place of an authenticator code. */

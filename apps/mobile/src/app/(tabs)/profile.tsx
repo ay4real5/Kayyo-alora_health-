@@ -157,7 +157,7 @@ export default function ProfileScreen() {
         <View style={{ marginTop: 8 }}>
           <Button title="Sign out" variant="danger" icon="log-out-outline" onPress={signOut} />
         </View>
-        <Text style={{ textAlign: 'center', color: colors.muted, fontSize: 13, marginTop: 4 }}>Kayo Health · Caregiver</Text>
+        <Text style={{ textAlign: 'center', color: colors.muted, fontSize: 13, marginTop: 4 }}>Primordial Health · Caregiver</Text>
       </View>
     </ScrollView>
   );

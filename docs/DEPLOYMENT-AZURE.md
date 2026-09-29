@@ -1,4 +1,4 @@
-# Deploying Kayo Health on Azure (small start)
+# Deploying Primordial Health on Azure (small start)
 
 The low-cost Azure setup (DECISIONS D-081): about **$30–40 a month**, and Azure's HIPAA **BAA is included
 automatically** for every customer (it's part of Microsoft's Product Terms — nothing to sign). Everything below
@@ -17,8 +17,9 @@ first months.
 
 ## What you need before starting
 
-1. **A domain** (≈ $10–15/year, e.g. at Cloudflare or Namecheap), say `kayohealth.com`. The dashboard will be
-   `app.kayohealth.com` and the API `api.kayohealth.com`. *A domain is required*: on Azure's free
+1. **The domain** `primordialhealthservices.health` (already owned, at Namecheap). The dashboard will be
+   `app.primordialhealthservices.health` and the API `api.primordialhealthservices.health`; the existing website
+   (`www.` / the bare domain) is not touched. *Using the domain is required*: on Azure's free
    `*.azurewebsites.net` names the browser treats the two apps as different sites and blocks the sign-in cookie,
    so staff would be signed out on every page reload.
 2. **The GitHub repository set to private** (P4-12).
@@ -29,7 +30,7 @@ first months.
 In Cloud Shell (Bash), upload `infra/azure/main.bicep` (Upload button in the Cloud Shell toolbar), then:
 
 ```bash
-az group create --name kayo-rg --location eastus
+az group create --name primordial-rg --location eastus
 
 # New secrets — copy all three into your password manager NOW. Losing PHI_KEY makes encrypted data unreadable.
 PG_PASSWORD=$(openssl rand -base64 30 | tr -d '/+=')
@@ -37,8 +38,8 @@ JWT_SECRET=$(openssl rand -base64 48)
 PHI_KEY=$(openssl rand -base64 32)
 echo "PG_PASSWORD=$PG_PASSWORD"; echo "JWT_SECRET=$JWT_SECRET"; echo "PHI_KEY=$PHI_KEY"
 
-az deployment group create --resource-group kayo-rg --template-file main.bicep \
-  --parameters appDomain=app.kayohealth.com apiDomain=api.kayohealth.com \
+az deployment group create --resource-group primordial-rg --template-file main.bicep \
+  --parameters appDomain=app.primordialhealthservices.health apiDomain=api.primordialhealthservices.health \
                postgresPassword="$PG_PASSWORD" jwtSecret="$JWT_SECRET" phiEncryptionKey="$PHI_KEY" \
   --query properties.outputs
 ```
@@ -48,13 +49,22 @@ until the first deploy (step 4) — that's expected.
 
 ## 2. Point your domain at Azure (15 minutes + DNS wait)
 
-For each app (`kayo-web-…` → `app`, `kayo-api-…` → `api`), in the portal open the app → **Custom domains** →
-**Add custom domain**. The portal shows two DNS records to create at your domain registrar:
+For each app — `primordial-web-…` gets `app`, `primordial-api-…` gets `api` — open it in the portal → **Custom
+domains** → **Add custom domain** → domain `app.primordialhealthservices.health` (or `api.…`). The portal shows the
+**Custom Domain Verification ID** and the app's `….azurewebsites.net` name.
 
-- a **CNAME** `app` (or `api`) → the app's `….azurewebsites.net` name, and
-- a **TXT** `asuid.app` (or `asuid.api`) → the verification ID it shows.
+At **Namecheap** → Domain List → *primordialhealthservices.health* → **Manage** → **Advanced DNS** → **Add New
+Record**, add for each:
 
-Once they're added, finish the wizard with **App Service Managed Certificate** (free HTTPS).
+| Type | Host | Value |
+|---|---|---|
+| CNAME | `app` | the web app's `….azurewebsites.net` name |
+| TXT | `asuid.app` | the verification ID |
+| CNAME | `api` | the API app's `….azurewebsites.net` name |
+| TXT | `asuid.api` | the verification ID |
+
+Leave the existing records (your website) as they are. After a few minutes, back in the portal click **Validate**,
+then **Add**, and choose **App Service Managed Certificate** (free HTTPS).
 
 ## 3. Let GitHub deploy (10 minutes)
 
@@ -62,9 +72,9 @@ In Cloud Shell (replace the repository name if it changed):
 
 ```bash
 SUB=$(az account show --query id -o tsv); TENANT=$(az account show --query tenantId -o tsv)
-APP_ID=$(az ad app create --display-name kayo-github-deploy --query appId -o tsv)
+APP_ID=$(az ad app create --display-name primordial-github-deploy --query appId -o tsv)
 az ad sp create --id "$APP_ID" -o none
-az role assignment create --assignee "$APP_ID" --role Contributor --scope "/subscriptions/$SUB/resourceGroups/kayo-rg" -o none
+az role assignment create --assignee "$APP_ID" --role Contributor --scope "/subscriptions/$SUB/resourceGroups/primordial-rg" -o none
 az ad app federated-credential create --id "$APP_ID" --parameters '{
   "name": "github-production",
   "issuer": "https://token.actions.githubusercontent.com",
@@ -82,15 +92,15 @@ approval before each deploy). Then **Settings → Secrets and variables → Acti
 | Secret | Value |
 |---|---|
 | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` | printed above |
-| `AZURE_DATABASE_URL` | `postgresql://kayoadmin:<PG_PASSWORD>@<postgresHost>:5432/kayo?sslmode=require` |
+| `AZURE_DATABASE_URL` | `postgresql://primordialadmin:<PG_PASSWORD>@<postgresHost>:5432/primordial?sslmode=require` |
 
 | Variable | Value (from step 1's output) |
 |---|---|
-| `AZURE_RESOURCE_GROUP` | `kayo-rg` |
+| `AZURE_RESOURCE_GROUP` | `primordial-rg` |
 | `AZURE_REGISTRY` | `registryName` |
 | `AZURE_API_APP` / `AZURE_WEB_APP` | `apiAppName` / `webAppName` |
 | `AZURE_POSTGRES_SERVER` | `postgresServerName` |
-| `PUBLIC_API_URL` | `https://api.kayohealth.com/api/v1` |
+| `PUBLIC_API_URL` | `https://api.primordialhealthservices.health/api/v1` |
 
 ## 4. Deploy
 
@@ -110,7 +120,7 @@ DATABASE_URL='<the AZURE_DATABASE_URL above>' npm run agency:create -w @alora/ap
 ```
 
 It prints a **temporary password once**. Remove your IP from the database's Networking page again. Then sign in at
-`https://app.kayohealth.com`: you'll choose your own password and set up two-factor authentication. **Never run the
+`https://app.primordialhealthservices.health`: you'll choose your own password and set up two-factor authentication. **Never run the
 demo seed (`db:seed`) against this database.**
 
 ## Later, when needed
@@ -120,9 +130,9 @@ demo seed (`db:seed`) against this database.**
   only `ses:SendEmail`) to the API app. Azure's own email service can replace it once it's confirmed on Microsoft's
   HIPAA in-scope list.
 - **Texts / phone check-in**: Twilio App Settings (see `.env.production.example`); the check-in number's webhook is
-  `https://api.kayohealth.com/api/v1/ivr/voice`.
+  `https://api.primordialhealthservices.health/api/v1/ivr/voice`.
 - **Hardening as you grow**: secrets from App Settings into Key Vault; the database on a private network instead of
   "Azure services only"; a standby database (zone-redundant HA, ≈ doubles the database cost); larger plans.
 - **Logs**: keep App Service **HTTP logging off** — it records full URLs, and search terms can be patient
   information (D-035). The container's own log (Log stream) is fine.
-- **Caregiver app**: build it with `EXPO_PUBLIC_API_URL=https://api.kayohealth.com/api/v1`.
+- **Caregiver app**: build it with `EXPO_PUBLIC_API_URL=https://api.primordialhealthservices.health/api/v1`.

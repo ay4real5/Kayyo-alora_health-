@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Kayo Health theme (D-079): indigo & violet, Inter, soft grey canvas, white rounded cards. */
+/* Primordial Health theme (D-079): indigo & violet, Inter, soft grey canvas, white rounded cards. */
 @theme inline {
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
