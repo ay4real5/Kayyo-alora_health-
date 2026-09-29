@@ -172,6 +172,55 @@ export class EnvironmentVariables {
   @IsBoolean()
   RATE_LIMITS_DISABLED: boolean = false;
 
+  // ── Outside notification channels (D-071). Each stays off until its settings are present — and must only be
+  // switched on once the provider has signed a BAA (P2-11, P3-19). Texts are PHI-free either way.
+
+  /** Twilio SMS: all three, or none. */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Matches(/^AC[0-9a-f]{32}$/, { message: 'TWILIO_ACCOUNT_SID must look like AC followed by 32 hex characters' })
+  TWILIO_ACCOUNT_SID?: string;
+
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsString()
+  TWILIO_AUTH_TOKEN?: string;
+
+  /** The agency's Twilio number, E.164 (+15551234567). */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Matches(/^\+[1-9]\d{7,14}$/, { message: 'TWILIO_PHONE_NUMBER must be E.164, e.g. +15551234567' })
+  TWILIO_PHONE_NUMBER?: string;
+
+  /** SendGrid email: key and sender address, or neither. */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsString()
+  SENDGRID_API_KEY?: string;
+
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Matches(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, { message: 'SENDGRID_FROM_EMAIL must be an email address' })
+  SENDGRID_FROM_EMAIL?: string;
+
+  /** Push notifications to the mobile app: "expo" (Expo's push service) or empty for off. */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsEnum(['expo'])
+  PUSH_PROVIDER?: 'expo';
+
+  /** Only when the Expo project requires authenticated push ("enhanced security"). */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsString()
+  EXPO_ACCESS_TOKEN?: string;
+
+  /** Where people open the dashboard — the link at the bottom of notification emails. */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @IsUrl({ require_protocol: true, require_tld: false, protocols: ['http', 'https'] })
+  FRONTEND_URL?: string;
+
   /** Retired keys still needed to read old values: "1:<base64>,2:<base64>". */
   @Transform(blankToUndefined)
   @IsOptional()

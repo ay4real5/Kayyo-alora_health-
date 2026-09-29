@@ -57,16 +57,17 @@ describe.skipIf(!hasDb)('Notification preferences (e2e)', () => {
     await app.close();
   });
 
-  it('lists every type with everything on by default; system alerts are mandatory', async () => {
+  it('lists every type: in-app on by default, outside channels per type (DESIGN §13.2); system alerts are mandatory', async () => {
     const prefs = (await http().get(base).set(auth).expect(200)).body.data;
     expect(prefs).toHaveLength(NOTIFICATION_TYPES.length);
-    expect(prefs.find((p: { type: string }) => p.type === 'shift_assigned')).toEqual({ type: 'shift_assigned', mandatory: false, inApp: true, push: true, sms: true, email: true });
+    expect(prefs.find((p: { type: string }) => p.type === 'shift_assigned')).toEqual({ type: 'shift_assigned', mandatory: false, inApp: true, push: true, sms: true, email: false });
+    expect(prefs.find((p: { type: string }) => p.type === 'payroll_ready')).toMatchObject({ push: false, sms: false, email: true });
     expect(prefs.find((p: { type: string }) => p.type === 'system')).toMatchObject({ mandatory: true, inApp: true });
   });
 
   it('changes only the channels sent, and refuses to mute mandatory or unknown types', async () => {
     const prefs = (await http().put(`${base}/shift_assigned`).set(auth).send({ inApp: false, sms: false }).expect(200)).body.data;
-    expect(prefs.find((p: { type: string }) => p.type === 'shift_assigned')).toMatchObject({ inApp: false, sms: false, push: true, email: true });
+    expect(prefs.find((p: { type: string }) => p.type === 'shift_assigned')).toMatchObject({ inApp: false, sms: false, push: true, email: false });
     const again = (await http().put(`${base}/shift_assigned`).set(auth).send({ push: false }).expect(200)).body.data;
     expect(again.find((p: { type: string }) => p.type === 'shift_assigned')).toMatchObject({ inApp: false, sms: false, push: false });
     await http().put(`${base}/system`).set(auth).send({ inApp: false }).expect(400);

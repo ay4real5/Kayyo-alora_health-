@@ -122,6 +122,7 @@ model User {
   uploadedDocuments       Document[]               @relation("DocumentUploadedBy")
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
+  pushDevices             PushDevice[]
 
   ordersTaken         PhysicianOrder[] @relation("OrderTakenBy")
   carePlansSigned     CarePlan[]       @relation("CarePlanSignedBy")
@@ -671,29 +672,29 @@ model Claim {
 
 /// One billed service (one visit). A visit can be on only one active line (partial unique index).
 model ClaimLine {
-  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  claimId              String   @map("claim_id") @db.Uuid
-  visitId              String?  @map("visit_id") @db.Uuid
-  lineNumber           Int      @map("line_number")
-  serviceCode          String   @map("service_code") @db.VarChar(20)
-  revenueCode          String?  @map("revenue_code") @db.VarChar(4)
-  modifier1            String?  @map("modifier1") @db.VarChar(5)
-  modifier2            String?  @map("modifier2") @db.VarChar(5)
-  serviceDate          DateTime @map("service_date") @db.Date
-  units                Decimal  @default(1) @db.Decimal(8, 2)
-  unitRate             Decimal  @map("unit_rate") @db.Decimal(10, 2)
-  chargeAmount         Decimal  @map("charge_amount") @db.Decimal(10, 2)
-  paidAmount           Decimal  @default(0) @map("paid_amount") @db.Decimal(10, 2)
-  adjustmentAmount     Decimal  @default(0) @map("adjustment_amount") @db.Decimal(10, 2)
-  diagnosisPointers    Int[]    @default([1]) @map("diagnosis_pointers")
-  placeOfService       String   @default("12") @map("place_of_service") @db.VarChar(2)
-  renderingProviderNpi String?  @map("rendering_provider_npi") @db.VarChar(10)
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId              String    @map("claim_id") @db.Uuid
+  visitId              String?   @map("visit_id") @db.Uuid
+  lineNumber           Int       @map("line_number")
+  serviceCode          String    @map("service_code") @db.VarChar(20)
+  revenueCode          String?   @map("revenue_code") @db.VarChar(4)
+  modifier1            String?   @map("modifier1") @db.VarChar(5)
+  modifier2            String?   @map("modifier2") @db.VarChar(5)
+  serviceDate          DateTime  @map("service_date") @db.Date
+  units                Decimal   @default(1) @db.Decimal(8, 2)
+  unitRate             Decimal   @map("unit_rate") @db.Decimal(10, 2)
+  chargeAmount         Decimal   @map("charge_amount") @db.Decimal(10, 2)
+  paidAmount           Decimal   @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  adjustmentAmount     Decimal   @default(0) @map("adjustment_amount") @db.Decimal(10, 2)
+  diagnosisPointers    Int[]     @default([1]) @map("diagnosis_pointers")
+  placeOfService       String    @default("12") @map("place_of_service") @db.VarChar(2)
+  renderingProviderNpi String?   @map("rendering_provider_npi") @db.VarChar(10)
   /// The part of the visit this line bills, when a shift crossing midnight is split into one line per day (D-069).
   evvStart             DateTime? @map("evv_start") @db.Timestamptz(6)
   evvEnd               DateTime? @map("evv_end") @db.Timestamptz(6)
   /// False once the claim is voided — the visit can then be billed again.
-  active               Boolean  @default(true)
-  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  active               Boolean   @default(true)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   claim Claim  @relation(fields: [claimId], references: [id], onDelete: Cascade)
   visit Visit? @relation(fields: [visitId], references: [id])
@@ -1102,8 +1103,9 @@ model Notification {
   deliveryStatus Json?     @map("delivery_status")
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  agency Agency @relation(fields: [agencyId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  agency     Agency                 @relation(fields: [agencyId], references: [id])
+  user       User                   @relation(fields: [userId], references: [id])
+  deliveries NotificationDelivery[]
 
   @@index([userId, isRead, createdAt(sort: Desc)])
   @@index([agencyId, createdAt(sort: Desc)])
@@ -1703,4 +1705,47 @@ model NotificationPreference {
 
   @@unique([userId, notificationType])
   @@map("notification_preferences")
+}
+
+/// Outbox for push / SMS / email: one row per notification and outside channel, sent by the delivery job with
+/// retries (D-071). No message text here — it's the notification's (PHI-free) title and body.
+model NotificationDelivery {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  notificationId    String    @map("notification_id") @db.Uuid
+  /// push | sms | email
+  channel           String    @db.VarChar(10)
+  /// pending | sending | sent | failed | skipped
+  status            String    @default("pending") @db.VarChar(10)
+  attempts          Int       @default(0)
+  nextAttemptAt     DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  /// When a job instance took the row (a row stuck in "sending" is taken again after a while).
+  claimedAt         DateTime? @map("claimed_at") @db.Timestamptz(6)
+  /// Provider error code/summary — never message text or contact details.
+  lastError         String?   @map("last_error") @db.VarChar(300)
+  providerMessageId String?   @map("provider_message_id") @db.VarChar(100)
+  sentAt            DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, channel])
+  @@index([status, nextAttemptAt])
+  @@map("notification_deliveries")
+}
+
+/// Phones signed in to the mobile app that can receive push notifications (Expo push tokens, D-071).
+model PushDevice {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  /// ExponentPushToken[…] — one phone; moves to whoever signed in on it last.
+  token      String   @unique @db.VarChar(255)
+  /// ios | android
+  platform   String   @db.VarChar(10)
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_devices")
 }

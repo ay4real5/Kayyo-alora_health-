@@ -25,6 +25,35 @@ export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 /** Alerts nobody can switch off (security and serious-incident alerts, D-066). */
 export const MANDATORY_NOTIFICATION_TYPES: readonly NotificationType[] = ['system'];
 
-/** Delivery channels. In-app works today; push, SMS and email arrive with P2-12 / P3-19. */
+/** Delivery channels. In-app always; push, SMS and email once the agency's accounts are connected (D-071). */
 export const NOTIFICATION_CHANNELS = ['inApp', 'push', 'sms', 'email'] as const;
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
+
+/** Channels outside the app, sent through the delivery outbox (D-071). */
+export type DeliveryChannel = 'push' | 'sms' | 'email';
+
+/**
+ * Which outside channels a type uses when the person hasn't chosen (DESIGN.md §13.2; types added since follow the
+ * closest listed one). Texts are kept for what can't wait: a new shift and a missed visit.
+ */
+export const DEFAULT_DELIVERY_CHANNELS: Record<NotificationType, readonly DeliveryChannel[]> = {
+  shift_reminder: ['push'],
+  shift_assigned: ['push', 'sms'],
+  shift_unassigned: ['push'],
+  shift_cancelled: ['push'],
+  shift_updated: ['push'],
+  open_shift: ['push'],
+  swap_requested: ['push'],
+  swap_decided: ['push'],
+  missed_visit: ['push', 'sms'],
+  late_arrival: [],
+  credential_expiry: ['email'],
+  auth_limit: ['email'],
+  claim_status: [],
+  message_received: ['push'],
+  document_signature: ['push', 'email'],
+  payroll_ready: ['email'],
+  time_off_decided: ['push'],
+  evv_correction_decided: ['push'],
+  system: ['email'],
+};

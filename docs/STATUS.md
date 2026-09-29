@@ -127,9 +127,10 @@
 
 ## In progress
 
-**P4-10 production packaging** — branch `task/P4-10-production-packaging`. Done (D-070): web and migration
-Dockerfiles, `docker-compose.prod.yml`, nginx template with PHI-safe logs, `TRUST_PROXY_HOPS`, `.env.production.example`,
-`docs/DEPLOYMENT.md`, CI builds/starts all images (Docker job green). **Left**: CI green after merging main → merge.
+**P2-12 groundwork — notification delivery** — branch `task/P2-12-notification-delivery` (from P4-10; merge P4-10 first).
+Done (D-071): outbox tables + migration `20260929030000_notification_delivery` (applied to Neon), senders (Twilio SMS,
+SendGrid email, Expo push — off until configured), `notify()` channel planning, delivery job, device registration
+(API + mobile), settings page shows connected channels, unit + e2e tests green. **Left**: full checks, push, CI, merge.
 
 ## Next up
 
@@ -147,6 +148,7 @@ owner asked for autonomous work: go straight on, check in with questions every ~
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P2-12 | Notification delivery outbox + SMS/email/push senders (off until keys), device registration. |
 | 2026-09-29 | Claude Code | P4-10 | Production images (web, migrate), prod compose, PHI-safe nginx, TRUST_PROXY_HOPS, DEPLOYMENT.md; CI builds them. |
 | 2026-09-29 | Claude Code | P4-09 | Verified Devin's forced-password-change work; CSV injection, CSP, load test + relationJoins. |
 | 2026-09-28 | Devin | P4-09 (in progress) | Forced-password-change enforcement written (unverified WIP); OWASP review findings in STATUS. Owner switched to Claude Code. |
