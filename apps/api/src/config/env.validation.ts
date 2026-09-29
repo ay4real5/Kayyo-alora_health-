@@ -202,15 +202,22 @@ export class EnvironmentVariables {
   TWILIO_WEBHOOK_BASE_URL?: string;
 
   /**
-   * Which email service sends (D-078): "ses" (Amazon SES — covered by the AWS BAA; recommended) or "sendgrid"
-   * (SendGrid does NOT sign a BAA — development only). Empty: SendGrid if its key is set, else email is off.
+   * Which email service sends (D-078, D-085): "azure" (Azure Communication Services — production, under the Microsoft
+   * BAA), "ses" (Amazon SES — AWS BAA; fallback) or "sendgrid" (NO BAA — development only). Empty: SendGrid if its key
+   * is set, else email is off.
    */
   @Transform(blankToUndefined)
   @IsOptional()
-  @IsEnum(['ses', 'sendgrid'])
-  EMAIL_PROVIDER?: 'ses' | 'sendgrid';
+  @IsEnum(['azure', 'ses', 'sendgrid'])
+  EMAIL_PROVIDER?: 'azure' | 'ses' | 'sendgrid';
 
-  /** Sender address for every email (a verified identity in SES / SendGrid). Falls back to SENDGRID_FROM_EMAIL. */
+  /** Azure Communication Services (EMAIL_PROVIDER=azure, D-085): "endpoint=https://….communication.azure.com/;accesskey=…". */
+  @Transform(blankToUndefined)
+  @IsOptional()
+  @Matches(/^endpoint=https:\/\/[^;]+;accesskey=.+$/i, { message: 'AZURE_COMMUNICATION_CONNECTION_STRING must look like endpoint=https://….communication.azure.com/;accesskey=…' })
+  AZURE_COMMUNICATION_CONNECTION_STRING?: string;
+
+  /** Sender address for every email (a verified sender in Azure / SES / SendGrid), a plain address. Falls back to SENDGRID_FROM_EMAIL. */
   @Transform(blankToUndefined)
   @IsOptional()
   @Matches(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, { message: 'EMAIL_FROM must be an email address' })
