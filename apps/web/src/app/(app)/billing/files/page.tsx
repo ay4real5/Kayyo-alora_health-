@@ -214,7 +214,7 @@ export default function ClaimFilesPage() {
         {files.data?.data.length === 0 && <p className="text-sm text-slate-500">No files yet.</p>}
         {files.data && files.data.data.length > 0 && (
           <table className="w-full text-left text-sm" aria-label="Claim files">
-            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
               <tr>
                 <th className="py-2 pr-4 font-medium">File</th>
                 <th className="py-2 pr-4 font-medium">Payer</th>

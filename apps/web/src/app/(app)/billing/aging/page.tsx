@@ -43,7 +43,7 @@ export default function AgingPage() {
               As of {formatDate(a.asOf)}: <strong className="text-slate-900">{money(a.total)}</strong> outstanding.
             </p>
             <table className="w-full text-left text-sm" aria-label="Aging">
-              <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+              <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
                 <tr>
                   <th className="py-2 pr-4 font-medium">Payer</th>
                   {a.buckets.map((b) => (

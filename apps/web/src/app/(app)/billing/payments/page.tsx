@@ -115,7 +115,7 @@ export default function PaymentsPage() {
               )}
               {open === p.id && (
                 <table className="mt-2 w-full text-left" aria-label="Payment details">
-                  <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                  <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
                     <tr>
                       <th className="py-1 pr-3 font-medium">Claim</th>
                       <th className="py-1 pr-3 font-medium">Result</th>

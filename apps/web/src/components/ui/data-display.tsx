@@ -44,7 +44,7 @@ export function DetailList({ items }: { items: [label: string, value: ReactNode]
     <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
       {items.map(([label, value]) => (
         <div key={label}>
-          <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
+          <dt className="text-xs font-medium uppercase tracking-wide text-slate-600">{label}</dt>
           <dd className="text-sm text-slate-900">{value === null || value === undefined || value === '' ? '—' : value}</dd>
         </div>
       ))}

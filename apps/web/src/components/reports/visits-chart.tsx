@@ -66,7 +66,7 @@ export function VisitsChart({ daily }: { daily: DailyVisits[] }) {
       {asTable ? (
         <div className="max-h-72 overflow-y-auto">
           <table className="w-full text-left text-sm" aria-label="Visits per day">
-            <thead className="sticky top-0 border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-500">
+            <thead className="sticky top-0 border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-600">
               <tr>
                 <th className="py-1.5 pr-4 font-medium">Date</th>
                 {SERIES.map((s) => (

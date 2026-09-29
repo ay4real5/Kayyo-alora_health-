@@ -93,7 +93,7 @@ export default function PayPeriodPage() {
         {p.stubs.length === 0 && <p className="text-sm text-slate-500">{p.status === 'open' ? 'Calculate to see pay.' : 'Nobody to pay in this period.'}</p>}
         {p.stubs.length > 0 && (
           <table className="w-full text-left text-sm" aria-label="Pay stubs">
-            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
               <tr>
                 <th className="py-2 pr-3 font-medium">Staff</th>
                 <th className="py-2 pr-3 text-right font-medium">Visits</th>

@@ -231,7 +231,7 @@ function SimpleTable({ label, head, rows, empty }: { label: string; head: string
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm" aria-label={label}>
-        <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+        <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
           <tr>
             {head.map((h) => (
               <th key={h} className="py-2 pr-4 font-medium">

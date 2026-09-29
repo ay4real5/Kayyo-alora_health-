@@ -150,7 +150,7 @@ export default function InvoicePage() {
       <Card className="p-5">
         <h2 className="mb-3 text-base font-semibold text-slate-900">Services</h2>
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">Date</th>
               <th className="py-2 pr-4 font-medium">Service</th>

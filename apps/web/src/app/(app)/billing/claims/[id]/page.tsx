@@ -105,7 +105,7 @@ export default function ClaimPage() {
       <Card className="p-4">
         <h2 className="mb-2 font-semibold text-slate-900">Lines</h2>
         <table className="w-full text-left text-sm" aria-label="Claim lines">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">#</th>
               <th className="py-2 pr-4 font-medium">Date</th>
