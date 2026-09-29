@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
+import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import type { ApiResult, RequestOptions } from './api';
 import { reminderId } from './reminders';
@@ -38,7 +39,7 @@ function prepare(): Promise<boolean> {
  */
 export async function scheduleClockOutReminder(visitId: string, at: Date): Promise<void> {
   try {
-    if (!(await prepare())) return;
+    if (!(await remindersEnabled()) || !(await prepare())) return;
     await Notifications.cancelScheduledNotificationAsync(reminderId(visitId)).catch(() => undefined);
     await Notifications.scheduleNotificationAsync({
       identifier: reminderId(visitId),
@@ -93,4 +94,16 @@ export async function unregisterForPush(request: Request): Promise<void> {
   pushToken = null;
   if (!token) return;
   await request(`/notifications/devices/${encodeURIComponent(token)}`, { method: 'DELETE' }).catch(() => undefined);
+}
+
+const REMINDERS_KEY = 'kayo.visitReminders';
+
+/** The caregiver's choice (Profile → Visit reminders), on unless switched off. Kept on this phone only. */
+export async function remindersEnabled(): Promise<boolean> {
+  return (await SecureStore.getItemAsync(REMINDERS_KEY).catch(() => null)) !== 'off';
+}
+
+export async function setRemindersEnabled(on: boolean): Promise<void> {
+  await SecureStore.setItemAsync(REMINDERS_KEY, on ? 'on' : 'off').catch(() => undefined);
+  if (!on) await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
 }

@@ -1,6 +1,7 @@
 import { checkPassword } from '@alora/shared';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text } from 'react-native';
+import { Alert, ScrollView, Text } from 'react-native';
 import { Button, ErrorText, Input, styles } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
 import { useOffline } from '@/lib/offline';
@@ -8,6 +9,11 @@ import type { Tokens } from '@/lib/session';
 
 /** Shown when the password was set by an administrator or has expired. */
 export default function ChangePasswordScreen() {
+  return <ChangePasswordForm required />;
+}
+
+/** The form: forced (`required`, before anything else) or chosen from Profile → Change password. */
+export function ChangePasswordForm({ required }: { required: boolean }) {
   const { request, passwordChanged } = useAuth();
   const { signOut } = useOffline();
   const [current, setCurrent] = useState('');
@@ -28,6 +34,10 @@ export default function ChangePasswordScreen() {
         body: { currentPassword: current, newPassword: next },
       });
       await passwordChanged(data);
+      if (!required) {
+        Alert.alert('Password changed', 'You were signed out on your other devices.');
+        router.back();
+      }
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -37,7 +47,11 @@ export default function ChangePasswordScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
-      <Text style={styles.subtitle}>Your password was set by an administrator or has expired. Choose a new one.</Text>
+      <Text style={styles.subtitle}>
+        {required
+          ? 'Your password was set by an administrator or has expired. Choose a new one.'
+          : 'Choose a new password. You stay signed in here; other devices are signed out.'}
+      </Text>
       <ErrorText>{error}</ErrorText>
       <Input label="Current password" value={current} onChangeText={setCurrent} secureTextEntry />
       <Input label="New password" value={next} onChangeText={setNext} secureTextEntry textContentType="newPassword" />
@@ -48,7 +62,7 @@ export default function ChangePasswordScreen() {
       ))}
       <Input label="Confirm new password" value={confirm} onChangeText={setConfirm} secureTextEntry />
       <Button title="Change password" onPress={() => void submit()} busy={busy} />
-      <Button title="Sign out" variant="secondary" onPress={signOut} />
+      {required && <Button title="Sign out" variant="secondary" onPress={signOut} />}
     </ScrollView>
   );
 }

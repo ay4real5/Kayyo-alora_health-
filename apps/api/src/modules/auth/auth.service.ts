@@ -43,6 +43,7 @@ export interface MeResult {
   is2faRequired: boolean;
   /** IANA timezone of the user's agency, e.g. America/Chicago — clients use it for "today". */
   agencyTimezone: string;
+  agency: { name: string; phone: string | null };
   /** The password was never set or is too old — only this endpoint and change-password work until it changes. */
   mustChangePassword: boolean;
   /** Unused backup codes, when 2FA is on — clients should warn when this gets low. */
@@ -211,7 +212,7 @@ export class AuthService {
   async me(auth: AuthUser): Promise<MeResult> {
     const user = await this.prisma.user.findFirst({
       where: { id: auth.userId, agencyId: auth.agencyId, isActive: true },
-      include: { agency: { select: { timezone: true } } },
+      include: { agency: { select: { timezone: true, name: true, phone: true } } },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -227,6 +228,8 @@ export class AuthService {
       is2faRequired: (await twoFactorPolicy(this.prisma, user.id)).mandatory,
       mustChangePassword: passwordChangeRequired(user.passwordChangedAt, this.passwordMaxAgeDays),
       agencyTimezone: user.agency.timezone,
+      // For "call the office" in the apps.
+      agency: { name: user.agency.name, phone: user.agency.phone },
       recoveryCodesRemaining: user.is2faEnabled ? await this.twoFactor.remainingRecoveryCodes(user.id) : null,
       roles: access.roles,
       permissions: [...access.permissions].sort(),

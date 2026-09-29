@@ -16,7 +16,15 @@ function Routes() {
   }
   const signedIn = status === 'signed-in';
   return (
-    <Stack screenOptions={{ headerTintColor: colors.brand }}>
+    <Stack
+      screenOptions={{
+        headerTintColor: colors.brand,
+        headerTitleStyle: { fontWeight: '700', color: colors.ink },
+        headerShadowVisible: false,
+        headerStyle: { backgroundColor: colors.bg },
+        contentStyle: { backgroundColor: colors.bg },
+      }}
+    >
       <Stack.Protected guard={status === 'signed-out'}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack.Protected>
@@ -27,7 +35,8 @@ function Routes() {
         <Stack.Screen name="change-password" options={{ title: 'New password', headerBackVisible: false }} />
       </Stack.Protected>
       <Stack.Protected guard={signedIn && !mustChangePassword}>
-        <Stack.Screen name="index" options={{ title: 'Today' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Today' }} />
+        <Stack.Screen name="password" options={{ title: 'Change password' }} />
         <Stack.Screen name="visit/[id]/index" options={{ title: 'Visit' }} />
         <Stack.Screen name="visit/[id]/tasks" options={{ title: 'Tasks' }} />
         <Stack.Screen name="visit/[id]/vitals" options={{ title: 'Vitals' }} />

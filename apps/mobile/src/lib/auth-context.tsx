@@ -10,6 +10,8 @@ export interface Me {
   firstName: string;
   lastName: string;
   agencyTimezone: string;
+  /** For "call the office" (D-080). */
+  agency?: { name: string; phone: string | null };
   is2faEnabled: boolean;
   is2faRequired: boolean;
   mustChangePassword: boolean;

@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@alora/shared": "*",
+    "@expo/vector-icons": "^15.1.1",
     "expo": "~57.0.25",
     "expo-constants": "~57.0.19",
     "expo-crypto": "~57.0.3",
+    "expo-linear-gradient": "~57.0.2",
     "expo-linking": "~57.0.11",
     "expo-local-authentication": "~57.0.3",
     "expo-location": "~57.0.20",
