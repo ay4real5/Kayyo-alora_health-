@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { todayInTimeZone, zonedTimeToUtc } from '@alora/shared';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
@@ -157,10 +158,13 @@ export class ClaimWorkflowService {
    * adjustments still count as owed while the denial is open (denied, appealed, or won and awaiting payment).
    */
   async aging(caller: AuthUser, query: AgingQueryDto) {
-    const asOf = query.asOf ?? (await this.clock.todayString(caller.agencyId));
+    // Dates are the agency's (D-036): "as of" ends at the agency's midnight, and a claim ages from its local date —
+    // using UTC dropped claims made in the evening (US time zones) from "today's" aging.
+    const zone = await this.clock.timezone(caller.agencyId);
+    const asOf = query.asOf ?? todayInTimeZone(zone);
     const [claims, invoices] = await Promise.all([
       this.prisma.claim.findMany({
-        where: { agencyId: caller.agencyId, status: { in: OUTSTANDING }, createdAt: { lt: new Date(`${addDays(asOf, 1)}T00:00:00Z`) } },
+        where: { agencyId: caller.agencyId, status: { in: OUTSTANDING }, createdAt: { lt: zonedTimeToUtc(addDays(asOf, 1), '00:00', zone) } },
         select: {
           totalCharges: true,
           totalPaid: true,
@@ -185,7 +189,7 @@ export class ClaimWorkflowService {
       const adjustments = denialOpen ? 0 : Number(c.totalAdjustments);
       const balance = money(Number(c.totalCharges) - Number(c.totalPaid) - adjustments - Number(c.patientResponsibility));
       if (balance <= 0.005) continue;
-      const from = (c.submittedAt ?? c.createdAt).toISOString().slice(0, 10);
+      const from = todayInTimeZone(zone, c.submittedAt ?? c.createdAt);
       const row = byPayer.get(c.payer.id) ?? { id: c.payer.id, name: c.payer.name, buckets: [0, 0, 0, 0, 0], total: 0 };
       const b = bucketOf(Math.max(0, daysBetween(from, asOf)));
       row.buckets[b] = money(row.buckets[b]! + balance);
