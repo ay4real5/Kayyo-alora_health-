@@ -1,0 +1,68 @@
+# Reverse proxy in front of the dashboard and the API (D-070). One host name: the dashboard at /, the API (and its
+# Socket.IO endpoint /api/v1/socket.io) at /api/. ${DOMAIN} is filled in from the environment at container start.
+#
+# PHI: URLs can carry search terms and record ids (D-035), so the access log records the path WITHOUT the query
+# string ($uri, not $request), no referrer, and the error log only records critical errors (its entries quote the
+# full request line).
+
+log_format phi_safe '$remote_addr [$time_iso8601] "$request_method $uri $server_protocol" $status '
+                    '$body_bytes_sent $request_time "$http_user_agent"';
+# The image's nginx.conf logs the full request line ("main" format) at the http level; each server below replaces
+# that with phi_safe (a server-level access_log overrides the inherited one).
+
+server_tokens off;
+# Documents are at most 10 MB (MAX_DOCUMENT_BYTES); 835 files at most 6 MB.
+client_max_body_size 12m;
+
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+server {
+  listen 80;
+  access_log /dev/stdout phi_safe;
+  error_log /dev/stderr crit;
+  server_name ${DOMAIN};
+  # Certificate renewal (ACME http-01) can drop files here; everything else goes to HTTPS.
+  location /.well-known/acme-challenge/ { root /var/www/certbot; }
+  location / { return 301 https://$host$request_uri; }
+}
+
+server {
+  listen 443 ssl;
+  access_log /dev/stdout phi_safe;
+  error_log /dev/stderr crit;
+  http2 on;
+  server_name ${DOMAIN};
+
+  ssl_certificate     /etc/nginx/certs/fullchain.pem;
+  ssl_certificate_key /etc/nginx/certs/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+  ssl_session_timeout 1d;
+  ssl_session_cache shared:TLS:10m;
+  ssl_session_tickets off;
+
+  add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+
+  proxy_http_version 1.1;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  # Replace (not append) so a client can't forge its address; the API trusts exactly one hop (TRUST_PROXY_HOPS=1).
+  proxy_set_header X-Forwarded-For $remote_addr;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection $connection_upgrade;
+
+  location /api/ {
+    proxy_pass http://api:3001;
+    # Socket.IO keeps connections open; the API closes them itself when the token expires.
+    proxy_read_timeout 1h;
+    proxy_buffering off;
+  }
+
+  location / {
+    proxy_pass http://web:3000;
+  }
+}

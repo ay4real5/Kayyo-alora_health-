@@ -127,17 +127,15 @@
 
 ## In progress
 
-**P4-04 Virginia EVV on claims** — branch `task/P4-04-virginia-evv`. Done (D-069): `edi/evv-virginia.ts` rules +
-837P/837I segments, payer setting `evvClaimProfile = 'va_dmas'` (migration `20260929010000_payer_evv_claim_profile`,
-applied to Neon), EDI preview lists missing EVV data with the DMAS edit numbers, Billing setup "EVV on claims" column,
-unit tests + `test/evv-virginia.e2e-spec.ts` (green). P4-04b too: overnight shifts split per day (migration
-`20260929020000_claim_line_evv_window`, applied), modifier 76, readiness check `evv_claim_data`; billing e2e files
-green. **Left**: full checks, push, CI, merge.
+**P4-10 production packaging** — branch `task/P4-10-production-packaging`. Done (D-070): web and migration
+Dockerfiles, `docker-compose.prod.yml`, nginx template with PHI-safe logs, `TRUST_PROXY_HOPS`, `.env.production.example`,
+`docs/DEPLOYMENT.md`, CI builds/starts all images (Docker job green). **Left**: CI green after merging main → merge.
 
 ## Next up
 
-P4-04c monthly hour rounding (after Q-012); P4-10 production packaging (hosting still undecided — prepare what
-doesn't depend on it). The owner asked for autonomous work: go straight on, check in with questions every ~6 hours.
+P2-12/P3-19 groundwork that needs no accounts: a database outbox for push/SMS/email with senders that stay off until
+keys exist (Twilio, SendGrid, Expo push). P4-04c after Q-012. Most of what's left needs the owner (see below). The
+owner asked for autonomous work: go straight on, check in with questions every ~6 hours.
 
 ## Blockers / waiting on human
 
@@ -149,6 +147,7 @@ doesn't depend on it). The owner asked for autonomous work: go straight on, chec
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-29 | Claude Code | P4-10 | Production images (web, migrate), prod compose, PHI-safe nginx, TRUST_PROXY_HOPS, DEPLOYMENT.md; CI builds them. |
 | 2026-09-29 | Claude Code | P4-09 | Verified Devin's forced-password-change work; CSV injection, CSP, load test + relationJoins. |
 | 2026-09-28 | Devin | P4-09 (in progress) | Forced-password-change enforcement written (unverified WIP); OWASP review findings in STATUS. Owner switched to Claude Code. |
 | 2026-09-28 | Devin | P4-08 | Audit-log partitions + append-only trigger + retention job; 5 unit + 3 e2e, drift check clean. |

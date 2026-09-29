@@ -20,6 +20,9 @@ export function setupApp(app: INestApplication): INestApplication {
   const config = app.get<ConfigService<EnvironmentVariables, true>>(ConfigService);
 
   app.setGlobalPrefix(API_PREFIX);
+  // Behind nginx / a load balancer: take the client IP (rate limits, audit log) from X-Forwarded-For (D-070).
+  const proxyHops = config.get('TRUST_PROXY_HOPS', { infer: true });
+  if (proxyHops > 0) (app as NestExpressApplication).set('trust proxy', proxyHops);
   // 835 remittance uploads can be a few MB (services cap their own sizes; D-054). Express's default is 100 kB.
   (app as NestExpressApplication).useBodyParser('json', { limit: '6mb' });
   app.use(correlationIdMiddleware);
