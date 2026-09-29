@@ -1177,7 +1177,6 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   pool, now configurable: **`DATABASE_POOL_SIZE`** (default 10). Latency here is dominated by the laptop↔Neon
   distance; in production the API must run in the same region as the database.
 
-<<<<<<< HEAD
 ### D-069 — Virginia EVV: data on the claim, no aggregator (P4-04)
 2026-09-29 · Claude Code
 - **Virginia has no EVV aggregator** (DMAS EVV FAQ, 11/2023: "Virginia does not use the term aggregator"). It is a
@@ -1212,7 +1211,6 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Not done yet** (ROADMAP P4-04b): personal care hours round per **month** (DMAS: whole 1-hour units, accrued
   minutes carried forward, 30+ leftover minutes round up at month end) — today `hour` codes bill quarter hours per
   visit; the UB modifier for live-in / exempt settings.
->>>>>>> main
 
 ### D-070 — Production packaging (P4-10)
 2026-09-29 · Claude Code
@@ -1239,7 +1237,6 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Verified locally: the standalone dashboard server runs and sends the nonce CSP; the migration recipe (same Prisma
   and dotenv versions, same files) reports "Database schema is up to date" against the dev database. Docker itself
   isn't run on the owner's laptop (D-011) — CI builds the images.
-=======
 
 ### D-071 — Push / SMS / email delivery: database outbox, providers off until connected (P2-12, P3-19 groundwork)
 2026-09-29 · Claude Code
@@ -1289,7 +1286,6 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Web: "Forgot your password?" on the sign-in page, `/forgot-password`, `/reset-password` (reads the fragment with
   `useSyncExternalStore`, clears it from history after use).
 
-<<<<<<< HEAD
 ### D-073 — Telephony EVV: Twilio voice webhooks (P2-13)
 2026-09-29 · Claude Code
 - **Flow**: the caregiver calls the agency's check-in number **from the patient's home phone** → the caller ID must
@@ -1311,7 +1307,6 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   `hasPhoneCheckInCode`). Stored plain so it can be looked up; a leaked code alone is useless without calling from
   that patient's home phone during that caregiver's visit. 6+ digits recommended.
 - Needs the owner's Twilio account + BAA (P2-11); tested with signed fake requests.
->>>>>>> main
 
 ### D-074 — Accessibility checks in the browser suite
 2026-09-29 · Claude Code
@@ -1325,7 +1320,6 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   `slate-400` (or lighter) text on white.**
 - Automated checks catch about a third of real problems; a manual keyboard + screen-reader pass (NVDA/VoiceOver) is
   still worth doing before launch.
-=======
 
 ### D-075 — Product name: Kayo Health
 2026-09-29 · owner (answer to Q-004) + Claude Code
