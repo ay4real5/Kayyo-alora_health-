@@ -175,7 +175,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
           </>
         )}
       </main>
-      <footer className="px-4 py-4 text-center text-xs text-slate-500">
+      <footer className="px-4 py-4 text-center text-xs text-slate-600">
         For emergencies call 911. Questions about care: {me.data.agency.phone ?? 'call your agency'}.
       </footer>
     </div>
