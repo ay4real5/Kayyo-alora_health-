@@ -140,6 +140,8 @@ owner asked for autonomous work: go straight on, check in with questions every ~
 
 ## Blockers / waiting on human
 
+The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security clean-up, Virginia Medicaid set-up).
+
 - Q-006 hosting (owner deferred; needed before P4-10). Google Maps key (owner will provide).
 - Q-009 background location during visits — default is no (D-049).
 - P3-08 clearinghouse account (Availity/Waystar etc.) + BAA — needed to actually submit claims.
