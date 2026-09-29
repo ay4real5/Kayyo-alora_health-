@@ -25,6 +25,20 @@ patient details, but the providers still see phone numbers and email addresses.
 | [ ] **Expo (EAS)** account, **Apple Developer** and **Google Play** accounts | Publish the caregiver app; push notifications | App built; push registers once the app has an EAS project id |
 | [ ] **Map tiles** for production (Google Maps key, or a paid OpenStreetMap tile provider) | Live monitor map; later, address → map point | Uses free OpenStreetMap tiles now — fine for testing only |
 
+### Estimated monthly costs (small agency, September 2026 list prices — check before buying)
+
+| Item | Estimate |
+|---|---|
+| AWS: API + dashboard containers (Fargate, 0.5 vCPU / 1 GB each, $0.04048 per vCPU-hour + $0.004445 per GB-hour) | ≈ $36 |
+| AWS: PostgreSQL (RDS db.t4g.small, ≈ $0.032/hour, + 20 GB storage and backups); about double for a standby copy (Multi-AZ) | ≈ $30–60 |
+| AWS: load balancer, logs, network | ≈ $25–60 |
+| Amazon SES email ($0.10 per 1,000) | ≈ $1 |
+| **Hosting total on AWS** | **≈ $90–160 / month** (Aptible instead: $499 / month flat) |
+| Twilio: 2 numbers ($1.15 each), texts ≈ $0.011 each incl. carrier fee, A2P 10DLC campaign ≈ $10 / month, check-in call minutes | ≈ $20–40 / month |
+| Clearinghouse: Office Ally (claims free, remittances ≈ $35 / month) or Availity (free for sponsoring payers; ≈ $35 / month for more payers); Waystar by quote | ≈ $0–35 / month |
+| Apple Developer / Google Play / Expo | $99 / year, $25 once, free plan |
+| Domain + certificate | ≈ $15 / year (certificate free on AWS) |
+
 ## 3. Security clean-up (P4-12)
 
 - [ ] Make the GitHub repository **private**.
