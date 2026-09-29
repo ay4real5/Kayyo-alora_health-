@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -23,6 +24,16 @@ export enum AppEnv {
 }
 
 const blankToUndefined = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
+/** Values pasted into a portal often carry stray spaces; blank → undefined. */
+const trimmed = ({ value }: { value: unknown }) => {
+  const v = typeof value === 'string' ? value.trim() : value;
+  return v === '' ? undefined : v;
+};
+/** Provider names: also case-insensitive ("Azure" → "azure"). */
+const choice = ({ value }: { value: unknown }) => {
+  const v = trimmed({ value });
+  return typeof v === 'string' ? v.toLowerCase() : v;
+};
 const toNumber = ({ value }: { value: unknown }) =>
   value === undefined || value === '' ? undefined : Number(value);
 
@@ -206,19 +217,19 @@ export class EnvironmentVariables {
    * BAA), "ses" (Amazon SES — AWS BAA; fallback) or "sendgrid" (NO BAA — development only). Empty: SendGrid if its key
    * is set, else email is off.
    */
-  @Transform(blankToUndefined)
+  @Transform(choice)
   @IsOptional()
-  @IsEnum(['azure', 'ses', 'sendgrid'])
+  @IsIn(['azure', 'ses', 'sendgrid'])
   EMAIL_PROVIDER?: 'azure' | 'ses' | 'sendgrid';
 
   /** Azure Communication Services (EMAIL_PROVIDER=azure, D-085): "endpoint=https://….communication.azure.com/;accesskey=…". */
-  @Transform(blankToUndefined)
+  @Transform(trimmed)
   @IsOptional()
   @Matches(/^endpoint=https:\/\/[^;]+;accesskey=.+$/i, { message: 'AZURE_COMMUNICATION_CONNECTION_STRING must look like endpoint=https://….communication.azure.com/;accesskey=…' })
   AZURE_COMMUNICATION_CONNECTION_STRING?: string;
 
   /** Sender address for every email (a verified sender in Azure / SES / SendGrid), a plain address. Falls back to SENDGRID_FROM_EMAIL. */
-  @Transform(blankToUndefined)
+  @Transform(trimmed)
   @IsOptional()
   @Matches(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, { message: 'EMAIL_FROM must be an email address' })
   EMAIL_FROM?: string;
@@ -241,9 +252,9 @@ export class EnvironmentVariables {
   SENDGRID_FROM_EMAIL?: string;
 
   /** Push notifications to the mobile app: "expo" (Expo's push service) or empty for off. */
-  @Transform(blankToUndefined)
+  @Transform(choice)
   @IsOptional()
-  @IsEnum(['expo'])
+  @IsIn(['expo'])
   PUSH_PROVIDER?: 'expo';
 
   /** Only when the Expo project requires authenticated push ("enhanced security"). */

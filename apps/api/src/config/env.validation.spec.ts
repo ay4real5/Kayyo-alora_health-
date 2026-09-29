@@ -96,4 +96,18 @@ describe('validateEnv', () => {
       validateEnv({ ACCESS_TOKEN_TTL_MINUTES: '15', SESSION_IDLE_TIMEOUT_MINUTES: '15' }),
     ).toThrow(/must be greater than ACCESS_TOKEN_TTL_MINUTES/);
   });
+
+  it('accepts provider names with stray spaces or capitals, and lists the allowed values when wrong', () => {
+    const env = validateEnv({
+      EMAIL_PROVIDER: ' Azure ',
+      EMAIL_FROM: 'DoNotReply@example.test ',
+      AZURE_COMMUNICATION_CONNECTION_STRING: ' endpoint=https://fake.communication.azure.com/;accesskey=ZmFrZQ== ',
+      PUSH_PROVIDER: 'Expo',
+    });
+    expect(env.EMAIL_PROVIDER).toBe('azure');
+    expect(env.EMAIL_FROM).toBe('DoNotReply@example.test');
+    expect(env.AZURE_COMMUNICATION_CONNECTION_STRING).toBe('endpoint=https://fake.communication.azure.com/;accesskey=ZmFrZQ==');
+    expect(env.PUSH_PROVIDER).toBe('expo');
+    expect(() => validateEnv({ EMAIL_PROVIDER: 'azur' })).toThrow(/EMAIL_PROVIDER must be one of the following values: azure, ses, sendgrid/);
+  });
 });
