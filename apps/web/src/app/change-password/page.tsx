@@ -9,6 +9,7 @@ import { Field } from '@/components/ui/field';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth/auth-provider';
 import type { SessionTokens } from '@/lib/auth/types';
+import { AuthLayout } from '@/components/layout/auth-layout';
 
 function ChangePasswordForm() {
   const { status, request, adoptTokens } = useAuth();
@@ -49,8 +50,8 @@ function ChangePasswordForm() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6">
+    <AuthLayout>
+      <Card className="w-full p-6 sm:p-8">
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Change your password</h1>
         {required && (
           <Alert tone="warning" className="my-4">
@@ -77,7 +78,7 @@ function ChangePasswordForm() {
           </Button>
         </form>
       </Card>
-    </main>
+    </AuthLayout>
   );
 }
 

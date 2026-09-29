@@ -76,7 +76,7 @@ export default function EvvPage() {
             {records.data?.data.map((r) => (
               <tr key={r.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/evv/${r.id}`} className="font-medium text-teal-800 hover:underline">
+                  <Link href={`/evv/${r.id}`} className="font-medium text-violet-800 hover:underline">
                     {formatDate(r.serviceDate)}
                   </Link>
                 </td>

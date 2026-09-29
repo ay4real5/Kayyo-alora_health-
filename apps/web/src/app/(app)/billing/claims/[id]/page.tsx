@@ -63,7 +63,7 @@ export default function ClaimPage() {
           items={[
             [
               'Patient',
-              <Link key="p" href={`/patients/${c.patient.id}`} className="text-teal-800 hover:underline">
+              <Link key="p" href={`/patients/${c.patient.id}`} className="text-violet-800 hover:underline">
                 {c.patient.lastName}, {c.patient.firstName} {c.patient.mrn ? `(${c.patient.mrn})` : ''}
               </Link>,
             ],
@@ -287,7 +287,7 @@ function WorkflowCard({ claim: c }: { claim: Claim }) {
       {c.originalClaimId && (
         <p className="text-sm text-slate-700">
           Corrected claim replacing{' '}
-          <Link href={`/billing/claims/${c.originalClaimId}`} className="text-teal-800 underline">
+          <Link href={`/billing/claims/${c.originalClaimId}`} className="text-violet-800 underline">
             the original
           </Link>
           .

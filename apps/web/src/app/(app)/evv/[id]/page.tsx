@@ -90,7 +90,7 @@ export default function EvvRecordPage() {
           <>
             {formatDate(r.serviceDate)} · {r.staff.firstName} {r.staff.lastName} ({r.staff.discipline}) with{' '}
             {r.patient.firstName} {r.patient.lastName} ·{' '}
-            <Link href={`/schedule/visits/${r.visit.id}`} className="text-teal-800 underline">
+            <Link href={`/schedule/visits/${r.visit.id}`} className="text-violet-800 underline">
               {humanize(r.visit.visitType)} visit, {formatTime(r.visit.scheduledStart)}–{formatTime(r.visit.scheduledEnd)}
             </Link>
           </>

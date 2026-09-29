@@ -50,7 +50,7 @@ export default function PortalDocuments() {
                   {d.isSigned && ' · signed'}
                 </span>
               </span>
-              <button type="button" className="text-sm text-teal-800 underline" onClick={() => download.mutate(d)}>
+              <button type="button" className="text-sm text-violet-800 underline" onClick={() => download.mutate(d)}>
                 Download
               </button>
             </li>

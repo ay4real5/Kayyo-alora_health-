@@ -70,7 +70,7 @@ export default function PortalMessages() {
                   {new Date(m.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                 </span>
                 <span
-                  className={`whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${mine ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-900'}`}
+                  className={`whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${mine ? 'bg-violet-700 text-white' : 'bg-slate-100 text-slate-900'}`}
                 >
                   {m.content}
                 </span>
@@ -88,7 +88,7 @@ export default function PortalMessages() {
             required
             maxLength={5000}
             rows={4}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-700/20"
           />
           <div>
             <Button type="submit" disabled={send.isPending}>

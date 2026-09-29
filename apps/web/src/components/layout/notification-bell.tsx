@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useLiveSocket } from '@/lib/realtime';
 import type { AppNotification } from '@/lib/types/evv';
+import { Bell } from 'lucide-react';
 
 /**
  * The in-app inbox in the header: unread count, the latest ten, mark all read. New notifications arrive live over
@@ -64,10 +65,10 @@ export function NotificationBell() {
         aria-label={count ? `Notifications, ${count} unread` : 'Notifications'}
         onClick={() => setOpen((o) => !o)}
       >
-        <span aria-hidden>🔔</span>
+        <Bell aria-hidden className="h-5 w-5 text-slate-600" />
         {count > 0 && (
           <span
-            className="rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white"
+            className="rounded-full bg-fuchsia-600 px-1.5 text-xs font-semibold text-white"
             aria-hidden
           >
             {count > 99 ? '99+' : count}
@@ -88,7 +89,7 @@ export function NotificationBell() {
             {count > 0 && (
               <button
                 type="button"
-                className="text-xs text-teal-800 underline"
+                className="text-xs text-violet-800 underline"
                 onClick={() => markAll.mutate()}
               >
                 Mark all read
@@ -101,7 +102,7 @@ export function NotificationBell() {
             {latest.data?.map((n) => (
               <li
                 key={n.id}
-                className={`rounded-md p-2 text-sm ${n.isRead ? 'text-slate-600' : 'bg-teal-50 text-slate-900'}`}
+                className={`rounded-md p-2 text-sm ${n.isRead ? 'text-slate-600' : 'bg-violet-50 text-slate-900'}`}
               >
                 <p className="font-medium">{n.title}</p>
                 {n.body && <p className="text-xs">{n.body}</p>}

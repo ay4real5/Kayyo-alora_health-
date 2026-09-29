@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
 import { ApiError, apiRequest } from '@/lib/api';
+import { AuthLayout } from '@/components/layout/auth-layout';
 
 /** "Forgot password" (D-072): the answer never says whether the address has an account. */
 export default function ForgotPasswordPage() {
@@ -32,8 +33,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6">
+    <AuthLayout>
+      <Card className="w-full p-6 sm:p-8">
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Forgot your password?</h1>
         {result ? (
           <div role="status" className="mt-4 flex flex-col gap-4 text-sm text-slate-700">
@@ -48,7 +49,7 @@ export default function ForgotPasswordPage() {
                 for you.
               </p>
             )}
-            <Link href="/login" className="text-teal-800 underline">
+            <Link href="/login" className="text-violet-800 underline">
               Back to sign in
             </Link>
           </div>
@@ -61,13 +62,13 @@ export default function ForgotPasswordPage() {
               <Button type="submit" disabled={busy}>
                 {busy ? 'Sending…' : 'Send reset link'}
               </Button>
-              <Link href="/login" className="text-sm text-teal-800 underline">
+              <Link href="/login" className="text-sm text-violet-800 underline">
                 Back to sign in
               </Link>
             </form>
           </>
         )}
       </Card>
-    </main>
+    </AuthLayout>
   );
 }

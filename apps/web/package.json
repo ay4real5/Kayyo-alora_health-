@@ -14,6 +14,7 @@
     "@alora/shared": "*",
     "@tanstack/react-query": "^5.104.0",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.48.0",
     "next": "16.3.6",
     "qrcode-generator": "^2.0.4",
     "react": "19.2.8",

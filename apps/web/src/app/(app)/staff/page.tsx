@@ -98,7 +98,7 @@ export default function StaffPage() {
             {staff.data?.data.map((s) => (
               <tr key={s.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/staff/${s.id}`} className="font-medium text-teal-800 hover:underline">
+                  <Link href={`/staff/${s.id}`} className="font-medium text-violet-800 hover:underline">
                     {s.lastName}, {s.firstName}
                   </Link>
                 </td>

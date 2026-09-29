@@ -1,11 +1,26 @@
 @import "tailwindcss";
 
+/* Kayo Health theme (D-079): indigo & violet, Inter, soft grey canvas, white rounded cards. */
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+  --color-canvas: #f7f7fb;
+  --color-ink: #1e1b4b;
+  --shadow-card: 0 1px 2px rgb(30 27 75 / 0.04), 0 4px 16px rgb(30 27 75 / 0.05);
+  --shadow-lift: 0 2px 4px rgb(30 27 75 / 0.06), 0 12px 32px rgb(30 27 75 / 0.1);
+}
+
 body {
-  background: #f8fafc;
+  background: var(--color-canvas);
   color: #0f172a;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Thin, quiet scrollbars in the sidebar and tables. */
+.scroll-quiet {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.15) transparent;
 }

@@ -59,7 +59,7 @@ export function VisitsChart({ daily }: { daily: DailyVisits[] }) {
             </li>
           ))}
         </ul>
-        <button type="button" className="text-xs text-teal-800 underline" onClick={() => setAsTable((v) => !v)}>
+        <button type="button" className="text-xs text-violet-800 underline" onClick={() => setAsTable((v) => !v)}>
           {asTable ? 'Show chart' : 'Show as table'}
         </button>
       </div>

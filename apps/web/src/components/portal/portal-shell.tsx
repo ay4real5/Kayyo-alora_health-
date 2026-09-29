@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
+import { BrandMark } from '@/components/layout/app-shell';
 import { ErrorAlert } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
 
@@ -94,27 +94,34 @@ export function PortalShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div>
-            <p className="text-lg font-semibold text-teal-800">{me.data.agency.name}</p>
-            <p className="text-xs text-slate-600">Patient &amp; family portal</p>
+    <div className="flex min-h-screen flex-col">
+      <header className="bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-800 text-white">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+          <div className="flex items-center gap-3">
+            <BrandMark className="h-10 w-10 text-base" />
+            <div className="leading-tight">
+              <p className="text-lg font-semibold">{me.data.agency.name}</p>
+              <p className="text-xs text-indigo-200">Patient &amp; family portal · Kayo Health</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-slate-700 sm:inline">
+            <span className="hidden text-sm text-indigo-100 sm:inline">
               {me.data.firstName} {me.data.lastName}
             </span>
-            <Link href="/change-password" className="text-sm text-slate-600 underline">
+            <Link href="/change-password" className="text-sm text-indigo-100 underline hover:text-white">
               Password
             </Link>
-            <Button variant="secondary" onClick={() => void logout()}>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="rounded-xl bg-white/10 px-3.5 py-2 text-sm font-medium text-white ring-1 ring-white/20 transition-colors hover:bg-white/20"
+            >
               Sign out
-            </Button>
+            </button>
           </div>
         </div>
         {patient && (
-          <nav aria-label="Portal" className="mx-auto flex max-w-4xl flex-wrap gap-1 px-4 pb-2">
+          <nav aria-label="Portal" className="mx-auto flex max-w-4xl flex-wrap gap-1 px-4 pb-3">
             {NAV.map((item) => {
               const active = item.href === '/portal' ? pathname === '/portal' : pathname.startsWith(item.href);
               return (
@@ -122,7 +129,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`rounded-md px-3 py-2 text-sm ${active ? 'bg-teal-50 font-medium text-teal-900' : 'text-slate-700 hover:bg-slate-100'}`}
+                  className={`rounded-xl px-3.5 py-2 text-sm transition-colors ${active ? 'bg-white font-medium text-indigo-950 shadow-sm' : 'text-indigo-100 hover:bg-white/10 hover:text-white'}`}
                 >
                   {item.label}
                 </Link>
@@ -138,9 +145,9 @@ export function PortalShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-4xl flex-1 p-4">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
         {!patient ? (
-          <p className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-700">
+          <p className="rounded-2xl border border-slate-200/70 bg-white p-6 text-sm text-slate-700 shadow-[var(--shadow-card)]">
             Your account isn&apos;t linked to a patient right now. Please call {me.data.agency.name}
             {me.data.agency.phone ? ` at ${me.data.agency.phone}` : ''}.
           </p>

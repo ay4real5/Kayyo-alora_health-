@@ -9,6 +9,7 @@ import { Field } from '@/components/ui/field';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth/auth-provider';
 import type { LoginOutcome } from '@/lib/auth/types';
+import { AuthLayout } from '@/components/layout/auth-layout';
 
 const REASONS: Record<string, string> = {
   idle: 'You were signed out after 15 minutes without activity.',
@@ -67,11 +68,11 @@ function LoginForm() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6">
-        <h1 className="text-xl font-semibold text-slate-900">Kayo Health</h1>
-        <p className="mb-6 text-sm text-slate-600">
-          {step === 'password' ? 'Sign in to your agency account' : 'Two-step verification'}
+    <AuthLayout>
+      <Card className="w-full p-6 sm:p-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{step === 'password' ? 'Sign in to Kayo Health' : 'Two-step verification'}</h1>
+        <p className="mb-6 mt-1 text-sm text-slate-500">
+          {step === 'password' ? 'Use your agency email and password' : 'Enter the code from your authenticator app'}
         </p>
 
         {reason && REASONS[reason] && step === 'password' && (
@@ -86,7 +87,7 @@ function LoginForm() {
             <>
               <Field label="Email" name="email" type="email" autoComplete="username" required autoFocus />
               <Field label="Password" name="password" type="password" autoComplete="current-password" required />
-              <Link href="/forgot-password" className="-mt-2 self-start text-sm text-teal-800 underline">
+              <Link href="/forgot-password" className="-mt-2 self-start text-sm text-violet-800 underline">
                 Forgot your password?
               </Link>
             </>
@@ -105,7 +106,7 @@ function LoginForm() {
               />
               <button
                 type="button"
-                className="self-start text-sm text-teal-800 underline"
+                className="self-start text-sm text-violet-800 underline"
                 onClick={() => setUseRecovery((v) => !v)}
               >
                 {useRecovery ? 'Use my authenticator app instead' : "I don't have my phone — use a backup code"}
@@ -117,7 +118,7 @@ function LoginForm() {
           </Button>
         </form>
       </Card>
-    </main>
+    </AuthLayout>
   );
 }
 

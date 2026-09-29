@@ -368,7 +368,7 @@ function RatesCard() {
                   ) : can('billing:update') ? (
                     <button
                       type="button"
-                      className="text-teal-800 underline"
+                      className="text-violet-800 underline"
                       onClick={() => {
                         const endDate = window.prompt('Last day of this rate (YYYY-MM-DD)');
                         if (endDate) end.mutate({ id: r.id, endDate });

@@ -98,7 +98,7 @@ export default function MonitorPage() {
           <span>
             {data ? `Today, ${data.date}` : 'Loading…'} ·{' '}
             <span
-              className={live === 'live' ? 'text-teal-700' : 'text-amber-700'}
+              className={live === 'live' ? 'text-violet-700' : 'text-amber-700'}
               aria-live="polite"
             >
               {live === 'live' ? '● Live' : live === 'connecting' ? 'Connecting…' : 'Reconnecting…'}
@@ -162,7 +162,7 @@ export default function MonitorPage() {
                       >
                         <Link
                           href={`/schedule/visits/${a.visitId}`}
-                          className="text-teal-800 underline"
+                          className="text-violet-800 underline"
                         >
                           {a.staff.firstName} {a.staff.lastName} ({a.staff.discipline}) with{' '}
                           {a.patient.firstName} {a.patient.lastName}
@@ -227,7 +227,7 @@ export default function MonitorPage() {
                       <li key={u.visitId}>
                         <Link
                           href={`/schedule/visits/${u.visitId}`}
-                          className="text-teal-800 underline"
+                          className="text-violet-800 underline"
                         >
                           {formatTime(u.scheduledStart)} {humanize(u.visitType)} —{' '}
                           {u.patient.firstName} {u.patient.lastName}
@@ -291,7 +291,7 @@ function Count({
       : tone === 'amber'
         ? 'text-amber-700'
         : tone === 'teal'
-          ? 'text-teal-700'
+          ? 'text-violet-700'
           : 'text-slate-900';
   const body = (
     <Card className="flex flex-col gap-1 p-3">
