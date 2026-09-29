@@ -7,6 +7,9 @@ import type { Page } from '@playwright/test';
  * keyboard and screen-reader testing by people is still needed — but they keep regressions out.
  */
 export async function wcagViolations(page: Page) {
+  // A button still under the mouse after a click is mid hover-transition; check the resting colours.
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(300);
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .exclude('.leaflet-container')
