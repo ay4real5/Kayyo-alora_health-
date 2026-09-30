@@ -59,7 +59,13 @@
           "useSQLCipher": true
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Primordial Health to access your photos to send them in messages."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
