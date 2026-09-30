@@ -1504,3 +1504,18 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - **Push** stays on Expo's push service (messages carry no patient details).
 - A service-principal/managed-identity login for email (no connection string) is possible later. It needs a custom
   role on the Communication Services resource.
+
+### D-086 — Email: an HTML version alongside plain text; deliverability steps
+2026-09-30 · owner ("email came in but it went to junk" → "do all") + Claude Code
+- Every email now goes out with **both a plain-text and an HTML version** (all providers: Azure, SES, SendGrid).
+  - The HTML is built only from the plain text (`email-html.ts`). Everything in it is escaped. It has a branded
+    header, and a line that is only a link (the reset link) becomes a button. The footer says the message is
+    automated. So the HTML can never say more than the PHI-free text.
+- Deliverability for the new domain:
+  - SPF, DKIM and DMARC (`p=none`) are verified.
+  - First emails to Outlook.com landed in Junk. That is expected for a new sender; "Not junk" and adding the sender to
+    contacts help.
+  - The owner checks `Authentication-Results` (spf/dkim/dmarc=pass). Once emails pass consistently for a few weeks,
+    tighten DMARC to `p=quarantine`, not before: tightening while anything fails would junk the agency's own mail.
+  - Sender name: Azure doesn't allow renaming the default `DoNotReply` sender in the portal. A custom MailFrom address
+    with the display name "Primordial Health" needs an Azure support request (quota for custom MailFrom).

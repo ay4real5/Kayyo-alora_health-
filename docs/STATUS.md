@@ -137,8 +137,10 @@ password and set up 2FA. The DB firewall allows only Azure services (temporary c
 The owner's next steps are in [MOBILE-RELEASE.md](MOBILE-RELEASE.md) (P4-15). Once the owner has built the app, the
 screens still need checking on a real phone.
 
-**Not connected yet**: email (Azure Communication Services — D-085; code ready, owner sets it up), Twilio (SMS + phone check-in), Expo push, clearinghouse, map
-tiles. Forgot-password emails don't send until email is set. Owner's list: [GO_LIVE.md](GO_LIVE.md).
+**Email is live** (Azure Communication Services, D-085; first test reached Outlook's Junk folder, see D-086).
+
+**Not connected yet**: Twilio (SMS + phone check-in), Expo push, clearinghouse, map
+tiles. Owner's list: [GO_LIVE.md](GO_LIVE.md).
 
 ## Next up
 
@@ -161,6 +163,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-30 | Claude Code | P4-18 | Azure email live in production; forgiving provider settings (PR #4); HTML version of every email (D-086). |
 | 2026-09-29 | Claude Code | P4-18 | Azure Communication Services email provider (EMAIL_PROVIDER=azure, HMAC-signed REST); owner steps in DEPLOYMENT-AZURE §6 (D-085). |
 | 2026-09-29 | Claude Code | P4-14 | Caregiver app: Messages tab, Open shifts, My pay, alert links; eas.json + store IDs (D-083); SES steps; D-084 agency onboarding plan. |
 | 2026-09-29 | Claude Code | azure | Production live: first deploy green, agency + admin created, owner signed in. |
