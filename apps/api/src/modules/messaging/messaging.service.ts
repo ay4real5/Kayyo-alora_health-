@@ -4,7 +4,7 @@ import type { AuthUser } from '../../common/decorators/current-user.decorator.js
 import { PhiCryptoService } from '../../common/crypto/phi-crypto.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
-import { DocumentsService } from '../documents/documents.service.js';
+import { DocumentsService, MESSAGE_PHOTO, type UploadedFile } from '../documents/documents.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { PatientsService } from '../patients/patients.service.js';
 import { RealtimeService } from '../realtime/realtime.service.js';
@@ -25,7 +25,7 @@ const CONVERSATION_INCLUDE = {
 type ConversationRow = Prisma.ConversationGetPayload<{ include: typeof CONVERSATION_INCLUDE }>;
 const MESSAGE_INCLUDE = {
   sender: PERSON,
-  document: { select: { id: true, title: true, fileName: true } },
+  document: { select: { id: true, title: true, fileName: true, mimeType: true, documentType: true } },
 } satisfies Prisma.MessageInclude;
 type MessageRow = Prisma.MessageGetPayload<{ include: typeof MESSAGE_INCLUDE }>;
 
@@ -37,7 +37,8 @@ export interface MessageView {
   sender: Person;
   content: string;
   isUrgent: boolean;
-  document: { id: string; title: string; fileName: string } | null;
+  /** `isPhoto`: a photo sent in the conversation (D-089), shown inline; others are documents from the library. */
+  document: { id: string; title: string; fileName: string; mimeType: string | null; isPhoto: boolean } | null;
   createdAt: Date;
 }
 
@@ -357,10 +358,47 @@ export class MessagingService {
     return users.map((u) => u.id);
   }
 
-  /** 404 unless the sender can see the document. */
+  /**
+   * A library document: 404 unless the sender can see it. A message photo (D-089): only the person who uploaded it, once,
+   * so a photo can't be re-sent into another conversation by someone else.
+   */
   private async assertAttachable(caller: AuthUser, documentId: string): Promise<void> {
+    const photo = await this.prisma.document.findFirst({
+      where: { id: documentId, agencyId: caller.agencyId, documentType: MESSAGE_PHOTO },
+      select: { uploadedById: true, deletedAt: true, _count: { select: { messages: true } } },
+    });
+    if (photo) {
+      if (photo.uploadedById !== caller.userId || photo.deletedAt || photo._count.messages > 0) {
+        throw new BadRequestException('That photo can’t be attached');
+      }
+      return;
+    }
     const doc = await this.documents.get(caller, documentId);
     if (doc.deleted) throw new BadRequestException('That document was deleted');
+  }
+
+  /** Upload a photo to send in this conversation (then send a message with its documentId). */
+  async uploadPhoto(caller: AuthUser, id: string, file: UploadedFile | undefined) {
+    const conversation = await this.find(caller, id);
+    if (conversation.participants.find((p) => p.userId === caller.userId)!.leftAt) throw new ConflictException('You left this conversation');
+    return this.documents.uploadMessagePhoto(caller, file);
+  }
+
+  /**
+   * An attachment of a message in this conversation, for anyone who can read that message. Photos are opened on the
+   * strength of being in the conversation; library documents still need the viewer's own access to that document.
+   */
+  async attachment(caller: AuthUser, id: string, documentId: string): Promise<{ fileName: string; mimeType: string; content: Buffer }> {
+    const conversation = await this.find(caller, id);
+    const me = conversation.participants.find((p) => p.userId === caller.userId)!;
+    const message = await this.prisma.message.findFirst({
+      where: { conversationId: id, documentId, ...(me.leftAt ? { createdAt: { lte: me.leftAt } } : {}) },
+      select: { document: { select: { documentType: true } } },
+    });
+    if (!message?.document) throw new NotFoundException('Attachment not found');
+    return message.document.documentType === MESSAGE_PHOTO
+      ? this.documents.loadMessagePhoto(caller.agencyId, documentId)
+      : this.documents.download(caller, documentId);
   }
 
   private messageable(agencyId: string): Prisma.UserWhereInput {
@@ -432,7 +470,15 @@ export class MessagingService {
       sender: m.sender,
       content: this.crypto.decryptBytes(m.contentEncrypted, contentContext(m.id)).toString('utf8'),
       isUrgent: m.isUrgent,
-      document: m.document,
+      document: m.document
+        ? {
+            id: m.document.id,
+            title: m.document.title,
+            fileName: m.document.fileName,
+            mimeType: m.document.mimeType,
+            isPhoto: m.document.documentType === MESSAGE_PHOTO,
+          }
+        : null,
       createdAt: m.createdAt,
     };
   }
