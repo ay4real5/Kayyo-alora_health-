@@ -19,8 +19,15 @@ test('billing checks a patient’s eligibility: 270 out, 271 back in', async ({ 
   await row.getByRole('link').first().click();
   await expect(page.getByText('MRN DEMO-0002')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Check eligibility' }).click();
   const waiting = page.getByText(/is waiting for the payer/);
+  // A click that lands while the patient page is still settling can be lost (seen once in CI): click again until the
+  // request goes out, and fail with the API's answer if it's refused.
+  await expect(async () => {
+    const posted = page.waitForResponse((r) => r.url().endsWith('/billing/eligibility') && r.request().method() === 'POST', { timeout: 5_000 });
+    await page.getByRole('button', { name: 'Check eligibility' }).click();
+    const response = await posted;
+    expect(response.status(), await response.text()).toBe(201);
+  }).toPass({ timeout: 30_000 });
   await expect(waiting).toBeVisible({ timeout: 15_000 });
   const trace = (await waiting.locator('.font-mono').textContent())!.trim();
   const download = page.waitForEvent('download');
