@@ -137,6 +137,9 @@ password and set up 2FA. The DB firewall allows only Azure services (temporary c
 The owner's next steps are in [MOBILE-RELEASE.md](MOBILE-RELEASE.md) (P4-15). Once the owner has built the app, the
 screens still need checking on a real phone.
 
+**Alerts are on** (D-087): the owner deployed `monitoring.bicep` on 2026-09-30; downtime and capacity alerts are emailed to
+the owner.
+
 **Email is live** (Azure Communication Services, D-085; first test reached Outlook's Junk folder, see D-086).
 
 **Not connected yet**: Twilio (SMS + phone check-in), Expo push, clearinghouse, map
