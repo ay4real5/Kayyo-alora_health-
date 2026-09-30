@@ -18,7 +18,7 @@ import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { formatTime, humanize } from '@/lib/labels';
 import type { OpenShift, ShiftSwap } from '@/lib/types/evv';
-import type { StaffSummary } from '@/lib/types/people';
+import type { StaffSummary, TimeOffRequest } from '@/lib/types/people';
 import type { ScheduleConflict } from '@/lib/types/schedule';
 
 /** Open shifts and shift swap requests for schedulers (DECISIONS D-040, D-042). Caregivers claim in the app. */
@@ -32,6 +32,7 @@ export default function OpenShiftsPage() {
       />
       <OpenShiftList />
       {can('visits:approve') && <SwapRequests />}
+      {can('visits:approve') && <TimeOffRequests />}
     </div>
   );
 }
@@ -286,6 +287,63 @@ function SwapRequests() {
                 Deny
               </Button>
             </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/** Pending time-off requests for supervisors (D-090); booked visits in the range still need a caregiver. */
+function TimeOffRequests() {
+  const { request } = useAuth();
+  const queryClient = useQueryClient();
+  const requests = useQuery({
+    queryKey: ['time-off', 'pending'],
+    queryFn: async () => (await request<TimeOffRequest[]>('/time-off?status=pending&limit=100')).data,
+  });
+  const decide = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'approved' | 'denied' }) =>
+      request(`/time-off/${id}`, { method: 'PATCH', body: { status } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['time-off'] }),
+  });
+
+  return (
+    <Card className="flex flex-col gap-3 p-4">
+      <h2 className="text-base font-semibold text-slate-900">Time off waiting for a decision</h2>
+      <ErrorAlert error={requests.error ?? decide.error} />
+      {requests.data?.length === 0 && <p className="text-sm text-slate-500">None.</p>}
+      <ul className="divide-y divide-slate-100 text-sm" aria-label="Time off requests">
+        {requests.data?.map((t) => (
+          <li key={t.id} className="flex flex-col gap-1 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                {t.staff.firstName} {t.staff.lastName} ({t.staff.discipline}) · {formatDate(t.startDate)} –{' '}
+                {formatDate(t.endDate)} · {t.days} day{t.days === 1 ? '' : 's'} · {humanize(t.type)}
+                {t.notes && <span className="text-slate-600"> — “{t.notes}”</span>}
+              </span>
+              <span className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  disabled={decide.isPending}
+                  onClick={() => decide.mutate({ id: t.id, status: 'approved' })}
+                >
+                  Approve
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={decide.isPending}
+                  onClick={() => decide.mutate({ id: t.id, status: 'denied' })}
+                >
+                  Deny
+                </Button>
+              </span>
+            </div>
+            {(t.bookedVisits ?? 0) > 0 && (
+              <p className="text-xs text-amber-800" role="alert">
+                {t.bookedVisits} visit{t.bookedVisits === 1 ? '' : 's'} booked in these days need another caregiver.
+              </p>
+            )}
           </li>
         ))}
       </ul>
