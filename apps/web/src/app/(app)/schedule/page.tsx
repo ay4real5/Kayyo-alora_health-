@@ -135,7 +135,7 @@ export default function SchedulePage() {
                   {v.priority !== 'normal' && <span className="font-medium text-red-700">{humanize(v.priority)} priority</span>}
                 </Link>
               ))}
-              {visits.length === 0 && <p className="text-xs text-slate-500">No visits</p>}
+              {visits.length === 0 && <p className="text-xs text-slate-600">No visits</p>}
             </section>
           );
         })}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/auth-provider';
 
 export interface MessageDocument {
@@ -26,13 +26,11 @@ export function MessageAttachment({ conversationId, document: doc, from }: { con
     enabled: doc.isPhoto,
     staleTime: Infinity,
   });
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!photo.data) return;
-    const objectUrl = URL.createObjectURL(photo.data);
-    setUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [photo.data]);
+  // The blob URL is derived from the fetched blob; the effect only revokes it on change/unmount.
+  const url = useMemo(() => (photo.data ? URL.createObjectURL(photo.data) : null), [photo.data]);
+  useEffect(() => () => {
+    if (url) URL.revokeObjectURL(url);
+  }, [url]);
   const open = useMutation({
     mutationFn: async () => {
       const blob = (await request<Blob>(path, { responseType: 'blob' })).data;
