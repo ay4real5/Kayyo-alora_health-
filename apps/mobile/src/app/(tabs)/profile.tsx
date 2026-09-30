@@ -104,7 +104,9 @@ export default function ProfileScreen() {
 
         <Card style={{ paddingVertical: 4 }}>
           <ListRow icon="wallet-outline" label="My pay" onPress={() => router.push('/pay')} />
-          <ListRow icon="briefcase-outline" label="Open shifts" onPress={() => router.push('/open-shifts')} last />
+          <ListRow icon="briefcase-outline" label="Open shifts" onPress={() => router.push('/open-shifts')} />
+          <ListRow icon="navigate-outline" label="Mileage" onPress={() => router.push('/mileage')} />
+          <ListRow icon="airplane-outline" label="Time off" onPress={() => router.push('/time-off')} last />
         </Card>
 
         <SectionTitle>Credentials</SectionTitle>
