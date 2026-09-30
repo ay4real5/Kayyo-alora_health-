@@ -98,6 +98,12 @@ export class MobileSession {
     return this.renewing;
   }
 
+  /** The current access token, renewing first if needed — for calls request() can't make (multipart, binary). */
+  async token(): Promise<string | null> {
+    if (!this.accessToken) await this.renew();
+    return this.accessToken;
+  }
+
   /** Authenticated call; renews once and retries on 401. */
   async request<T>(path: string, options: Omit<RequestOptions, 'accessToken'> = {}): Promise<ApiResult<T>> {
     if (!this.accessToken) await this.renew();

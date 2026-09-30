@@ -131,3 +131,19 @@ export interface StaffCandidate {
   lastName: string;
   email: string;
 }
+
+/** A time-off request as returned by `GET /time-off` (D-090). */
+export interface TimeOffRequest {
+  id: string;
+  staff: { id: string; userId: string; firstName: string; lastName: string; discipline: string };
+  startDate: string;
+  endDate: string;
+  days: number;
+  type: string;
+  status: string;
+  notes: string | null;
+  decidedBy: { id: string; firstName: string; lastName: string } | null;
+  createdAt: string;
+  /** For approvers on pending requests: the person's visits already booked in those days. */
+  bookedVisits?: number;
+}

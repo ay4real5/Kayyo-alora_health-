@@ -40,6 +40,7 @@ const TARGETS: Record<string, Href> = {
   shift_assigned: '/schedule',
   shift_updated: '/schedule',
   shift_reminder: '/',
+  time_off_decided: '/time-off',
 };
 
 /** "5 min ago", "3 h ago", or a date. */

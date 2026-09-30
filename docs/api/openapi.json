@@ -1910,6 +1910,165 @@
         ]
       }
     },
+    "/api/v1/time-off": {
+      "get": {
+        "operationId": "TimeOffController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "denied",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "staffId",
+            "required": false,
+            "in": "query",
+            "description": "Approvers only: one staff member's requests.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "post": {
+        "operationId": "TimeOffController_request",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestTimeOffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/time-off/{id}/cancel": {
+      "post": {
+        "operationId": "TimeOffController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/time-off/{id}": {
+      "patch": {
+        "operationId": "TimeOffController_decide",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideTimeOffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/api/v1/schedule/visits": {
       "get": {
         "operationId": "SchedulingController_list",
@@ -6042,6 +6201,60 @@
         ]
       }
     },
+    "/api/v1/messages/conversations/{id}/photos": {
+      "post": {
+        "operationId": "MessagingController_uploadPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "messages"
+        ]
+      }
+    },
+    "/api/v1/messages/conversations/{id}/attachments/{documentId}": {
+      "get": {
+        "operationId": "MessagingController_attachment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "messages"
+        ]
+      }
+    },
     "/api/v1/messages/conversations/{id}/read": {
       "post": {
         "operationId": "MessagingController_read",
@@ -8982,16 +9195,44 @@
         "properties": {
           "status": {
             "type": "string",
-            "description": "approved/denied by an approver; cancelled by the requester (pending requests only).",
             "enum": [
               "approved",
-              "denied",
-              "cancelled"
+              "denied"
             ]
           }
         },
         "required": [
           "status"
+        ]
+      },
+      "RequestTimeOffDto": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "vacation",
+              "sick",
+              "personal",
+              "other"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "description": "For the office; keep it short and don't include patient details.",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "type"
         ]
       },
       "CreateVisitDto": {

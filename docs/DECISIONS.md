@@ -1537,3 +1537,29 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   wanted; it is billed per test run.
 - Alert text names the failing piece and where to look (Log stream). It contains no patient data, because metrics
   carry none.
+
+### D-089 — Photos in messages
+2026-09-30 · owner request + Claude Code / Devin (P4-22)
+- A photo is uploaded to the conversation first (`POST /messages/conversations/:id/photos`, multipart `file`, same size
+  limit as documents), and then sent as a message with its `documentId`. It is stored encrypted like any document, as
+  `documentType = message_photo`, and hidden from the document library.
+- Only the uploader can attach it, and only once, so a photo can't be moved into another conversation. It can be opened
+  only through `GET …/attachments/:documentId` by participants of that conversation. Every view is audited
+  (`VIEW_MESSAGE_ATTACHMENT`).
+- Clients keep photos in memory only: the dashboard uses a data URL, and the app fetches with the bearer token into a
+  base64 data URL. Nothing goes into a disk cache or the photo library. The app needs a connection to send a photo;
+  photos are not added to the offline queue.
+- The message text is required by the DTO. When the caregiver leaves it empty, the app sends "Sent a photo".
+
+### D-090 — Time off requests
+2026-09-30 · owner request + Claude Code / Devin (P4-22)
+- `/time-off`: staff list, request and cancel their own requests (`visits:read`). Supervisors (`visits:approve`, like
+  shift swaps) see all of them and approve or deny with `PATCH /time-off/:id`. At most 60 days per request, and never in
+  the past. The requester can cancel while a request is pending, or after approval if it hasn't started yet.
+- Approved time off blocks scheduling on those days, and pending time off shows a warning (conflict detector). For
+  pending requests, approvers see `bookedVisits`: visits already booked in those days that will need another caregiver.
+- The decision reaches the requester as a `time_off_decided` alert, with dates only. The app opens its Time off screen
+  from that alert. The dashboard queue is on Schedule → Open shifts.
+- The types are `vacation | sick | personal | other` (`time-off.dto.ts`). The older staff-profile time-off DTO still uses
+  the shared `TIME_OFF_TYPES`, which also has `bereavement`. Reconcile the two lists if the owner wants bereavement
+  leave.

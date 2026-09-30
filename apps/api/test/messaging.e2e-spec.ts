@@ -63,6 +63,7 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
   afterAll(async () => {
     for (const id of [agencyId, otherAgencyId]) {
       await prisma.conversation.deleteMany({ where: { agencyId: id } }); // participants, messages cascade
+      await prisma.document.deleteMany({ where: { agencyId: id } }); // message photos (blobs cascade)
       await prisma.notification.deleteMany({ where: { agencyId: id } });
       await prisma.patient.deleteMany({ where: { agencyId: id } });
       await purgeAuditLogs(prisma, id);
@@ -194,6 +195,43 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
     expect(note).toMatchObject({ title: 'Urgent message', data: { conversationId: convo.id } });
     expect(`${note.title} ${note.body}`).not.toContain('fell');
     expect(await prisma.notification.count({ where: { userId: office.id, type: 'message_received' } })).toBe(0);
+  });
+
+  it('photos (D-089): participants see them inline, nobody else can; they stay out of the document library', async () => {
+    const convo = (await start(aide, { participantIds: [nurse.id], content: 'Wound dressing looks different today' }).expect(201)).body.data;
+    const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 1)]);
+    const upload = (who: Person, file: Buffer, name = 'photo.jpg') =>
+      http().post(`/api/v1/messages/conversations/${convo.id}/photos`).set(who.auth).attach('file', file, name);
+
+    await upload(aide, Buffer.from('%PDF-1.4 not a photo'), 'x.pdf').expect(415);
+    await upload(outsider, jpeg).expect(404);
+    const photo = (await upload(aide, jpeg).expect(201)).body.data;
+    expect(photo).toMatchObject({ mimeType: 'image/jpeg' });
+
+    // Only its uploader can attach it, and only once.
+    await http().post(`/api/v1/messages/conversations/${convo.id}/messages`).set(nurse.auth).send({ content: 'Mine now', documentId: photo.id }).expect(400);
+    const sent = (
+      await http().post(`/api/v1/messages/conversations/${convo.id}/messages`).set(aide.auth).send({ content: 'Photo', documentId: photo.id }).expect(201)
+    ).body.data;
+    expect(sent.document).toMatchObject({ id: photo.id, isPhoto: true, mimeType: 'image/jpeg' });
+    await http().post(`/api/v1/messages/conversations/${convo.id}/messages`).set(aide.auth).send({ content: 'Again', documentId: photo.id }).expect(400);
+
+    const url = `/api/v1/messages/conversations/${convo.id}/attachments/${photo.id}`;
+    const seen = await http().get(url).set(nurse.auth).buffer(true).parse((res, done) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (c: Buffer) => chunks.push(c));
+      res.on('end', () => done(null, Buffer.concat(chunks)));
+    }).expect(200);
+    expect(seen.headers['content-type']).toBe('image/jpeg');
+    expect(Buffer.compare(seen.body as Buffer, jpeg)).toBe(0);
+    for (const who of [office, outsider]) await http().get(url).set(who.auth).expect(404);
+
+    // Stored encrypted, and not in the library (nor openable through it).
+    const blob = await prisma.documentBlob.findFirstOrThrow({ where: { documentId: photo.id } });
+    expect(Buffer.from(blob.content).includes(Buffer.alloc(64, 1))).toBe(false);
+    const library = (await http().get('/api/v1/documents?limit=100').set(office.auth).expect(200)).body.data;
+    expect(library.map((d: { id: string }) => d.id)).not.toContain(photo.id);
+    await http().get(`/api/v1/documents/${photo.id}/download`).set(office.auth).expect(404);
   });
 
   it('portal users have no staff messaging', async () => {

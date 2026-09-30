@@ -33,6 +33,8 @@ interface AuthValue {
   /** The API ends other sessions and returns fresh tokens for this one. */
   passwordChanged(tokens: Tokens): Promise<void>;
   request<T>(path: string, options?: Omit<RequestOptions, 'accessToken'>): Promise<ApiResult<T>>;
+  /** A valid access token for calls request() can't make (multipart photo upload, binary attachment fetch). */
+  accessToken(): Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -133,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setMustChangePassword(false);
       },
       request: (path, options) => session.request(path, options),
+      accessToken: () => session.token(),
     }),
     [status, user, mustChangePassword, session, finish],
   );

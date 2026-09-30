@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { MessageAttachment, type MessageDocument } from '@/components/messages/message-attachment';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader } from '@/components/ui/data-display';
@@ -15,7 +16,7 @@ interface Message {
   sender: Person;
   content: string;
   isUrgent: boolean;
-  document: { id: string; title: string; fileName: string } | null;
+  document: MessageDocument | null;
   createdAt: string;
 }
 interface Conversation {
@@ -228,7 +229,9 @@ function ConversationPane({
                 {m.isUrgent && <span className="mr-1 font-semibold">Urgent:</span>}
                 {m.content}
               </span>
-              {m.document && <span className="text-xs text-slate-600">Attached: {m.document.title}</span>}
+              {m.document && (
+                <MessageAttachment conversationId={id} document={m.document} from={mine ? 'you' : name(m.sender)} />
+              )}
             </li>
           );
         })}

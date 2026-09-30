@@ -61,6 +61,12 @@ export interface UploadedFile {
 const sha256 = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 
 /**
+ * Photos sent in secure messages (D-089). They are stored like any document (encrypted, hashed), but they are not part
+ * of the agency's document library: only the people in the conversation can open them, through Messages.
+ */
+export const MESSAGE_PHOTO = 'message_photo';
+
+/**
  * Documents (DESIGN.md §6.9, DECISIONS D-056): upload, list, download, versions, e-sign, soft delete. Files are
  * recognised by content (PDF, PNG, JPEG, DOCX; 10 MB), stored through `DocumentStorage` (encrypted), and streamed back
  * through the API so every download is audited. A document tied to a patient follows patient access.
@@ -156,16 +162,57 @@ export class DocumentsService {
     }
   }
 
+  /** Stores a photo for a message (PNG or JPEG, by its bytes). Attaching and viewing are Messaging's job. */
+  async uploadMessagePhoto(caller: AuthUser, file: UploadedFile | undefined): Promise<{ id: string; fileName: string; mimeType: string }> {
+    if (!file) throw new BadRequestException('Attach a photo (field "file")');
+    if (file.size > MAX_DOCUMENT_BYTES) throw new PayloadTooLargeException('Photos can be at most 10 MB');
+    const kind = detectFileKind(file.buffer, file.originalname);
+    if (kind !== 'jpeg' && kind !== 'png') throw new UnsupportedMediaTypeException('Only JPEG and PNG photos can be sent');
+    const id = (await this.prisma.$queryRaw<{ id: string }[]>`SELECT gen_random_uuid()::text AS id`)[0]!.id;
+    const fileName = safeFileName(file.originalname || 'photo', kind);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.document.create({
+        data: {
+          id,
+          agencyId: caller.agencyId,
+          uploadedById: caller.userId,
+          documentType: MESSAGE_PHOTO,
+          title: 'Photo',
+          fileName,
+          fileSize: file.size,
+          mimeType: ACCEPTED_FILES[kind].mime,
+          s3Key: 'pending',
+          contentHash: sha256(file.buffer),
+          tags: [],
+        },
+      });
+      const key = await this.storage.save(id, file.buffer, tx);
+      await tx.document.update({ where: { id }, data: { s3Key: key } });
+    });
+    return { id, fileName, mimeType: ACCEPTED_FILES[kind].mime };
+  }
+
+  /** A message photo's bytes. The caller (Messaging) has already checked the viewer is in the conversation. */
+  async loadMessagePhoto(agencyId: string, id: string): Promise<{ fileName: string; mimeType: string; content: Buffer }> {
+    const doc = await this.prisma.document.findFirst({ where: { id, agencyId, documentType: MESSAGE_PHOTO, deletedAt: null } });
+    if (!doc) throw new NotFoundException('Photo not found');
+    const content = await this.storage.load(doc.id);
+    if (doc.contentHash && sha256(content) !== doc.contentHash) {
+      throw new ConflictException('The stored file does not match what was uploaded');
+    }
+    return { fileName: doc.fileName, mimeType: doc.mimeType ?? 'image/jpeg', content };
+  }
+
   async list(caller: AuthUser, query: ListDocumentsQueryDto): Promise<Paginated<DocumentView>> {
     if (query.patientId) await this.patients.assertAccessible(caller, query.patientId);
     const where: Prisma.DocumentWhereInput = {
       agencyId: caller.agencyId,
       nextVersion: null, // latest versions only
+      documentType: query.documentType ?? { not: MESSAGE_PHOTO },
       ...(query.includeDeleted ? {} : { deletedAt: null }),
       ...(query.patientId ? { patientId: query.patientId } : {}),
       ...(query.staffId ? { staffId: query.staffId } : {}),
       ...(query.visitId ? { visitId: query.visitId } : {}),
-      ...(query.documentType ? { documentType: query.documentType } : {}),
       // Documents about patients the caller can't see are invisible.
       OR: [{ patientId: null }, { patient: await this.patients.accessibleWhere(caller) }],
     };
@@ -308,6 +355,7 @@ export class DocumentsService {
       where: {
         id,
         agencyId: caller.agencyId,
+        documentType: { not: MESSAGE_PHOTO },
         OR: [{ patientId: null }, { patient: await this.patients.accessibleWhere(caller) }],
       },
       include: INCLUDE,

@@ -127,6 +127,15 @@
 
 ## In progress
 
+**P4-22 caregiver extras — done (branch `task/P4-22-caregiver-extras-2`, PR open, not merged).** Mileage and time off in
+the app, photos in messages (app + dashboard), supervisor time-off queue on Schedule → Open shifts. D-089, D-090. Build,
+typecheck, lint and unit tests pass; time-off e2e (API + browser) pass; CI green on the implementation commits.
+- **Open PRs waiting to merge**:
+  - #7 backup restore drill: its one flaky browser test was re-run. After merging, run **Actions → Backup restore
+    drill** once and add the result to the BACKUP-RESTORE.md drill log.
+  - #8 Create agency workflow: will conflict with #7 in the docs, so rebase it after #7.
+
+
 **Production is LIVE on Azure (D-081, D-082)** — https://app.primordialhealthservices.health (dashboard),
 https://api.primordialhealthservices.health (API). Central US, resource group `primordial-prod`; deploys via
 *Deploy to Azure* (manual workflow, OIDC — federated credentials for both GitHub subject formats). Agency
