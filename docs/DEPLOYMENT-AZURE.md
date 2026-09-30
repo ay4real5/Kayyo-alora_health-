@@ -114,6 +114,14 @@ and checks they're healthy. Run it again whenever you want the latest version.
 
 ## 5. Create your agency and first administrator
 
+**Later agencies** (once email works, §6, and the repository is private) are created entirely from GitHub:
+**Actions → Create agency → Run workflow**, then fill in the name, state, time zone and the administrator's name and
+email. The administrator receives an email with a link (valid 72 hours) to choose their password, then sets up
+two-factor authentication. Nothing secret appears in the run log. If the email fails, the run says so, and the admin
+can use "Forgot password" on the sign-in page. The manual way below is still how the **first** agency was created.
+
+### The manual way
+
 From a computer with the code (the database only accepts Azure services, so open it for yourself briefly: portal →
 the PostgreSQL server → **Networking** → **Add current client IP address** → Save):
 

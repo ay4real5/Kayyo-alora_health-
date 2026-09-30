@@ -1466,7 +1466,13 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 2026-09-29 · owner ("in future we might have agencies that will need to be added") + Claude Code
 - For now new agencies are added with `agency:create` (DEPLOYMENT-AZURE §5). It is run by the owner with a temporary
   database firewall opening and prints a one-time password; the new admin must change it and set up 2FA.
-- Next step, once email works (D-085): a manual **"Create agency" GitHub workflow**. The owner enters the name, state,
+- **Built (2026-09-30)**: `.github/workflows/create-agency.yml` plus `create-agency --invite`.
+  - The workflow refuses to run while the repository is public, because run inputs are visible there.
+  - It uses the live API image and the API app's own email settings (read through the OIDC login and masked in logs),
+    with a temporary database firewall rule.
+  - The invite link reuses the password-reset token table and page, and is valid **72 hours**. The admin's email is
+    masked in the output.
+  - The original plan was a manual **"Create agency" GitHub workflow**. The owner enters the name, state,
   timezone and admin email. It runs inside the deploy pipeline (temporary firewall rule, like migrations) and emails
   the new admin a **set-your-password link** instead of printing a password, so nothing sensitive appears in logs.
 - A signed-in platform-owner console (a `super_admin` who sees every agency) is deliberately **not** built yet. Every

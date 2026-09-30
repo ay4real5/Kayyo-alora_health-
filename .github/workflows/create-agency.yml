@@ -1,0 +1,121 @@
+# Create an agency and email its first administrator an invite (D-084). Runs only by hand:
+# Actions → Create agency → Run workflow, then fill in the form.
+#
+# Runs the agency script from the API image that is live in production, against the production database (opened to
+# this run's address for a minute, like migrations), with the API's own email settings — the new admin gets a
+# "choose your password" link valid for 72 hours. Nothing secret is printed; the email address is masked in the log.
+# Refuses to run while the repository is public: run inputs (agency name, admin email) show on the run's page.
+name: Create agency
+
+on:
+  workflow_dispatch:
+    inputs:
+      agency_name:
+        description: Agency name (as it should appear in the app)
+        required: true
+        type: string
+      admin_email:
+        description: Administrator's email (gets the invite)
+        required: true
+        type: string
+      admin_first_name:
+        description: Administrator's first name
+        required: true
+        type: string
+      admin_last_name:
+        description: Administrator's last name
+        required: true
+        type: string
+      state:
+        description: State (two letters)
+        required: true
+        default: VA
+        type: string
+      timezone:
+        description: Time zone
+        required: true
+        default: America/New_York
+        type: choice
+        options:
+          - America/New_York
+          - America/Chicago
+          - America/Denver
+          - America/Phoenix
+          - America/Los_Angeles
+          - America/Anchorage
+          - Pacific/Honolulu
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: create-agency
+  cancel-in-progress: false
+
+jobs:
+  create:
+    name: Create agency and invite its administrator
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+      REGISTRY: ${{ vars.AZURE_REGISTRY }}
+      API_APP: ${{ vars.AZURE_API_APP }}
+      PG_SERVER: ${{ vars.AZURE_POSTGRES_SERVER }}
+    steps:
+      - name: Refuse while the repository is public
+        if: ${{ !github.event.repository.private }}
+        run: |
+          echo "::error::Make the repository private first (Settings → General → Danger zone). Run details, including the admin's email, are visible to anyone while it is public."
+          exit 1
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Use the API version and email settings that are live
+        run: |
+          set -euo pipefail
+          IMAGE=$(az webapp show -g "$RG" -n "$API_APP" --query siteConfig.linuxFxVersion -o tsv | sed 's/^DOCKER|//')
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          az acr login --name "$REGISTRY"
+          docker pull -q "$IMAGE"
+          az webapp config appsettings list -g "$RG" -n "$API_APP" -o json > settings.json
+          : > email.env
+          for key in EMAIL_PROVIDER EMAIL_FROM AZURE_COMMUNICATION_CONNECTION_STRING AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY SENDGRID_API_KEY SENDGRID_FROM_EMAIL FRONTEND_URL; do
+            value=$(jq -r --arg k "$key" '.[] | select(.name == $k) | .value' settings.json)
+            if [ -n "$value" ]; then
+              echo "::add-mask::$value"
+              printf '%s=%s\n' "$key" "$value" >> email.env
+            fi
+          done
+          rm settings.json
+          grep -q '^FRONTEND_URL=' email.env || { echo "::error::FRONTEND_URL is not set on the API app"; exit 1; }
+          grep -q '^EMAIL_PROVIDER=' email.env || { echo "::error::Email isn't set up on the API app (DEPLOYMENT-AZURE §6)"; exit 1; }
+
+      - name: Create the agency and email the invite
+        env:
+          DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
+          # Form values go through the environment, never pasted into the script (no shell injection).
+          AGENCY_NAME: ${{ inputs.agency_name }}
+          ADMIN_EMAIL: ${{ inputs.admin_email }}
+          ADMIN_FIRST: ${{ inputs.admin_first_name }}
+          ADMIN_LAST: ${{ inputs.admin_last_name }}
+          STATE: ${{ inputs.state }}
+          TIMEZONE: ${{ inputs.timezone }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$ADMIN_EMAIL"
+          IP=$(curl -fsS https://api.ipify.org)
+          RULE="agency-${GITHUB_RUN_ID}"
+          az postgres flexible-server firewall-rule create -g "$RG" --server-name "$PG_SERVER" --name "$RULE" \
+            --start-ip-address "$IP" --end-ip-address "$IP" -o none
+          trap 'az postgres flexible-server firewall-rule delete -g "$RG" --server-name "$PG_SERVER" --name "$RULE" --yes -o none; rm -f email.env' EXIT
+          docker run --rm --env-file email.env -e DATABASE_URL "$IMAGE" \
+            node apps/api/dist/seed/create-agency.js --invite \
+              --name "$AGENCY_NAME" --email "$ADMIN_EMAIL" --first "$ADMIN_FIRST" --last "$ADMIN_LAST" \
+              --state "$STATE" --timezone "$TIMEZONE"
