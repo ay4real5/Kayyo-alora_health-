@@ -21,7 +21,13 @@
     "android": {
       "allowBackup": false,
       "package": "health.primordialhealthservices.caregiver",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -57,6 +63,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "21b21363-faf1-4e83-a113-45483213a5ad"
+      }
+    },
+    "owner": "ay4real1128"
   }
 }
