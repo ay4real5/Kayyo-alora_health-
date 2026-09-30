@@ -1,0 +1,114 @@
+# Backup restore drill (D-088, docs/BACKUP-RESTORE.md). Proves the production database's automatic backups restore:
+#   1. restores the latest backup to a NEW temporary server (production is never touched),
+#   2. checks the copy: same tables, same migrations, row counts close to production,
+#   3. deletes the temporary server — always, even when a check fails.
+# Runs by hand (Actions → Backup restore drill → Run workflow) and every three months on its own. The run summary is the
+# drill record (table names and row counts only — never any data). Cost: a few cents per run.
+#
+# Uses the same settings as "Deploy to Azure": secrets AZURE_CLIENT_ID/TENANT_ID/SUBSCRIPTION_ID, AZURE_DATABASE_URL;
+# variables AZURE_RESOURCE_GROUP, AZURE_POSTGRES_SERVER.
+name: Backup restore drill
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 13 3 1,4,7,10 *' # 3 Jan/Apr/Jul/Oct, 13:00 UTC
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: backup-restore-drill
+  cancel-in-progress: false
+
+jobs:
+  drill:
+    name: Restore, verify, delete
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: production
+    env:
+      RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+      PG_SERVER: ${{ vars.AZURE_POSTGRES_SERVER }}
+      DRILL: ${{ vars.AZURE_POSTGRES_SERVER }}-drill-${{ github.run_id }}
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Restore the latest backup to a temporary server
+        run: |
+          START=$(date -u +%s)
+          echo "START=$START" >> "$GITHUB_ENV"
+          # No --restore-time: the latest restorable point (usually a few minutes ago).
+          az postgres flexible-server restore -g "$RG" --name "$DRILL" --source-server "$PG_SERVER" -o none
+          echo "RESTORE_MINUTES=$(( ($(date -u +%s) - START) / 60 ))" >> "$GITHUB_ENV"
+
+      - name: Compare the restored copy with production
+        env:
+          PROD_URL: ${{ secrets.AZURE_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          export LC_ALL=C # sort and join must agree on order
+          IP=$(curl -fsS https://api.ipify.org)
+          RULE="drill-${GITHUB_RUN_ID}"
+          for server in "$PG_SERVER" "$DRILL"; do
+            az postgres flexible-server firewall-rule create -g "$RG" --server-name "$server" --name "$RULE" \
+              --start-ip-address "$IP" --end-ip-address "$IP" -o none
+          done
+          trap 'az postgres flexible-server firewall-rule delete -g "$RG" --server-name "$PG_SERVER" --name "$RULE" --yes -o none || true' EXIT
+
+          DRILL_URL=$(printf '%s' "$PROD_URL" | sed "s/@${PG_SERVER}\./@${DRILL}./")
+          if [ "$DRILL_URL" = "$PROD_URL" ]; then echo "::error::Could not point the connection at the drill server"; exit 1; fi
+
+          # Exact row counts for every table (names and numbers only).
+          counts() {
+            local sql
+            sql=$(psql "$1" -Atc "select string_agg(format('select %L, count(*) from public.%I', table_name, table_name), ' union all ' order by table_name) from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE'")
+            psql "$1" -At -F ' ' -c "$sql"
+          }
+          counts "$PROD_URL" | sort > prod.txt
+          counts "$DRILL_URL" | sort > drill.txt
+          migrations() { psql "$1" -Atc "select count(*) || ' ' || coalesce(max(migration_name), '-') from _prisma_migrations where finished_at is not null"; }
+          PROD_MIG=$(migrations "$PROD_URL")
+          DRILL_MIG=$(migrations "$DRILL_URL")
+
+          {
+            echo "## Backup restore drill — $(date -u +%Y-%m-%d)"
+            echo
+            echo "Restored the latest backup of \`$PG_SERVER\` to a temporary server in ${RESTORE_MINUTES} minutes."
+            echo
+            echo "| Check | Production | Restored copy |"
+            echo "|---|---|---|"
+            echo "| Migrations applied (count, latest) | $PROD_MIG | $DRILL_MIG |"
+            echo "| Tables | $(wc -l < prod.txt) | $(wc -l < drill.txt) |"
+            echo
+            echo "<details><summary>Row counts per table</summary>"
+            echo
+            echo "| Table | Production | Restored |"
+            echo "|---|---|---|"
+            join -a1 -a2 -e 'missing' -o 0,1.2,2.2 prod.txt drill.txt | awk '{print "| " $1 " | " $2 " | " $3 " |"}'
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          FAIL=0
+          if [ "$PROD_MIG" != "$DRILL_MIG" ]; then echo "::error::The restored copy has different migrations"; FAIL=1; fi
+          if ! diff <(cut -d' ' -f1 prod.txt) <(cut -d' ' -f1 drill.txt) > /dev/null; then echo "::error::The restored copy has different tables"; FAIL=1; fi
+          # The backup is a few minutes old, so busy tables may differ slightly; it must not be empty or larger.
+          AGENCIES=$(awk '$1 == "agencies" {print $2}' drill.txt)
+          if [ "${AGENCIES:-0}" -lt 1 ]; then echo "::error::The restored copy has no agencies"; FAIL=1; fi
+          join prod.txt drill.txt | awk '$3 > $2 {print "::warning::" $1 ": restored copy has more rows than production (" $3 " > " $2 ")"}'
+          if [ "$FAIL" = 1 ]; then echo "**Result: FAILED** — see the errors above." >> "$GITHUB_STEP_SUMMARY"; exit 1; fi
+          echo "**Result: PASSED** — the backup restores and matches production." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Delete the temporary server
+        if: always()
+        run: |
+          if az postgres flexible-server show -g "$RG" -n "$DRILL" -o none 2>/dev/null; then
+            az postgres flexible-server delete -g "$RG" -n "$DRILL" --yes -o none
+            echo "Deleted $DRILL"
+          fi

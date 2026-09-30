@@ -175,6 +175,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-09-30 | Claude Code | P4-21 | Backup restore drill workflow + runbook (D-088); first drill to run after merge. |
 | 2026-09-30 | Claude Code | P4-20 | Uptime/capacity alerts template (monitoring.bicep, D-087); owner runs DEPLOYMENT-AZURE §7 once. |
 | 2026-09-30 | Claude Code | P4-18 | Azure email live in production; forgiving provider settings (PR #4); HTML version of every email (D-086). |
 | 2026-09-29 | Claude Code | P4-18 | Azure Communication Services email provider (EMAIL_PROVIDER=azure, HMAC-signed REST); owner steps in DEPLOYMENT-AZURE §6 (D-085). |

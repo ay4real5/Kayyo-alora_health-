@@ -1536,7 +1536,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   problem *in front of* App Service (DNS, certificate) isn't caught. Add a standard availability test later if that's
   wanted; it is billed per test run.
 - Alert text names the failing piece and where to look (Log stream). It contains no patient data, because metrics
+- Alert text names the failing piece and where to look (Log stream). It contains no patient data, because metrics
   carry none.
+
+### D-088 — Backup restore drill (HIPAA contingency plan)
+2026-09-30 · owner ("prove the database backups actually restore") + Claude Code
+- **Backups**: Azure PostgreSQL automatic backups (daily full backups plus continuous logs), with **14-day** point-in-time
+  restore in the same region. Geo-redundant backup is off for cost, and is the upgrade path.
+  - Documents live encrypted inside the database (D-056), so they're in the same backups.
+  - The PHI key lives only in the owner's password manager and the app settings: **a restore is unreadable without
+    it**.
+- **Drill**: the `.github/workflows/backup-restore-drill.yml` workflow runs by hand and quarterly (3 Jan/Apr/Jul/Oct).
+  - It restores the latest point to a *new* temporary server; production is never touched.
+  - It compares the copy with production: the same tables, the same applied migrations, at least one agency, and a
+    warning if any table has *more* rows than production.
+  - It always deletes the temporary server.
+  - It uses the deploy pipeline's OIDC login and temporary firewall rules. The job summary (counts only, no data) is
+    the drill record.
+- **Runbook for a real restore** (restore to a new server, check it, switch `DATABASE_URL`, keep the old server a
+  week): [BACKUP-RESTORE.md](BACKUP-RESTORE.md). Recovery point is minutes; recovery time is about 30–60 minutes.
 
 ### D-089 — Photos in messages
 2026-09-30 · owner request + Claude Code / Devin (P4-22)
