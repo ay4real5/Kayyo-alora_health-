@@ -156,7 +156,6 @@ tiles. Owner's list: [GO_LIVE.md](GO_LIVE.md).
 
 ## Next up
 
-- **P4-17** "Create agency" workflow (D-084), once email works (P4-16).
 - Test the caregiver app on a real phone once the owner has a preview build (P4-15). Possible extras: mileage logging
   in the app (`POST /payroll/mileage` exists), time-off requests, photo attachments in messages.
 - Agent work that waits on accounts: SFTP transport for claim files once a clearinghouse is chosen
