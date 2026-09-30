@@ -1,7 +1,6 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/auth-provider';
 
 export interface MessageDocument {
@@ -22,15 +21,11 @@ export function MessageAttachment({ conversationId, document: doc, from }: { con
   const path = `/messages/conversations/${conversationId}/attachments/${doc.id}`;
   const photo = useQuery({
     queryKey: ['message-attachment', doc.id],
-    queryFn: async () => (await request<Blob>(path, { responseType: 'blob' })).data,
+    queryFn: async () => toDataUrl((await request<Blob>(path, { responseType: 'blob' })).data),
     enabled: doc.isPhoto,
     staleTime: Infinity,
   });
-  // The blob URL is derived from the fetched blob; the effect only revokes it on change/unmount.
-  const url = useMemo(() => (photo.data ? URL.createObjectURL(photo.data) : null), [photo.data]);
-  useEffect(() => () => {
-    if (url) URL.revokeObjectURL(url);
-  }, [url]);
+  const url = photo.data ?? null;
   const open = useMutation({
     mutationFn: async () => {
       const blob = (await request<Blob>(path, { responseType: 'blob' })).data;
@@ -55,4 +50,14 @@ export function MessageAttachment({ conversationId, document: doc, from }: { con
       {open.isPending ? 'Opening…' : `Attached: ${doc.title} — download`}
     </button>
   );
+}
+
+/** Blob → data URL held in memory (no object URL to revoke, so it survives remounts). */
+function toDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('read failed'));
+    reader.readAsDataURL(blob);
+  });
 }
