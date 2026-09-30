@@ -1519,3 +1519,21 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
     tighten DMARC to `p=quarantine`, not before: tightening while anything fails would junk the agency's own mail.
   - Sender name: Azure doesn't allow renaming the default `DoNotReply` sender in the portal. A custom MailFrom address
     with the display name "Primordial Health" needs an Azure support request (quota for custom MailFrom).
+
+### D-087 — Uptime and capacity alerts (Azure Monitor)
+2026-09-30 · owner + Claude Code (after a startup-config outage went unnoticed until the deploy check failed)
+- `infra/azure/monitoring.bicep` is deployed once, separately from `main.bicep`. It finds the same resources by the same
+  names and needs no secrets. It creates an **action group** that emails the owner, and **metric alerts**:
+  - API and dashboard `HealthCheckStatus` < 100 over 5 minutes (App Service's built-in health check: `/api/v1/health`,
+    `/login`);
+  - API `Http5xx` > 20 in 15 minutes;
+  - Postgres `is_db_alive` < 1;
+  - Postgres storage > 80% and CPU > 90% over 30 minutes;
+  - App Service plan memory > 90% over 30 minutes.
+
+  Alerts resolve themselves when the problem clears (`autoMitigate`).
+- Metric alerts only (about $0.10 per rule per month). There is no Application Insights availability test yet, so a
+  problem *in front of* App Service (DNS, certificate) isn't caught. Add a standard availability test later if that's
+  wanted; it is billed per test run.
+- Alert text names the failing piece and where to look (Log stream). It contains no patient data, because metrics
+  carry none.

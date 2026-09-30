@@ -163,6 +163,27 @@ then (ROADMAP P4-19). Emails never contain patient details. Cost is about $0.25 
 
 Fallback: Amazon SES also works (EMAIL_PROVIDER=ses; see `.env.production.example`) if it's ever needed.
 
+## 7. Alerts: get an email when something breaks (5 minutes)
+
+`infra/azure/monitoring.bicep` creates email alerts (D-087). It needs no secrets. In Cloud Shell (Bash):
+
+```bash
+curl -sO https://raw.githubusercontent.com/ay4real5/Kayyo-alora_health-/main/infra/azure/monitoring.bicep
+az deployment group create -g primordial-prod -f monitoring.bicep -p alertEmail=YOUR-EMAIL -o none
+```
+
+Azure sends a "You've been added to an action group" email; that confirms it's set up. You'll then get an email when:
+
+| Alert | When |
+|---|---|
+| API down / dashboard down | the health check fails for 5 minutes |
+| API server errors | more than 20 errors in 15 minutes |
+| Database down | the database stops responding |
+| Database storage / CPU, app server memory | over 80–90% for 30 minutes (time to size up) |
+
+A second email arrives when the problem clears. It costs about $1–2 a month. To change the address, run the same command
+again with the new email.
+
 ## Later, when needed
 
 - **Texts / phone check-in**: Twilio App Settings (see `.env.production.example`); the check-in number's webhook is
