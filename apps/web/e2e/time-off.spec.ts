@@ -25,24 +25,30 @@ function futureRange(weeksAhead: number): { startDate: string; endDate: string }
 
 test('a supervisor sees a caregiver’s pending time off and approves it', async ({ page }) => {
   // A demo caregiver asks for time off (created over the API; the mobile app is the real client for this).
-  const { startDate, endDate } = futureRange(12);
+  const { startDate, endDate } = futureRange(12 + Math.floor(Math.random() * 4)); // fresh dates each run — leftovers block overlaps
   const notes = `E2E ${Date.now()}`;
   const token = await apiToken('hha@demo.alora.test');
-  const created = await request.newContext({ baseURL: API, extraHTTPHeaders: { Authorization: `Bearer ${token}` } });
-  const post = await created.post('time-off', { data: { startDate, endDate, type: 'vacation', notes } });
+  const api = await request.newContext({ baseURL: API, extraHTTPHeaders: { Authorization: `Bearer ${token}` } });
+  const post = await api.post('time-off', { data: { startDate, endDate, type: 'vacation', notes } });
   expect(post.status()).toBe(201);
-  await created.dispose();
+  const requestId = ((await post.json()) as { data: { id: string } }).data.id;
 
-  // The supervisor reviews it on the open-shifts page and approves it; it then leaves the pending list.
-  await page.goto('/login');
-  await page.getByLabel('Email').fill('supervisor@demo.alora.test');
-  await page.getByLabel('Password').fill(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
-  await page.goto('/schedule/open-shifts');
+  try {
+    // The supervisor reviews it on the open-shifts page and approves it; it then leaves the pending list.
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('supervisor@demo.alora.test');
+    await page.getByLabel('Password').fill(PASSWORD);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+    await page.goto('/schedule/open-shifts');
 
-  const row = page.getByRole('list', { name: 'Time off requests' }).getByRole('listitem').filter({ hasText: notes });
-  await expect(row).toBeVisible();
-  await row.getByRole('button', { name: 'Approve' }).click();
-  await expect(row).toHaveCount(0);
+    const row = page.getByRole('list', { name: 'Time off requests' }).getByRole('listitem').filter({ hasText: notes });
+    await expect(row).toBeVisible();
+    await row.getByRole('button', { name: 'Approve' }).click();
+    await expect(row).toHaveCount(0);
+  } finally {
+    // Leave nothing behind: an approved request the dates haven't reached yet can still be cancelled.
+    await api.post(`time-off/${requestId}/cancel`).catch(() => undefined);
+    await api.dispose();
+  }
 });
