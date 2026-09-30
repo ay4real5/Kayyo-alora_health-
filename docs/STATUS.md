@@ -127,6 +127,37 @@
 
 ## In progress
 
+**P4-22 caregiver extras (branch `task/P4-22-caregiver-extras-2`, not merged yet)** — owner asked for mileage, time off
+and photos in messages (2026-09-30).
+- Done and tested:
+  - **API**: message photos (`POST /messages/conversations/:id/photos`, `GET …/attachments/:documentId`; stored encrypted
+    as documentType `message_photo`, hidden from the document library, only participants can open them, only the
+    uploader can attach them, once).
+  - **Time off** (`/time-off`: list/request/cancel; `PATCH /time-off/:id` approve or deny needs `visits:approve`; the
+    requester is notified with `time_off_decided`, dates only).
+  - e2e tests `test/time-off.e2e-spec.ts` and the photo test in `test/messaging.e2e-spec.ts` pass; OpenAPI is
+    regenerated.
+  - **Web**: `components/messages/message-attachment.tsx` shows photos inline and downloads documents in Messages
+    (not yet typechecked).
+- **Next steps, in order**:
+  1. Web: a Time off page for supervisors: `/schedule/time-off`, or a section on `/schedule/open-shifts` like
+     `SwapRequests`, gated by `can('visits:approve')`. It lists pending requests with `bookedVisits` and has
+     approve/deny buttons.
+  2. Mobile (`apps/mobile`):
+     - **Mileage screen**: `GET/POST /payroll/mileage` already exist. The DTO is travelDate, miles, description?,
+       visitId?.
+     - **Time off screen**: list own, request form, cancel.
+     - **Photos in messages**: add `expo-image-picker` (the SDK-57 version); upload multipart to `…/photos`, then send
+       the message with `documentId`. Show photos by fetching the attachment into memory (a data URL), not a disk
+       cache.
+     - Add Profile rows for Mileage and Time off. Alerts: `time_off_decided` → the time off screen.
+  3. Record D-089 (message photos) and D-090 (time off) in DECISIONS, tick P4-22 in ROADMAP, then open the PR.
+- **Open PRs waiting to merge**:
+  - #7 backup restore drill: its one flaky browser test was re-run. After merging, run **Actions → Backup restore
+    drill** once and add the result to the BACKUP-RESTORE.md drill log.
+  - #8 Create agency workflow: will conflict with #7 in the docs, so rebase it after #7.
+
+
 **Production is LIVE on Azure (D-081, D-082)** — https://app.primordialhealthservices.health (dashboard),
 https://api.primordialhealthservices.health (API). Central US, resource group `primordial-prod`; deploys via
 *Deploy to Azure* (manual workflow, OIDC — federated credentials for both GitHub subject formats). Agency
