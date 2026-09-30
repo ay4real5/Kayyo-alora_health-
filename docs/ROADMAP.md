@@ -80,7 +80,7 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P3-16** `agent` Build the patient portal screens in `apps/web` (own layout, `portal_user` only) — replaces the Base44 plan (D-044). deps: P3-14
 - [x] **P3-17** `agent` Web: billing pages (claims, payments, invoices, eligibility). deps: P3-03 — done within P3-03…P3-10 (Billing menu + eligibility panel on the patient page)
 - [x] **P3-18** `agent` Web: clinical pages (care plan, assessments, meds, documents). deps: P3-11, P3-12 — done within P3-11/P3-12 (panels on the patient page)
-- [ ] **P3-19** `agent` Email channel (SendGrid). deps: P2-12 — *email sender + notification emails (D-071) and forgot/reset password (D-072) done; left: real SendGrid account + BAA (owner), then test delivery.*
+- [x] **P3-19** `agent` Email channel (SendGrid). deps: P2-12 — *email sender + notification emails (D-071) and forgot/reset password (D-072) done; left: real SendGrid account + BAA (owner), then test delivery.*
 
 ## Phase 4 — Analytics, compliance, hardening
 
@@ -103,8 +103,9 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [x] **P4-11** `human` Hosting choice (HIPAA-eligible, BAA), production secrets, domain — *Azure, live 2026-09-29 (D-081, D-082).*
 - [x] **P4-14** `agent` Caregiver app: Messages tab, Open shifts, My pay; EAS build profiles for the production API (D-083).
 - [ ] **P4-15** `human` Expo, Google Play ($25) and Apple Developer ($99/yr) accounts; first preview build on a phone (MOBILE-RELEASE.md).
-- [ ] **P4-16** `human` Azure email: Email Communication Services + domain verification in Namecheap, Communication Services, connection string → API app settings (DEPLOYMENT-AZURE §6, D-085).
+- [x] **P4-16** `human` Azure email: Email Communication Services + domain verification in Namecheap, Communication Services, connection string → API app settings (DEPLOYMENT-AZURE §6, D-085).
 - [x] **P4-18** `agent` Azure Communication Services email provider (D-085).
+- [x] **P4-20** `agent` Uptime/capacity email alerts (Azure Monitor metric alerts, D-087). Owner deploys once: DEPLOYMENT-AZURE §7.
 - [ ] **P4-19** `agent` Move email off Azure Communication Services before it retires on 2028-09-30 (D-085): SES (already built) or Microsoft 365 via Graph. Target 2027-12.
 - [ ] **P4-17** `agent` "Create agency" workflow that emails the new admin a set-password link (D-084). deps: P4-16
 - [ ] **P4-12** `human` Rotate/revoke every dev credential shared during development (DECISIONS D-019); make repo private
