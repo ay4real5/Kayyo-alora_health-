@@ -66,6 +66,7 @@ jobs:
 
       - name: Roll out the new images
         run: |
+          echo "ROLLOUT_AT=$(date -u +%s)" >> "$GITHUB_ENV"
           az webapp config container set -g "$RG" -n "$API_APP" --container-image-name "$SERVER/primordial-api:$TAG" -o none
           az webapp config container set -g "$RG" -n "$WEB_APP" --container-image-name "$SERVER/primordial-web:$TAG" -o none
           az webapp restart -g "$RG" -n "$API_APP"
@@ -75,11 +76,16 @@ jobs:
         run: |
           API_HOST=$(az webapp show -g "$RG" -n "$API_APP" --query defaultHostName -o tsv)
           WEB_HOST=$(az webapp show -g "$RG" -n "$WEB_APP" --query defaultHostName -o tsv)
-          for i in $(seq 1 60); do
-            if curl -fsS "https://$API_HOST/api/v1/health" && curl -fsS -o /dev/null "https://$WEB_HOST/login"; then
-              echo; echo "Deployed $TAG — API and dashboard are healthy"; exit 0
+          # App Service keeps the old container answering while the new one starts, so "healthy" alone proves nothing:
+          # the API must also have started after the rollout (its uptime is shorter than the time since then).
+          for i in $(seq 1 90); do
+            UPTIME=$(curl -fsS "https://$API_HOST/api/v1/health" | jq -r '.data.uptimeSeconds // empty' || true)
+            SINCE=$(( $(date -u +%s) - ROLLOUT_AT + 30 ))
+            if [ -n "$UPTIME" ] && [ "$UPTIME" -le "$SINCE" ] && curl -fsS -o /dev/null "https://$WEB_HOST/login"; then
+              echo "Deployed $TAG — the new API (up ${UPTIME}s) and the dashboard are healthy"; exit 0
             fi
+            echo "Waiting for the new version (API uptime: ${UPTIME:-no answer}s)"
             sleep 10
           done
-          echo "::error::The new version did not become healthy — check the App Service logs (Log stream) in the portal"
+          echo "::error::The new version did not take over within 15 minutes — check the API app's Log stream in the portal"
           exit 1
