@@ -27,6 +27,10 @@
         "android.permission.USE_FINGERPRINT",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
       ]
     },
     "plugins": [
@@ -63,7 +67,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Primordial Health to access your photos to send them in messages."
+          "photosPermission": "Allow Primordial Health to access your photos to send them in messages.",
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ]
     ],
