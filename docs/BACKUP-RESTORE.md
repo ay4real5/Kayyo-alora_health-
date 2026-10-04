@@ -60,4 +60,4 @@ about 30–60 minutes: the restore plus the switch-over.
 
 | Date | Who | Result | Restore time | Notes |
 |---|---|---|---|---|
-| | | | | First drill: run after this page is merged |
+| 2026-10-03 | Scheduled run ([#37138899608](https://github.com/ay4real5/Kayyo-alora_health-/actions/runs/37138899608)) | **Passed** | 6 min (checks 3 min) | First drill. Same tables and migrations as production; temporary server deleted afterwards. |

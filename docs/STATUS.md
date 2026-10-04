@@ -127,14 +127,13 @@
 
 ## In progress
 
-**P4-22 caregiver extras — done (branch `task/P4-22-caregiver-extras-2`, PR open, not merged).** Mileage and time off in
-the app, photos in messages (app + dashboard), supervisor time-off queue on Schedule → Open shifts. D-089, D-090. Build,
-typecheck, lint and unit tests pass; time-off e2e (API + browser) pass; CI green on the implementation commits.
-- **Open PRs waiting to merge**:
-  - #7 backup restore drill: its one flaky browser test was re-run. After merging, run **Actions → Backup restore
-    drill** once and add the result to the BACKUP-RESTORE.md drill log.
-  - #8 Create agency workflow: will conflict with #7 in the docs, so rebase it after #7.
+Nothing half-done. PRs #7 (backup drill), #8 (Create agency workflow) and #10 (P4-22 caregiver extras: mileage, time
+off, photos in messages; D-089, D-090) are merged. Production was redeployed with all of them on 2026-10-04.
 
+- **Backup restore drill passed** on 2026-10-03 (first scheduled run): restore took 6 minutes. It is logged in
+  [BACKUP-RESTORE.md](BACKUP-RESTORE.md).
+- **Expo project linked** (`projectId` in app.json, image-picker permission added). Next: the first Android preview
+  build (`eas build --profile preview --platform android`, MOBILE-RELEASE.md §1), then check the app on a real phone.
 
 **Production is LIVE on Azure (D-081, D-082)** — https://app.primordialhealthservices.health (dashboard),
 https://api.primordialhealthservices.health (API). Central US, resource group `primordial-prod`; deploys via
@@ -174,6 +173,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-04 | Claude Code | ops | Redeployed production with P4-17/P4-21/P4-22; logged the first passed backup drill; STATUS refreshed. |
 | 2026-09-30 | Claude Code | P4-21 | Backup restore drill workflow + runbook (D-088); first drill to run after merge. |
 | 2026-09-30 | Claude Code | P4-20 | Uptime/capacity alerts template (monitoring.bicep, D-087); owner runs DEPLOYMENT-AZURE §7 once. |
 | 2026-09-30 | Claude Code | P4-18 | Azure email live in production; forgiving provider settings (PR #4); HTML version of every email (D-086). |
