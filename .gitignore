@@ -53,3 +53,6 @@ apps/api/src/generated/
 
 # Next.js generated type file (regenerated on dev/build/typegen)
 apps/web/next-env.d.ts
+
+# Firebase config for Android push (D-091): kept out of the public repo; EAS builds get it from a file variable
+apps/mobile/google-services.json
