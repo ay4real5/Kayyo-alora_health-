@@ -132,8 +132,10 @@ off, photos in messages; D-089, D-090) are merged. Production was redeployed wit
 
 - **Backup restore drill passed** on 2026-10-03 (first scheduled run): restore took 6 minutes. It is logged in
   [BACKUP-RESTORE.md](BACKUP-RESTORE.md).
-- **Expo project linked** (`projectId` in app.json, image-picker permission added). Next: the first Android preview
-  build (`eas build --profile preview --platform android`, MOBILE-RELEASE.md §1), then check the app on a real phone.
+- **First Android preview build succeeded** (2026-10-04, EAS build 08bbb691-6426-4785-96b6-b7aa32236233, APK). It
+  needed PR #12: an `eas-build-post-install` script compiles `@alora/shared` (its `dist/` isn't in git). Camera and
+  microphone permissions were dropped, since photos come from the gallery only. **Next:** the owner tests on a real
+  Android phone with a caregiver login; fix what they find. iOS needs the Apple Developer account (P4-15).
 
 **Production is LIVE on Azure (D-081, D-082)** — https://app.primordialhealthservices.health (dashboard),
 https://api.primordialhealthservices.health (API). Central US, resource group `primordial-prod`; deploys via
@@ -173,6 +175,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-05 | Claude Code | P4-15 | First EAS Android preview build green (shared-package build hook, PR #12); deploy health check now waits for the new container (PR #11). |
 | 2026-10-04 | Claude Code | ops | Redeployed production with P4-17/P4-21/P4-22; logged the first passed backup drill; STATUS refreshed. |
 | 2026-09-30 | Claude Code | P4-21 | Backup restore drill workflow + runbook (D-088); first drill to run after merge. |
 | 2026-09-30 | Claude Code | P4-20 | Uptime/capacity alerts template (monitoring.bicep, D-087); owner runs DEPLOYMENT-AZURE §7 once. |
