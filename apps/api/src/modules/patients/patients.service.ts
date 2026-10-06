@@ -14,6 +14,7 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import type {
+  CaregiverPreferenceDto,
   CreateAllergyDto,
   CreateDiagnosisDto,
   CreatePatientDto,
@@ -38,6 +39,8 @@ export interface PatientDetail extends PatientSummary {
   ssnLast4: string | null;
   phoneHome: string | null;
   liveIn: boolean;
+  preferredLanguage: string | null;
+  preferredCaregiverGender: string | null;
   phoneCell: string | null;
   email: string | null;
   addressLine1: string | null;
@@ -224,6 +227,40 @@ export class PatientsService {
     if (removed.count === 0) throw new NotFoundException('Diagnosis not found');
   }
 
+  /** Preferred and declined caregivers for this patient (D-094). */
+  async listCaregiverPreferences(caller: AuthUser, patientId: string) {
+    await this.find(caller, patientId);
+    const rows = await this.prisma.patientCaregiverPreference.findMany({
+      where: { patientId },
+      include: { staffProfile: { select: { id: true, discipline: true, user: { select: { firstName: true, lastName: true } } } } },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((r) => ({
+      staff: { id: r.staffProfile.id, firstName: r.staffProfile.user.firstName, lastName: r.staffProfile.user.lastName, discipline: r.staffProfile.discipline },
+      kind: r.kind,
+      note: r.note,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  async setCaregiverPreference(caller: AuthUser, patientId: string, staffId: string, dto: CaregiverPreferenceDto) {
+    await this.find(caller, patientId);
+    const staff = await this.prisma.staffProfile.count({ where: { id: staffId, agencyId: caller.agencyId } });
+    if (!staff) throw new BadRequestException('staffId does not match a staff member in this agency');
+    await this.prisma.patientCaregiverPreference.upsert({
+      where: { patientId_staffProfileId: { patientId, staffProfileId: staffId } },
+      create: { patientId, staffProfileId: staffId, kind: dto.kind, note: dto.note ?? null, createdById: caller.userId },
+      update: { kind: dto.kind, note: dto.note ?? null },
+    });
+    return this.listCaregiverPreferences(caller, patientId);
+  }
+
+  async removeCaregiverPreference(caller: AuthUser, patientId: string, staffId: string): Promise<void> {
+    await this.find(caller, patientId);
+    const removed = await this.prisma.patientCaregiverPreference.deleteMany({ where: { patientId, staffProfileId: staffId } });
+    if (removed.count === 0) throw new NotFoundException('No preference for that caregiver');
+  }
+
   async listAllergies(caller: AuthUser, patientId: string): Promise<AllergyView[]> {
     return (await this.find(caller, patientId)).allergies.map(toAllergy);
   }
@@ -284,7 +321,7 @@ export class PatientsService {
   private fields(dto: UpdatePatientDto): Prisma.PatientUncheckedUpdateInput & Prisma.PatientUncheckedCreateInput {
     const data: Record<string, unknown> = {};
     const copy = [
-      'firstName', 'lastName', 'gender', 'mrn', 'phoneHome', 'liveIn', 'phoneCell', 'email', 'addressLine1',
+      'firstName', 'lastName', 'gender', 'mrn', 'phoneHome', 'liveIn', 'preferredLanguage', 'preferredCaregiverGender', 'phoneCell', 'email', 'addressLine1',
       'addressLine2', 'city', 'state', 'zip', 'latitude', 'longitude', 'geoFenceRadiusMeters', 'emergencyContactName',
       'emergencyContactPhone', 'emergencyContactRelation', 'primaryPhysicianId', 'medicareBeneficiaryId',
       'medicaidId', 'insuranceMemberId', 'insuranceGroupNumber', 'notes',
@@ -316,6 +353,8 @@ export class PatientsService {
       ssnLast4: ssn ? ssn.slice(-4) : null,
       phoneHome: patient.phoneHome,
       liveIn: patient.liveIn,
+      preferredLanguage: patient.preferredLanguage,
+      preferredCaregiverGender: patient.preferredCaregiverGender,
       phoneCell: patient.phoneCell,
       email: patient.email,
       addressLine1: patient.addressLine1,

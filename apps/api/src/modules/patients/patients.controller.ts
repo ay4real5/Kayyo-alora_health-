@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -16,6 +17,7 @@ import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import {
+  CaregiverPreferenceDto,
   CreateAllergyDto,
   CreateDiagnosisDto,
   CreatePatientDto,
@@ -76,6 +78,33 @@ export class PatientsController {
   @HttpCode(HttpStatus.OK)
   readmit(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string, @Body() dto: ReadmitPatientDto) {
     return this.patients.readmit(caller, id, dto.admissionDate);
+  }
+
+  @Permissions('patients:read')
+  @Get(':id/caregiver-preferences')
+  caregiverPreferences(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string) {
+    return this.patients.listCaregiverPreferences(caller, id);
+  }
+
+  /** Prefer or decline a caregiver for this patient (D-094); declined caregivers are never suggested. */
+  @Permissions('patients:update')
+  @Audit({ action: 'SET_CAREGIVER_PREFERENCE', resourceType: 'patients' })
+  @Put(':id/caregiver-preferences/:staffId')
+  setCaregiverPreference(
+    @CurrentUser() caller: AuthUser,
+    @Param('id', uuid()) id: string,
+    @Param('staffId', uuid()) staffId: string,
+    @Body() dto: CaregiverPreferenceDto,
+  ) {
+    return this.patients.setCaregiverPreference(caller, id, staffId, dto);
+  }
+
+  @Permissions('patients:update')
+  @Audit({ action: 'REMOVE_CAREGIVER_PREFERENCE', resourceType: 'patients' })
+  @Delete(':id/caregiver-preferences/:staffId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeCaregiverPreference(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string, @Param('staffId', uuid()) staffId: string) {
+    await this.patients.removeCaregiverPreference(caller, id, staffId);
   }
 
   @Permissions('patients:read')
