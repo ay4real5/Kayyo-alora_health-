@@ -52,9 +52,9 @@ export default function MyPayScreen() {
           <ErrorText>{error}</ErrorText>
           {latest && (
             <Card style={{ backgroundColor: colors.indigo, gap: 4, paddingVertical: 20 }}>
-              <Text style={{ color: '#c7d2fe', fontSize: 14 }}>Latest pay · {dateRange(latest.payPeriod.periodStart, latest.payPeriod.periodEnd)}</Text>
+              <Text style={{ color: '#9aeedd', fontSize: 14 }}>Latest pay · {dateRange(latest.payPeriod.periodStart, latest.payPeriod.periodEnd)}</Text>
               <Text style={{ color: colors.white, fontSize: 34, fontWeight: '800' }}>{money(latest.grossPay)}</Text>
-              <Text style={{ color: '#c7d2fe', fontSize: 14 }}>
+              <Text style={{ color: '#9aeedd', fontSize: 14 }}>
                 Paid {shortDate(latest.payPeriod.payDate)} · {latest.regularHours + latest.overtimeHours} h · {latest.visitCount} visits
               </Text>
             </Card>

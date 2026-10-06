@@ -40,7 +40,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: '#7c8497',
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
         tabBarStyle: { borderTopColor: colors.border, backgroundColor: colors.white, height: 64, paddingTop: 6, paddingBottom: 8 },
-        tabBarBadgeStyle: { backgroundColor: '#c026d3', fontSize: 11 },
+        tabBarBadgeStyle: { backgroundColor: '#ef5a46', fontSize: 11 },
         tabBarIcon: ({ focused, color, size }) => {
           const [on, off] = TAB_ICONS[route.name] ?? ['ellipse', 'ellipse-outline'];
           return <Ionicons name={focused ? on : off} size={size} color={color} />;

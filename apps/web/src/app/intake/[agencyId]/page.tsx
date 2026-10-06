@@ -1,7 +1,8 @@
 'use client';
 
 import { REFERRAL_PAYER_LABELS, REFERRAL_PAYER_TYPES } from '@alora/shared';
-import { CheckCircle2, HeartHandshake } from 'lucide-react';
+import { CheckCircle2, Clock3, HeartHandshake, ShieldCheck } from 'lucide-react';
+import { LogoMark } from '@/components/brand/logo';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
@@ -58,24 +59,37 @@ export default function IntakePage() {
 
   if (sent) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-3 p-6 text-center">
-        <CheckCircle2 aria-hidden className="h-12 w-12 text-emerald-600" />
-        <h1 className="text-2xl font-semibold text-slate-900">Thank you — we&apos;ve got it</h1>
+      <main className="mx-auto flex min-h-screen max-w-xl animate-fade-in flex-col items-center justify-center gap-3 p-6 text-center">
+        <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-100 to-brand-200 shadow-[var(--shadow-glow)]">
+          <CheckCircle2 aria-hidden className="h-9 w-9 text-brand-700" />
+        </span>
+        <h1 className="font-display text-3xl font-extrabold text-ink">Thank you — we&apos;ve got it</h1>
         <p className="text-slate-700">Someone from our care team will call you back, usually within one business day. If it&apos;s an emergency, call 911.</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-4 sm:p-8">
-      <div className="mb-6 flex items-center gap-3">
-        <HeartHandshake aria-hidden className="h-9 w-9 text-brand-700" />
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Ask about home care</h1>
-          <p className="text-sm text-slate-600">Tell us a little about who needs care and we&apos;ll call you back. No cost, no obligation.</p>
-        </div>
+    <main className="mx-auto max-w-2xl animate-fade-in p-4 sm:p-8">
+      <div className="bg-mesh-light relative mb-6 overflow-hidden rounded-3xl p-6 sm:p-8">
+        <LogoMark className="h-11 w-11" />
+        <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink">
+          Ask about <span className="text-brand-700">home care</span>
+        </h1>
+        <p className="mt-2 text-slate-700">Tell us a little about who needs care and we&apos;ll call you back.</p>
+        <ul className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-brand-900">
+          <li className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 shadow-sm">
+            <HeartHandshake aria-hidden className="h-3.5 w-3.5 text-accent-600" /> No cost, no obligation
+          </li>
+          <li className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 shadow-sm">
+            <Clock3 aria-hidden className="h-3.5 w-3.5 text-accent-600" /> Call back within a business day
+          </li>
+          <li className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 shadow-sm">
+            <ShieldCheck aria-hidden className="h-3.5 w-3.5 text-accent-600" /> Private and secure
+          </li>
+        </ul>
       </div>
-      <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+      <form onSubmit={submit} className="grid gap-4 rounded-3xl border border-brand-900/[0.06] bg-white p-5 shadow-[var(--shadow-card)] sm:grid-cols-2 sm:p-7">
         <fieldset className="flex flex-col gap-2 sm:col-span-2">
           <legend className="mb-1 text-sm font-medium text-slate-700">Who needs care?</legend>
           <label className="flex items-center gap-2 text-sm text-slate-800">

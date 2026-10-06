@@ -28,8 +28,8 @@ export function LogoMark({ className = 'h-9 w-9', title }: { className?: string;
       <path d="M16.5 36V13.5h9a8.25 8.25 0 0 1 0 16.5h-9" fill="none" stroke="#fff" strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M21.5 25.2c1.6-3.9 4.4-5.6 8-5.7-.5 3.7-3 6-8 5.7Z" fill="#ccf7ee" />
       {/* The coral spark. */}
-      <circle cx="36.5" cy="11.5" r="4" fill={`url(#${spark})`} />
-      <circle cx="36.5" cy="11.5" r="6.2" fill="none" stroke="#fea697" strokeOpacity="0.45" strokeWidth="1.2" />
+      <circle cx="37.5" cy="10.5" r="3.6" fill={`url(#${spark})`} />
+      <circle cx="37.5" cy="10.5" r="5.6" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
     </svg>
   );
 }

@@ -106,10 +106,10 @@ export default function ProfileScreen() {
         <Text style={{ color: colors.white, fontSize: 24, fontWeight: '800', marginTop: 12 }}>
           {user.firstName} {user.lastName}
         </Text>
-        <Text style={{ color: '#c7d2fe', fontSize: 15, marginTop: 2 }}>
+        <Text style={{ color: '#9aeedd', fontSize: 15, marginTop: 2 }}>
           {staff ? `${staff.discipline} · ${role}` : role}
         </Text>
-        {user.agency?.name ? <Text style={{ color: '#a5b4fc', fontSize: 13, marginTop: 4 }}>{user.agency.name}</Text> : null}
+        {user.agency?.name ? <Text style={{ color: '#5fdcc8', fontSize: 13, marginTop: 4 }}>{user.agency.name}</Text> : null}
       </GradientHeader>
 
       <View style={{ padding: 20, gap: 12 }}>

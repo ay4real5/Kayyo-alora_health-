@@ -36,7 +36,7 @@ export default function UnlockScreen() {
           <Ionicons name="lock-closed" size={38} color={colors.white} />
         </View>
         <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800', textAlign: 'center' }}>Primordial Health is locked</Text>
-        <Text style={{ color: '#c7d2fe', fontSize: 16, textAlign: 'center' }}>
+        <Text style={{ color: '#9aeedd', fontSize: 16, textAlign: 'center' }}>
           Unlock with Face ID, fingerprint or your phone passcode.
         </Text>
       </View>

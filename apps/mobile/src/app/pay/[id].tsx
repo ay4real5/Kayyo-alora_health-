@@ -40,9 +40,9 @@ export default function PayStubScreen() {
     <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, gap: 12, paddingBottom: 40 }}>
       <Stack.Screen options={{ title: dateRange(stub.payPeriod.periodStart, stub.payPeriod.periodEnd) }} />
       <Card style={{ backgroundColor: colors.indigo, gap: 4, paddingVertical: 20 }}>
-        <Text style={{ color: '#c7d2fe', fontSize: 14 }}>Gross pay</Text>
+        <Text style={{ color: '#9aeedd', fontSize: 14 }}>Gross pay</Text>
         <Text style={{ color: colors.white, fontSize: 34, fontWeight: '800' }}>{money(stub.grossPay)}</Text>
-        <Text style={{ color: '#c7d2fe', fontSize: 14 }}>
+        <Text style={{ color: '#9aeedd', fontSize: 14 }}>
           Paid {shortDate(stub.payPeriod.payDate)} · {stub.visitCount} visits
         </Text>
       </Card>
