@@ -87,7 +87,7 @@ export default function UsersPage() {
             {users.data?.data.map((u) => (
               <tr key={u.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/users/${u.id}`} className="font-medium text-violet-800 hover:underline">
+                  <Link href={`/users/${u.id}`} className="font-medium text-brand-800 hover:underline">
                     {u.lastName}, {u.firstName}
                   </Link>
                 </td>

@@ -32,6 +32,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Clinical supervisor: all clinical and scheduling work, approvals, live monitoring. No billing/payroll. */
   supervisor: [
+    'assistant:use',
     'messages:use',
     'messages:portal',
     'medications:manage',
@@ -76,6 +77,9 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'compliance:create',
     'compliance:read',
     'compliance:update',
+    'referrals:read',
+    'referrals:manage',
+    'training:manage',
   ],
 
   registered_nurse: [
@@ -110,6 +114,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Billing: full billing and claims, patient demographics, no clinical notes. */
   billing_staff: [
+    'assistant:use',
     'messages:use',
     'authorizations:read',
     'authorizations:manage',
@@ -130,6 +135,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
 
   /** Office coordinator: scheduling, basic patient info, staff management. No billing, no clinical notes. */
   office_staff: [
+    'assistant:use',
     'messages:use',
     'messages:portal',
     'authorizations:read',
@@ -154,6 +160,9 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'documents:read',
     'notifications:create',
     'compliance:create',
+    'referrals:read',
+    'referrals:manage',
+    'training:manage',
   ],
 
   /** Patients/family: only the /portal endpoints, which have their own own-data guard (P3-14). */

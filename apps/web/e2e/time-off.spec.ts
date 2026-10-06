@@ -39,7 +39,7 @@ test('a supervisor sees a caregiver’s pending time off and approves it', async
     await page.getByLabel('Email').fill('supervisor@demo.alora.test');
     await page.getByLabel('Password').fill(PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
     await page.goto('/schedule/open-shifts');
 
     const row = page.getByRole('list', { name: 'Time off requests' }).getByRole('listitem').filter({ hasText: notes });

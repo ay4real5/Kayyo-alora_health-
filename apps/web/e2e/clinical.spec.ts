@@ -8,7 +8,7 @@ async function openPatient(page: Page, email: string, mrn: string) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   await page
     .getByRole('navigation', { name: 'Main' })
     .getByRole('link', { name: 'Patients' })

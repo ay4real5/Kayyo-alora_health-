@@ -13,7 +13,7 @@ test('a supervisor uploads, signs and replaces a patient document', async ({ pag
   await page.getByLabel('Email').fill('supervisor@demo.alora.test');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Patients' }).click();
   await page.getByLabel('Search').fill('DEMO-0004');
   const row = page.getByRole('row').filter({ hasText: 'DEMO-0004' });

@@ -22,7 +22,7 @@ test('office gives a family member portal access; they sign in, read, and messag
 
   // Office: grant access (the temporary password is shown once) and share a document.
   await signIn(page, 'office.staff@demo.alora.test', PASSWORD);
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Patients' }).click();
   await page.getByLabel('Search').fill('DEMO-0005');
   const row = page.getByRole('row').filter({ hasText: 'DEMO-0005' });

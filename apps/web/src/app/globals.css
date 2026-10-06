@@ -1,16 +1,71 @@
 @import "tailwindcss";
 
-/* Primordial Health theme (D-079): indigo & violet, Inter, soft grey canvas, white rounded cards. */
+/*
+ * Primordial Teal design system (D-103). Colours come ONLY from these tokens: `brand-*` (teal), `accent-*` (coral),
+ * `canvas`, `ink`, plus Tailwind's slate/emerald/amber/rose/sky for neutral and status colours. A unit test
+ * (src/lib/design-tokens.spec.ts) keeps the old violet/indigo/fuchsia classes from coming back, so changing the
+ * palette later means editing this file only.
+ */
 @theme inline {
   --font-sans: var(--font-inter);
+  --font-display: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
 }
 
 @theme {
-  --color-canvas: #f7f7fb;
-  --color-ink: #1e1b4b;
-  --shadow-card: 0 1px 2px rgb(30 27 75 / 0.04), 0 4px 16px rgb(30 27 75 / 0.05);
-  --shadow-lift: 0 2px 4px rgb(30 27 75 / 0.06), 0 12px 32px rgb(30 27 75 / 0.1);
+  /* Teal — primary actions, links, active states. 700 is the main brand colour (5.4:1 on white). */
+  --color-brand-50: #effcf9;
+  --color-brand-100: #ccf7ee;
+  --color-brand-200: #9aeedd;
+  --color-brand-300: #5fdcc8;
+  --color-brand-400: #2fc2ae;
+  --color-brand-500: #14a896;
+  --color-brand-600: #0d877a;
+  --color-brand-700: #0f766e;
+  --color-brand-800: #115e59;
+  --color-brand-900: #134e4a;
+  --color-brand-950: #042f2e;
+
+  /* Coral — highlights, badges, the logo spark. Not for small text on white. */
+  --color-accent-50: #fff4f2;
+  --color-accent-100: #ffe5e0;
+  --color-accent-200: #ffcbc2;
+  --color-accent-300: #fea697;
+  --color-accent-400: #f97362;
+  --color-accent-500: #ef5a46;
+  --color-accent-600: #e0533f;
+  --color-accent-700: #b93a28;
+  --color-accent-800: #993326;
+  --color-accent-900: #7f3025;
+
+  --color-canvas: #f6faf9;
+  --color-ink: #042f2e;
+
+  --shadow-card: 0 1px 2px rgb(4 47 46 / 0.04), 0 4px 16px rgb(4 47 46 / 0.05);
+  --shadow-lift: 0 2px 4px rgb(4 47 46 / 0.06), 0 14px 34px rgb(4 47 46 / 0.12);
+  --shadow-glow: 0 10px 30px -8px rgb(15 118 110 / 0.45);
+
+  --animate-fade-in: fade-in 0.35s ease-out both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: -400px 0;
+    }
+    to {
+      background-position: 400px 0;
+    }
+  }
 }
 
 body {
@@ -19,8 +74,53 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Numbers line up in tables and stat cards. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The soft teal-to-coral mesh used behind heroes (dashboard greeting, login, portal, intake). */
+.bg-mesh {
+  background-color: var(--color-brand-950);
+  background-image:
+    radial-gradient(at 12% 18%, rgb(20 168 150 / 0.55) 0, transparent 50%),
+    radial-gradient(at 88% 12%, rgb(249 115 98 / 0.45) 0, transparent 45%),
+    radial-gradient(at 70% 90%, rgb(47 194 174 / 0.35) 0, transparent 50%);
+}
+.bg-mesh-light {
+  background-color: var(--color-brand-50);
+  background-image:
+    radial-gradient(at 0% 0%, rgb(154 238 221 / 0.7) 0, transparent 55%),
+    radial-gradient(at 100% 0%, rgb(255 203 194 / 0.6) 0, transparent 50%),
+    radial-gradient(at 60% 100%, rgb(204 247 238 / 0.8) 0, transparent 55%);
+}
+
+/* Loading placeholders. */
+.skeleton {
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, #e8f0ee 0, #f4f8f7 40%, #e8f0ee 80%) 0 0 / 800px 100%;
+  animation: var(--animate-shimmer);
+}
+
 /* Thin, quiet scrollbars in the sidebar and tables. */
 .scroll-quiet {
   scrollbar-width: thin;
   scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

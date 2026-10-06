@@ -42,7 +42,7 @@ export default function MessagesScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <View>
             <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800' }}>Messages</Text>
-            <Text style={{ color: '#c7d2fe', fontSize: 15, marginTop: 4 }}>{unread ? `${unread} unread` : 'Secure, just for your team'}</Text>
+            <Text style={{ color: '#9aeedd', fontSize: 15, marginTop: 4 }}>{unread ? `${unread} unread` : 'Secure, just for your team'}</Text>
           </View>
           <Pressable
             accessibilityRole="button"
@@ -92,7 +92,7 @@ export default function MessagesScreen() {
               onPress={() => router.push({ pathname: '/messages/[id]', params: { id: item.id } })}
               style={({ pressed }) => pressed && { opacity: 0.75 }}
             >
-              <Card style={[{ flexDirection: 'row', alignItems: 'center', gap: 12 }, item.unread > 0 && { borderWidth: 1, borderColor: '#ddd6fe' }]}>
+              <Card style={[{ flexDirection: 'row', alignItems: 'center', gap: 12 }, item.unread > 0 && { borderWidth: 1, borderColor: '#9aeedd' }]}>
                 {item.type === 'direct' && other ? (
                   <Avatar first={other.firstName} last={other.lastName} size={46} />
                 ) : (
@@ -118,7 +118,7 @@ export default function MessagesScreen() {
                       {preview}
                     </Text>
                     {item.unread > 0 && (
-                      <View style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: '#c026d3', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: '#ef5a46', alignItems: 'center', justifyContent: 'center' }}>
                         <Text style={{ color: colors.white, fontSize: 12, fontWeight: '800' }}>{item.unread}</Text>
                       </View>
                     )}

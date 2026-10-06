@@ -344,7 +344,7 @@ function CarePlansPanel({ patientId }: { patientId: string }) {
         {plans.data?.map((p) => (
           <li
             key={p.id}
-            className={`rounded-md border p-2 ${p.status === 'active' ? 'border-violet-300' : 'border-slate-200 text-slate-500'}`}
+            className={`rounded-md border p-2 ${p.status === 'active' ? 'border-brand-300' : 'border-slate-200 text-slate-500'}`}
           >
             <div className="flex items-center justify-between">
               <span className="font-medium">
@@ -367,7 +367,7 @@ function CarePlansPanel({ patientId }: { patientId: string }) {
             {p.status === 'draft' && can('care_plans:update') && (
               <button
                 type="button"
-                className="mt-1 text-xs text-violet-800 underline"
+                className="mt-1 text-xs text-brand-800 underline"
                 onClick={() => {
                   const date = window.prompt('Date the physician signed it (YYYY-MM-DD)');
                   if (date)

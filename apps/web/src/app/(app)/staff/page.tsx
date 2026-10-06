@@ -50,6 +50,14 @@ export default function StaffPage() {
         subtitle="Caregivers and clinicians: disciplines, credentials, availability and time off."
         actions={
           <>
+            {can('staff:update') && can('reports:read') && (
+              <ButtonLink href="/staff/care-scores" variant="secondary">
+                Care Scores
+              </ButtonLink>
+            )}
+            <ButtonLink href="/staff/onboarding" variant="secondary">
+              Onboarding
+            </ButtonLink>
             <ButtonLink href="/staff/credentials" variant="secondary">
               Credentials needing attention
             </ButtonLink>
@@ -98,7 +106,7 @@ export default function StaffPage() {
             {staff.data?.data.map((s) => (
               <tr key={s.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/staff/${s.id}`} className="font-medium text-violet-800 hover:underline">
+                  <Link href={`/staff/${s.id}`} className="font-medium text-brand-800 hover:underline">
                     {s.lastName}, {s.firstName}
                   </Link>
                 </td>

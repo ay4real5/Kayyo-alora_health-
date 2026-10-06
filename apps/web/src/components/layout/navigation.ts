@@ -21,6 +21,9 @@ import {
   Users,
   Wallet,
   HeartPulse,
+  Inbox,
+  KeyRound,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -33,9 +36,11 @@ export const NAVIGATION: readonly { href: string; label: string; permission: str
   { href: '/schedule', label: 'Schedule', permission: 'visits:read', icon: CalendarDays, group: 'Care' },
   { href: '/monitor', label: 'Live monitor', permission: 'evv:read', icon: MapPinned, group: 'Care' },
   { href: '/evv', label: 'EVV review', permission: 'evv:read', icon: ShieldCheck, group: 'Care' },
+  { href: '/referrals', label: 'Referrals', permission: 'referrals:read', icon: Inbox, group: 'Care' },
   { href: '/patients', label: 'Patients', permission: 'patients:read', icon: HeartPulse, group: 'Care' },
   { href: '/staff', label: 'Staff', permission: 'staff:read', icon: Users, group: 'Care' },
   { href: '/physicians', label: 'Physicians', permission: 'physicians:read', icon: Stethoscope, group: 'Care' },
+  { href: '/training', label: 'Academy', permission: 'training:manage', icon: GraduationCap, group: 'Care' },
   { href: '/billing/ready', label: 'Ready to bill', permission: 'billing:read', icon: ClipboardCheck, group: 'Billing' },
   { href: '/billing/claims', label: 'Claims', permission: 'billing:read', icon: FileText, group: 'Billing' },
   { href: '/billing/files', label: 'Claim files', permission: 'billing:read', icon: FileStack, group: 'Billing' },
@@ -50,6 +55,7 @@ export const NAVIGATION: readonly { href: string; label: string; permission: str
   { href: '/compliance/audit-log', label: 'Audit log', permission: 'audit_logs:read', icon: ScrollText, group: 'Admin' },
   { href: '/users', label: 'Users', permission: 'users:read', icon: UserCog, group: 'Admin' },
   { href: '/settings/agency', label: 'Agency settings', permission: 'settings:read', icon: Building2, group: 'Admin' },
+  { href: '/settings/roles', label: 'Roles', permission: 'users:read', icon: KeyRound, group: 'Admin' },
 ];
 
 export const NAV_GROUPS: readonly Group[] = ['Overview', 'Care', 'Billing', 'Business', 'Admin'];

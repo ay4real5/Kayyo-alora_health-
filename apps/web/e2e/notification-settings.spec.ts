@@ -5,7 +5,7 @@ test('a caregiver mutes an alert from the bell’s settings; security alerts sta
   await page.getByLabel('Email').fill('rn@demo.alora.test');
   await page.getByLabel('Password').fill('Demo-Password-1!');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 
   await page.getByRole('button', { name: /Notifications/ }).click();
   await page.getByRole('region', { name: 'Notifications' }).getByRole('link', { name: 'Settings' }).click();

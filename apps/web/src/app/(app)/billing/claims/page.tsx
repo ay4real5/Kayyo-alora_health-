@@ -52,7 +52,7 @@ export default function ClaimsPage() {
             {claims.data?.data.map((c) => (
               <tr key={c.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/billing/claims/${c.id}`} className="font-mono text-violet-800 hover:underline">
+                  <Link href={`/billing/claims/${c.id}`} className="font-mono text-brand-800 hover:underline">
                     {c.claimNumber}
                   </Link>
                 </td>

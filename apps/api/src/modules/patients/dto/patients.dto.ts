@@ -61,6 +61,18 @@ export class CreatePatientDto {
   @Matches(PHONE, { message: 'phoneHome must be a valid phone number' })
   phoneHome?: string;
 
+  /** Caregiver matching (D-094): the language the patient prefers their caregiver to speak. */
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(50)
+  preferredLanguage?: string;
+
+  /** Caregiver matching (D-094): preferred caregiver gender, if any. */
+  @IsOptional()
+  @IsIn(['female', 'male'])
+  preferredCaregiverGender?: 'female' | 'male';
+
   /** A live-in caregiver lives in the home (Virginia personal care claims get the UB modifier, D-077). */
   @IsOptional()
   @IsBoolean()
@@ -248,3 +260,17 @@ export class CreateAllergyDto {
   @IsIn(ALLERGY_SEVERITIES)
   severity?: (typeof ALLERGY_SEVERITIES)[number];
 }
+
+/** A caregiver the patient prefers, or declines (never suggested for them) — D-094. */
+export class CaregiverPreferenceDto {
+  @IsIn(['preferred', 'declined'])
+  kind!: 'preferred' | 'declined';
+
+  /** Why (e.g. "Speaks Haitian Creole", "Family asked not to send"). Not shown to caregivers. */
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}
+

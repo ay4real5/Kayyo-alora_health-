@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { AvailabilityEditor, CredentialsPanel, TimeOffPanel } from '@/components/staff/staff-panels';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { CareScoreCard } from '@/components/workforce/care-score';
+import { OnboardingCard } from '@/components/staff/onboarding-card';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
@@ -71,6 +73,10 @@ export default function StaffMemberPage() {
           ]}
         />
       </Card>
+
+      {s.isActive && <OnboardingCard staffId={s.id} />}
+
+      <CareScoreCard staffId={s.id} />
 
       {s.pay && (
         <Card className="p-5">

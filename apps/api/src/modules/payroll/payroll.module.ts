@@ -104,5 +104,6 @@ export class PayrollController {
 @Module({
   controllers: [PayrollController],
   providers: [PayrollService],
+  exports: [PayrollService],
 })
 export class PayrollModule {}

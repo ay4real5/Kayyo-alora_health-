@@ -19,7 +19,7 @@ test('every page carries a nonce-based CSP, and the app runs without violating i
   await page.getByLabel('Email').fill('supervisor@demo.alora.test');
   await page.getByLabel('Password').fill('Demo-Password-1!');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible({ timeout: 20_000 });
   const nav = page.getByRole('navigation', { name: 'Main' });
 
   await nav.getByRole('link', { name: 'Live monitor' }).click(); // Leaflet map + OpenStreetMap tiles + socket

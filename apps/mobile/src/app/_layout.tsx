@@ -46,6 +46,8 @@ function Routes() {
         <Stack.Screen name="open-shifts" options={{ title: 'Open shifts' }} />
         <Stack.Screen name="pay" options={{ title: 'My pay' }} />
         <Stack.Screen name="pay/[id]" options={{ title: 'Pay stub' }} />
+        <Stack.Screen name="training/index" options={{ title: 'Training' }} />
+        <Stack.Screen name="training/[id]" options={{ title: 'Course' }} />
       </Stack.Protected>
     </Stack>
   );

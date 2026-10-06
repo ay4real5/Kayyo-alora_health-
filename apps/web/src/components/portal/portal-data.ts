@@ -12,6 +12,8 @@ export interface PortalVisit {
   start: string;
   end: string;
   caregiver: string | null;
+  /** The caregiver's update for the family about this visit (D-096). */
+  careUpdate: { summary: string; mood: string | null; at: string } | null;
 }
 export interface PortalMessage {
   id: string;

@@ -112,7 +112,7 @@ export default function ReadyToBillPage() {
       />
       <ErrorAlert error={bill.error} />
       {bill.data && (
-        <p role="status" className="text-sm text-violet-800">
+        <p role="status" className="text-sm text-brand-800">
           Created {bill.data.created.length} claim{bill.data.created.length === 1 ? '' : 's'}.{' '}
           <Link href="/billing/claims" className="underline">
             See claims
@@ -127,7 +127,7 @@ export default function ReadyToBillPage() {
           </Card>
           <Card className="p-3">
             <p className="text-xs text-slate-500">Ready</p>
-            <p className="text-2xl font-semibold text-violet-700">{data.summary.ready}</p>
+            <p className="text-2xl font-semibold text-brand-700">{data.summary.ready}</p>
           </Card>
           <Card className="p-3">
             <p className="text-xs text-slate-500">Blocked</p>
@@ -216,7 +216,7 @@ export default function ReadyToBillPage() {
                   <td className="py-2 pr-4">
                     <Link
                       href={`/schedule/visits/${v.visitId}`}
-                      className="text-violet-800 hover:underline"
+                      className="text-brand-800 hover:underline"
                     >
                       {formatDate(v.serviceDate)}
                     </Link>
@@ -237,7 +237,7 @@ export default function ReadyToBillPage() {
                   <td className="py-2 pr-4">{money(v.amount)}</td>
                   <td className="py-2">
                     {v.ready ? (
-                      <span className="font-medium text-violet-800">Ready</span>
+                      <span className="font-medium text-brand-800">Ready</span>
                     ) : (
                       <span className="font-medium text-red-700">Blocked</span>
                     )}

@@ -35,6 +35,9 @@ export interface PatientDetail extends PatientSummary {
   ssnLast4: string | null;
   phoneHome: string | null;
   liveIn: boolean;
+  /** Caregiver matching (D-094). */
+  preferredLanguage: string | null;
+  preferredCaregiverGender: string | null;
   phoneCell: string | null;
   email: string | null;
   addressLine1: string | null;

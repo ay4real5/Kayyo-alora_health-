@@ -112,7 +112,7 @@ export default function InvoicesPage() {
             {invoices.data?.data.map((i) => (
               <tr key={i.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/billing/invoices/${i.id}`} className="font-mono text-violet-800 hover:underline">
+                  <Link href={`/billing/invoices/${i.id}`} className="font-mono text-brand-800 hover:underline">
                     {i.invoiceNumber}
                   </Link>
                 </td>

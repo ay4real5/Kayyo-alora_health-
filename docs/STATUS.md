@@ -127,6 +127,29 @@
 
 ## In progress
 
+**Primordial Intelligence (Phase 5, owner's 25-idea list; ROADMAP P5-01…P5-11).**
+- P5-01 to P5-10 (D-093 to D-102) are all merged and deployed to production, as of 2026-10-06. Last deploy: run
+  37519979037.
+- `INTAKE_FRAME_ANCESTORS` is set on the production web app (`https://primordialhealthservices.health` and the `www`
+  host).
+- **Next:** P5-11 is all owner-dependent:
+  - payments (processor account);
+  - public API;
+  - predictive risk (clinical review);
+  - AI intake chat (BAA).
+
+  Until the owner provides those, pick up remaining agent tasks from earlier phases, or polish from owner feedback.
+- **Still open**: PR #13 (Android push) waits on the owner's phone test.
+
+**AI assistant (P4-24, D-092) is deployed to production (2026-10-06) but off there.**
+- It was tested end-to-end locally with Claude Haiku 4.5 against the dev database (demo agency).
+- To switch it on, the owner adds `ANTHROPIC_API_KEY` to the API app settings, and later sets
+  `ASSISTANT_BAA_CONFIRMED=true` only once a BAA with Anthropic is signed (P4-25).
+- The current key is a temporary owner key, to be replaced at go-live.
+- 2026-10-06: the owner chose to switch it on in production for a test drive with **test data only** (no real patients until December 2026). The owner sets `ASSISTANT_BAA_CONFIRMED=true` themselves. **Before the first real patient: BAA signed, or set it back to false** (GO_LIVE.md).
+
+**PR #13 (Android push, D-091)** is waiting on the owner's phone test.
+
 Nothing half-done. PRs #7 (backup drill), #8 (Create agency workflow) and #10 (P4-22 caregiver extras: mileage, time
 off, photos in messages; D-089, D-090) are merged. Production was redeployed with all of them on 2026-10-04.
 
@@ -175,6 +198,19 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-06 | Claude Code | P6-01 | Primordial Teal redesign (D-103): teal & coral tokens, new logo and icons, new login, dashboard hero, portal, intake, app colours. |
+| 2026-10-06 | Claude Code | P5-10 | Primordial Academy (D-102): courses + quiz on the dashboard, Training in the app, pass records a credential. |
+| 2026-10-06 | Claude Code | P5-09 | Onboarding checklist (D-101): readiness % per staff member, per-discipline credential requirements, app "Getting started". |
+| 2026-10-06 | Claude Code | P5-08 | Client timeline (D-100): one permission-filtered chronological view on the patient page. |
+| 2026-10-06 | Claude Code | P5-07 | Custom roles (D-099): Settings → Roles, permission grid, no privilege escalation. |
+| 2026-10-06 | Claude Code | P5-06 | Referral pipeline (D-098): board, detail/notes/admit→patient, sources + conversion report, public intake form (embeddable), alerts, Command Center items. |
+| 2026-10-06 | Claude Code | P5-05 | Workforce intelligence (D-097): EVV patterns tab and Command Center item, explainable Care Scores (admins and supervisors), opt-in recognition badges in the app. |
+| 2026-10-06 | Claude Code | P5-04 | AI documentation (D-096): tidy-up of dictated notes, incident detection + report/dismiss, family care updates in the portal. Merged and deployed. |
+| 2026-10-06 | Claude Code | P5-03 | Assistant actions behind Confirm cards (D-095): assign, offer open shift, decide time off, calculate/export payroll. |
+| 2026-10-06 | Claude Code | P5-02 | Smart caregiver matching (D-094): ranked suggestions with reasons, patient preferences, staff location; assistant suggest_caregivers. |
+| 2026-10-06 | Claude Code | P5-01 | Command Center (D-093): permission-filtered needs-attention, money at risk, authorization forecast; assistant todays_priorities. Roadmap Phase 5 added. |
+| 2026-10-06 | Claude Code | fix | Assistant panel crashed the page after an answer (effect returned scrollIntoView's Promise); fixed (PR #15) and deployed. |
+| 2026-10-06 | Claude Code | P4-24 | AI assistant Phase 1: read-only tools as the caller, Haiku 4.5, dashboard panel; off in production until BAA (D-092). |
 | 2026-10-05 | Claude Code | P4-15 | First EAS Android preview build green (shared-package build hook, PR #12); deploy health check now waits for the new container (PR #11). |
 | 2026-10-04 | Claude Code | ops | Redeployed production with P4-17/P4-21/P4-22; logged the first passed backup drill; STATUS refreshed. |
 | 2026-09-30 | Claude Code | P4-21 | Backup restore drill workflow + runbook (D-088); first drill to run after merge. |

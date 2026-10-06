@@ -66,7 +66,7 @@ export default function TodayScreen() {
             <GradientHeader style={{ paddingTop: insets.top + 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#c7d2fe', fontSize: 14, fontWeight: '600' }}>{today ? longDate(today) : ''}</Text>
+                  <Text style={{ color: '#9aeedd', fontSize: 14, fontWeight: '600' }}>{today ? longDate(today) : ''}</Text>
                   <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800', marginTop: 2 }}>
                     {greeting(hour)}, {user?.firstName}
                   </Text>
@@ -94,7 +94,7 @@ export default function TodayScreen() {
                   style={({ pressed }) => pressed && { opacity: 0.85 }}
                 >
                   <View style={[{ backgroundColor: colors.brand, borderRadius: 22, padding: 18, gap: 6 }, shadow]}>
-                    <Text style={{ color: '#ddd6fe', fontWeight: '700', fontSize: 13, letterSpacing: 0.6 }}>
+                    <Text style={{ color: '#9aeedd', fontWeight: '700', fontSize: 13, letterSpacing: 0.6 }}>
                       {next.status === 'in_progress' ? 'YOU ARE ON THIS VISIT' : 'UP NEXT'}
                     </Text>
                     <Text style={{ color: colors.white, fontSize: 20, fontWeight: '800' }}>
@@ -102,7 +102,7 @@ export default function TodayScreen() {
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Ionicons name="time-outline" size={16} color="#ede9fe" />
-                      <Text style={{ color: '#ede9fe', fontSize: 15 }}>
+                      <Text style={{ color: '#ccf7ee', fontSize: 15 }}>
                         {time(next.scheduledStart)} – {time(next.scheduledEnd)} · {humanize(next.visitType)}
                       </Text>
                     </View>
@@ -162,7 +162,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 12 }}>
       <Text style={{ color: colors.white, fontSize: 20, fontWeight: '800' }}>{value}</Text>
-      <Text style={{ color: '#c7d2fe', fontSize: 12, fontWeight: '600', marginTop: 2 }}>{label}</Text>
+      <Text style={{ color: '#9aeedd', fontSize: 12, fontWeight: '600', marginTop: 2 }}>{label}</Text>
     </View>
   );
 }

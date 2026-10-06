@@ -201,3 +201,37 @@ export class UpdateTaskDto {
   @MaxLength(1000)
   notDoneReason?: string;
 }
+
+/** Dictated or typed text to organize into a note draft (D-096). Nothing is saved. */
+export class OrganizeNoteDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(8000)
+  text!: string;
+}
+
+/** File the incident report a note flag suggests (D-096). */
+export class ReportFlagDto {
+  @IsOptional()
+  @IsIn(['low', 'moderate', 'high', 'critical'])
+  severity?: 'low' | 'moderate' | 'high' | 'critical';
+
+  /** Defaults to the flag's reason. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  description?: string;
+}
+
+/** A short update for the family about this visit, shown in the portal (D-096). */
+export class CareUpdateDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  summary!: string;
+
+  @IsOptional()
+  @IsIn(['good', 'okay', 'low'])
+  mood?: 'good' | 'okay' | 'low';
+}
+

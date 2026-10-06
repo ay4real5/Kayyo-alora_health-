@@ -164,11 +164,11 @@ export default function ConversationScreen() {
                 <Text style={{ color: mine ? colors.white : colors.text, fontSize: 16 }}>{item.content}</Text>
                 {item.document?.isPhoto && <MessagePhoto conversationId={id} documentId={item.document.id} mine={mine} />}
                 {item.document && !item.document.isPhoto && (
-                  <Text style={{ color: mine ? '#ddd6fe' : colors.brandDark, fontSize: 13, marginTop: 4 }}>
+                  <Text style={{ color: mine ? '#9aeedd' : colors.brandDark, fontSize: 13, marginTop: 4 }}>
                     Attachment: {item.document.title} (open it on the dashboard)
                   </Text>
                 )}
-                <Text style={{ color: mine ? '#ddd6fe' : colors.muted, fontSize: 11, marginTop: 4, alignSelf: 'flex-end' }}>{shortWhen(item.createdAt)}</Text>
+                <Text style={{ color: mine ? '#9aeedd' : colors.muted, fontSize: 11, marginTop: 4, alignSelf: 'flex-end' }}>{shortWhen(item.createdAt)}</Text>
               </View>
             </View>
           );
@@ -294,7 +294,7 @@ function MessagePhoto({ conversationId, documentId, mine }: { conversationId: st
     );
   }
   if (!uri) {
-    return <Text style={{ color: mine ? '#ddd6fe' : colors.muted, fontSize: 13, marginTop: 4 }}>Loading photo…</Text>;
+    return <Text style={{ color: mine ? '#9aeedd' : colors.muted, fontSize: 13, marginTop: 4 }}>Loading photo…</Text>;
   }
   return (
     <Image

@@ -4,6 +4,7 @@ import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import { forecastAuthorization, type Forecast } from './authorization-forecast.js';
 import type { AuthorizationDto, UpdateAuthorizationDto } from './dto/billing-setup.dto.js';
 
 /** Visits that count against an authorization: done, happening, or booked. */
@@ -41,6 +42,22 @@ export interface AuthorizationView {
   notes: string | null;
 }
 
+/** An authorization the Command Center flags (D-093): over, or close to, its limit at the current pace. */
+export interface AuthorizationRisk {
+  id: string;
+  patient: { id: string; firstName: string; lastName: string };
+  payer: string;
+  serviceCode: string | null;
+  startDate: string;
+  endDate: string;
+  /** Which limit is at risk. */
+  unit: 'hours' | 'visits';
+  authorized: number;
+  used: number;
+  booked: number;
+  forecast: Forecast;
+}
+
 export interface AuthorizationMatch {
   /** The payer or service code says this service needs an authorization. */
   required: boolean;
@@ -65,6 +82,59 @@ export class AuthorizationsService {
     private readonly prisma: PrismaService,
     private readonly clock: AgencyClockService,
   ) {}
+
+  /**
+   * Active authorizations in the agency that are over, or close to, a limit at the current pace (Command Center,
+   * D-093). Worst first.
+   */
+  async atRisk(agencyId: string): Promise<AuthorizationRisk[]> {
+    const today = await this.clock.todayString(agencyId);
+    const rows = await this.prisma.authorization.findMany({
+      where: {
+        patient: { agencyId, status: 'active' },
+        status: 'active',
+        startDate: { lte: toDate(today)! },
+        endDate: { gte: toDate(today)! },
+      },
+      include: {
+        payer: { select: { id: true, name: true } },
+        patient: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+    const views = await this.views(agencyId, rows);
+    const risks: AuthorizationRisk[] = [];
+    views.forEach((v, i) => {
+      const row = rows[i]!;
+      for (const unit of ['hours', 'visits'] as const) {
+        const authorized = unit === 'hours' ? v.authorizedHours : v.authorizedVisits;
+        if (authorized === null) continue;
+        const forecast = forecastAuthorization({
+          startDate: v.startDate,
+          endDate: v.endDate,
+          today,
+          authorized,
+          used: v.used[unit],
+          planned: v.planned[unit],
+        });
+        if (forecast.level === 'ok') continue;
+        risks.push({
+          id: v.id,
+          patient: row.patient,
+          payer: v.payer.name,
+          serviceCode: v.serviceCode,
+          startDate: v.startDate,
+          endDate: v.endDate,
+          unit,
+          authorized,
+          used: v.used[unit],
+          booked: Math.round((v.used[unit] + v.planned[unit]) * 100) / 100,
+          forecast,
+        });
+        break; // one entry per authorization — hours first
+      }
+    });
+    return risks.sort((a, b) => b.forecast.overBy / b.authorized - a.forecast.overBy / a.authorized);
+  }
 
   async list(caller: AuthUser, patientId: string): Promise<AuthorizationView[]> {
     await this.patient(caller, patientId);

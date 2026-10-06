@@ -125,6 +125,10 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - Call the API with `useAuth().request(path)` (adds the token, renews once on 401). Never store tokens anywhere.
 - Gate UI with `useAuth().can('patients:read')` — cosmetic only; the API enforces permissions.
 - Pages under `src/app/(app)/` are signed-in only (AppShell guard).
+- Colours come only from the design tokens in `src/app/globals.css` (D-103): `brand-*` (teal), `accent-*` (coral),
+  `canvas`, `ink`, plus slate/emerald/amber/rose/sky for neutrals and status. `npm run lint -w @alora/web` fails on
+  violet/indigo/fuchsia/purple/pink classes. Headings use `font-display` (Plus Jakarta Sans); the logo is
+  `components/brand/logo.tsx`. Mobile colours live in `colors` in `apps/mobile/src/components/ui.tsx`.
 
 ### File naming
 - NestJS: `kebab-case` (`care-plans.service.ts`); DTOs: `*.dto.ts`

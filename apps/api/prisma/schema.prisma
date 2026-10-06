@@ -67,6 +67,9 @@ model Agency {
   eligibilityChecks EligibilityCheck[]
   incidentReports   IncidentReport[]
   payPeriods        PayPeriod[]
+  referralSources   ReferralSource[]
+  referrals         Referral[]
+  trainingCourses   TrainingCourse[]
 
   @@map("agencies")
 }
@@ -145,6 +148,8 @@ model User {
   claimAppeals         ClaimAppeal[]             @relation("ClaimAppealCreatedBy")
   payPeriodsApproved   PayPeriod[]               @relation("PayPeriodApprovedBy")
   mileageDecided       MileageLog[]              @relation("MileageDecidedBy")
+  referralsAssigned    Referral[]                @relation("ReferralAssignedTo")
+  referralEvents       ReferralEvent[]           @relation("ReferralEventBy")
 
   @@index([agencyId])
   @@map("users")
@@ -277,6 +282,9 @@ model Patient {
   phoneHome                String?   @map("phone_home") @db.VarChar(20)
   /// A live-in caregiver lives in the home (Virginia personal care: UB modifier on the claim lines, D-077).
   liveIn                   Boolean   @default(false) @map("live_in")
+  /// Caregiver matching (D-094): language the patient prefers their caregiver to speak, and caregiver gender (female | male).
+  preferredLanguage        String?   @map("preferred_language") @db.VarChar(50)
+  preferredCaregiverGender String?   @map("preferred_caregiver_gender") @db.VarChar(10)
   phoneCell                String?   @map("phone_cell") @db.VarChar(20)
   email                    String?   @db.VarChar(255)
   addressLine1             String?   @map("address_line1") @db.VarChar(255)
@@ -322,14 +330,17 @@ model Patient {
   /// Medical record numbers are unique within an agency (NULLs allowed — MRN is optional).
   claims Claim[]
 
-  medications       Medication[]
-  physicianOrders   PhysicianOrder[]
-  carePlans         CarePlan[]
-  assessments       Assessment[]
-  conversations     Conversation[]
-  invoices          Invoice[]
-  eligibilityChecks EligibilityCheck[]
-  incidentReports   IncidentReport[]
+  medications          Medication[]
+  physicianOrders      PhysicianOrder[]
+  carePlans            CarePlan[]
+  assessments          Assessment[]
+  conversations        Conversation[]
+  invoices             Invoice[]
+  eligibilityChecks    EligibilityCheck[]
+  incidentReports      IncidentReport[]
+  careUpdates          CareUpdate[]
+  referrals            Referral[]
+  caregiverPreferences PatientCaregiverPreference[]
 
   @@unique([agencyId, mrn])
   @@index([agencyId])
@@ -473,27 +484,35 @@ model StaffProfile {
   maxPatients         Int?      @map("max_patients")
   skills              String[]
   languages           String[]
+  /// Caregiver matching (D-094): optional; female | male.
+  gender              String?   @db.VarChar(10)
+  /// Home location for distance, entered by the office (optional).
+  latitude            Decimal?  @db.Decimal(10, 8)
+  longitude           Decimal?  @db.Decimal(11, 8)
   notes               String?
   isActive            Boolean   @default(true) @map("is_active")
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agency            Agency              @relation(fields: [agencyId], references: [id])
-  credentials       StaffCredential[]
-  incidentReports   IncidentReport[]
-  payStubs          PayStub[]
-  mileageLogs       MileageLog[]
-  availability      StaffAvailability[]
-  timeOff           StaffTimeOff[]
-  visits            Visit[]
-  recurrenceRules   RecurrenceRule[]
-  documents         Document[]
-  evvRecords        EvvRecord[]
-  openShiftsClaimed OpenShift[]
-  swapsRequested    ShiftSwapRequest[]  @relation("SwapRequesting")
-  swapsTargeted     ShiftSwapRequest[]  @relation("SwapTarget")
-  visitNotes        VisitNote[]
+  user               User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agency             Agency                       @relation(fields: [agencyId], references: [id])
+  credentials        StaffCredential[]
+  trainingCompletions TrainingCompletion[]
+  incidentReports    IncidentReport[]
+  payStubs           PayStub[]
+  mileageLogs        MileageLog[]
+  availability       StaffAvailability[]
+  timeOff            StaffTimeOff[]
+  visits             Visit[]
+  recurrenceRules    RecurrenceRule[]
+  documents          Document[]
+  evvRecords         EvvRecord[]
+  openShiftsClaimed  OpenShift[]
+  swapsRequested     ShiftSwapRequest[]           @relation("SwapRequesting")
+  swapsTargeted      ShiftSwapRequest[]           @relation("SwapTarget")
+  visitNotes         VisitNote[]
+  careUpdates        CareUpdate[]
+  patientPreferences PatientCaregiverPreference[]
 
   @@unique([agencyId, employeeId])
   @@unique([agencyId, ivrCode])
@@ -961,6 +980,7 @@ model Visit {
   openShifts     OpenShift[]
   swapRequests   ShiftSwapRequest[]
   visitNotes     VisitNote[]
+  careUpdates    CareUpdate[]
   vitals         VisitVital[]
   tasks          VisitTask[]
   claimLines     ClaimLine[]
@@ -1139,28 +1159,34 @@ model Notification {
 /// A clinical or activity note for a visit, written by the visit's caregiver. Locked once signed or submitted;
 /// later changes are addenda (a new note pointing at the one it amends).
 model VisitNote {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  visitId        String    @map("visit_id") @db.Uuid
-  staffId        String    @map("staff_id") @db.Uuid
-  authorId       String    @map("author_id") @db.Uuid
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId            String    @map("visit_id") @db.Uuid
+  staffId            String    @map("staff_id") @db.Uuid
+  authorId           String    @map("author_id") @db.Uuid
   /// progress | skilled_nursing | therapy | aide_activity | addendum
-  noteType       String    @map("note_type") @db.VarChar(50)
-  subjective     String?
-  objective      String?
-  assessment     String?
-  plan           String?
-  narrative      String?
-  formData       Json?     @map("form_data")
+  noteType           String    @map("note_type") @db.VarChar(50)
+  subjective         String?
+  objective          String?
+  assessment         String?
+  plan               String?
+  narrative          String?
+  formData           Json?     @map("form_data")
   /// draft | submitted | signed
-  status         String    @default("draft") @db.VarChar(20)
-  amendsNoteId   String?   @map("amends_note_id") @db.Uuid
-  submittedAt    DateTime? @map("submitted_at") @db.Timestamptz(6)
-  signedAt       DateTime? @map("signed_at") @db.Timestamptz(6)
-  signedById     String?   @map("signed_by") @db.Uuid
-  qaReviewedById String?   @map("qa_reviewed_by") @db.Uuid
-  qaReviewedAt   DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  status             String    @default("draft") @db.VarChar(20)
+  amendsNoteId       String?   @map("amends_note_id") @db.Uuid
+  submittedAt        DateTime? @map("submitted_at") @db.Timestamptz(6)
+  signedAt           DateTime? @map("signed_at") @db.Timestamptz(6)
+  signedById         String?   @map("signed_by") @db.Uuid
+  qaReviewedById     String?   @map("qa_reviewed_by") @db.Uuid
+  qaReviewedAt       DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
+  /// Incident detection (D-096): set when a submitted note may describe a reportable incident.
+  incidentFlagType   String?   @map("incident_flag_type") @db.VarChar(30)
+  incidentFlagReason String?   @map("incident_flag_reason") @db.VarChar(500)
+  incidentFlaggedAt  DateTime? @map("incident_flagged_at") @db.Timestamptz(6)
+  /// open | reported | dismissed
+  incidentFlagStatus String?   @map("incident_flag_status") @db.VarChar(15)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   visit        Visit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
   staff        StaffProfile @relation(fields: [staffId], references: [id])
@@ -1781,4 +1807,190 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+/// A patient's preferred or declined caregivers (D-094). Declined caregivers are never suggested.
+model PatientCaregiverPreference {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  /// preferred | declined
+  kind           String   @db.VarChar(10)
+  note           String?  @db.VarChar(500)
+  createdById    String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, staffProfileId])
+  @@index([staffProfileId])
+  @@map("patient_caregiver_preferences")
+}
+
+/// A short update for the family about one visit (D-096), written or approved by the caregiver; shown in the portal.
+model CareUpdate {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String   @map("agency_id") @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  visitId        String   @unique @map("visit_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  summary        String   @db.VarChar(1000)
+  /// good | okay | low — optional
+  mood           String?  @db.VarChar(10)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visit        Visit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, createdAt])
+  @@index([agencyId])
+  @@map("care_updates")
+}
+
+/// Where referrals come from (D-098): a hospital, a physician's office, a social worker, the website…
+model ReferralSource {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String   @map("agency_id") @db.Uuid
+  name         String   @db.VarChar(200)
+  /// hospital | physician | social_worker | family | website | community | insurance | other
+  sourceType   String   @map("source_type") @db.VarChar(30)
+  contactName  String?  @map("contact_name") @db.VarChar(200)
+  phone        String?  @db.VarChar(20)
+  email        String?  @db.VarChar(255)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency    Agency     @relation(fields: [agencyId], references: [id])
+  referrals Referral[]
+
+  @@unique([agencyId, name])
+  @@map("referral_sources")
+}
+
+/// A prospective client on the way to admission (D-098). Converts to a Patient when admitted.
+model Referral {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  sourceId            String?   @map("source_id") @db.Uuid
+  /// manual | web_form
+  channel             String    @default("manual") @db.VarChar(20)
+  /// new | contacted | assessment | authorization_pending | ready | admitted | lost
+  status              String    @default("new") @db.VarChar(30)
+  lostReason          String?   @map("lost_reason") @db.VarChar(500)
+  clientFirstName     String    @map("client_first_name") @db.VarChar(100)
+  clientLastName      String    @map("client_last_name") @db.VarChar(100)
+  dateOfBirth         DateTime? @map("date_of_birth") @db.Date
+  phone               String?   @db.VarChar(20)
+  email               String?   @db.VarChar(255)
+  city                String?   @db.VarChar(100)
+  zip                 String?   @db.VarChar(10)
+  /// medicaid | medicare | private_pay | insurance | va | unknown
+  payerType           String    @default("unknown") @map("payer_type") @db.VarChar(20)
+  careNeeds           String?   @map("care_needs")
+  /// The person who reached out, when not the client (daughter, discharge planner…).
+  contactName         String?   @map("contact_name") @db.VarChar(200)
+  contactRelationship String?   @map("contact_relationship") @db.VarChar(50)
+  contactPhone        String?   @map("contact_phone") @db.VarChar(20)
+  contactEmail        String?   @map("contact_email") @db.VarChar(255)
+  assignedToId        String?   @map("assigned_to") @db.Uuid
+  nextFollowUp        DateTime? @map("next_follow_up") @db.Date
+  patientId           String?   @unique @map("patient_id") @db.Uuid
+  statusChangedAt     DateTime  @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  admittedAt          DateTime? @map("admitted_at") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency          @relation(fields: [agencyId], references: [id])
+  source     ReferralSource? @relation(fields: [sourceId], references: [id])
+  assignedTo User?           @relation("ReferralAssignedTo", fields: [assignedToId], references: [id])
+  patient    Patient?        @relation(fields: [patientId], references: [id])
+  events     ReferralEvent[]
+
+  @@index([agencyId, status])
+  @@index([agencyId, createdAt])
+  @@map("referrals")
+}
+
+/// The referral's history: status changes and call notes (D-098).
+model ReferralEvent {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referralId String   @map("referral_id") @db.Uuid
+  /// created | status | note | admitted
+  eventType  String   @map("event_type") @db.VarChar(20)
+  fromStatus String?  @map("from_status") @db.VarChar(30)
+  toStatus   String?  @map("to_status") @db.VarChar(30)
+  note       String?
+  userId     String?  @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  referral Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  user     User?    @relation("ReferralEventBy", fields: [userId], references: [id])
+
+  @@index([referralId, createdAt])
+  @@map("referral_events")
+}
+
+/// Primordial Academy (D-102): a short training module with a quiz. Passing can record a credential.
+model TrainingCourse {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId        String   @map("agency_id") @db.Uuid
+  title           String   @db.VarChar(200)
+  summary         String?  @db.VarChar(500)
+  /// The lesson, as plain text with blank lines between paragraphs.
+  content         String
+  /// Disciplines it is for (e.g. HHA, CNA); empty = everyone.
+  disciplines     String[]
+  /// Pass mark, percent of questions right.
+  passPercent     Int      @default(80) @map("pass_percent")
+  /// When set, passing records a credential of this type (e.g. infection_control).
+  credentialType  String?  @map("credential_type") @db.VarChar(100)
+  /// How long that credential lasts; null = no expiry.
+  validityMonths  Int?     @map("validity_months")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency      Agency               @relation(fields: [agencyId], references: [id])
+  questions   TrainingQuestion[]
+  completions TrainingCompletion[]
+
+  @@index([agencyId, isActive])
+  @@map("training_courses")
+}
+
+model TrainingQuestion {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId     String   @map("course_id") @db.Uuid
+  sortOrder    Int      @map("sort_order")
+  prompt       String   @db.VarChar(1000)
+  options      String[]
+  /// Index into options of the right answer. Never sent to people taking the quiz.
+  correctIndex Int      @map("correct_index")
+
+  course TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, sortOrder])
+  @@map("training_questions")
+}
+
+/// One attempt at a course's quiz.
+model TrainingCompletion {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId       String   @map("course_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  scorePercent   Int      @map("score_percent")
+  passed         Boolean
+  /// The credential recorded for a pass, when the course grants one.
+  credentialId   String?  @map("credential_id") @db.Uuid
+  completedAt    DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+
+  course       TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile   @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([staffProfileId, courseId, completedAt])
+  @@index([courseId])
+  @@map("training_completions")
 }

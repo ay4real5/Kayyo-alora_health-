@@ -92,7 +92,7 @@ export default function PatientsPage() {
               {query.data?.data.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
                   <td className="py-2 pr-4">
-                    <Link href={`/patients/${p.id}`} className="font-medium text-violet-800 hover:underline">
+                    <Link href={`/patients/${p.id}`} className="font-medium text-brand-800 hover:underline">
                       {p.lastName}, {p.firstName}
                     </Link>
                   </td>

@@ -1599,3 +1599,376 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - The FCM V1 service-account key is uploaded by the owner straight to Expo credentials.
 - Open shifts already notify eligible caregivers when offered from the dashboard ("Offer and notify"). The gap was
   only the phone notification itself.
+
+### D-092 — In-app AI assistant (Phase 1: read-only)
+2026-10-06 · owner ("an AI assistant that knows the system in and out … use a very low model") + Claude Code
+- **What**: an "Ask Primordial" side panel in the dashboard that answers how-to questions and looks things up in
+  plain English. It is for roles with the new permission **`assistant:use`**: supervisor, office staff and billing
+  staff, plus admins via all permissions. It is **not** for caregivers or portal users.
+- **How**: `POST /assistant/chat` runs Claude with **read-only tools** (`modules/assistant/assistant-tools.ts`):
+  `find_patients`, `find_staff`, `list_visits`, `list_open_shifts`, `list_time_off`, `list_claims`,
+  `list_pay_periods`, `compliance_overview`.
+  - Each tool calls the existing service **as the signed-in person**, so record filtering (assigned patients, own
+    visits, agency scope) is unchanged.
+  - A tool is offered to the model only if the person holds its permission.
+  - Inputs go through the same DTO validation as the HTTP routes.
+  - Results are trimmed to the fields needed (no SSN, at most 25 rows) and carry dashboard links the panel renders
+    (internal paths only).
+  - The product guide (`assistant-guide.ts`) is the system prompt, prompt-cached.
+  - At most 6 lookup rounds per question; 20 questions a minute per person.
+- **Model**: `ASSISTANT_MODEL`, default **Claude Haiku 4.5** at the owner's request, for the lowest cost (about
+  $1/$5 per million input/output tokens, so well under a cent per typical question). It can be switched to a Sonnet
+  or Opus model by changing the setting, without code changes.
+- **HIPAA**:
+  - Patient details are sent to the model, so **production refuses to switch the assistant on** until
+    `ASSISTANT_BAA_CONFIRMED=true`, which may only be set once a BAA with Anthropic is signed. Anthropic's HIPAA
+    offering requires its zero-data-retention configuration.
+  - Off entirely without `ANTHROPIC_API_KEY`.
+  - Conversations are not stored, and the panel keeps them in memory only.
+  - Message text is never logged. Each lookup is audited as `ASSISTANT_LOOKUP` (tool name and result count, never the
+    search words, D-035), and each question as `ASSISTANT_CHAT`.
+- **Later phases**:
+  - Phase 2: actions (payroll export, approvals, open shifts) behind an explicit **Confirm** card that calls the
+    normal endpoints.
+  - Phase 3 (optional): a caregiver version in the app, limited to their own visits.
+
+### D-093 — "Primordial Intelligence" roadmap; Phase A: the Command Center
+2026-10-06 · owner (25-idea list: "don't replicate Alora, run the agency intelligently"; "do all, split into phases") + Claude Code
+- **Roadmap** (ROADMAP Phase 5, P5-01 … P5-07):
+  - A: Command Center;
+  - B: smart caregiver matching;
+  - C: assistant actions behind Confirm;
+  - D: AI documentation (dictation, incident detection, family care updates);
+  - E: workforce intelligence (EVV anomalies, explainable Care Score, recognition);
+  - F: growth (referral CRM, intake form);
+  - G: platform (portal invoices and payments, custom roles UI, onboarding, Academy, public API, client-risk decision
+    support).
+- **Principles**:
+  - Build on existing data and services.
+  - Every insight is filtered by the viewer's permissions.
+  - AI suggests and people confirm.
+  - PHI reaches the model only under the Anthropic BAA (D-092).
+- **Phase A, built**: `GET /insights/command-center` (`modules/insights`) is for any signed-in staff member, and each
+  section is computed only with its permission:
+  - coverage (`visits:read_all`): unassigned visits today and tomorrow, open shifts;
+  - documentation (`visits:read_all`): completed visits from the last 7 days with no submitted or signed note, and
+    draft notes;
+  - EVV (`evv:read`): pending corrections, flagged records in the last 7 days;
+  - credentials (`staff:read`): expired, and expiring within 7 or 30 days;
+  - authorizations (`authorizations:read`): `AuthorizationsService.atRisk` with the pure `forecastAuthorization`.
+    The projection is the higher of booked (used plus scheduled) and pace (used ÷ days elapsed × days in the period,
+    from day 7). It is "over" if the projection exceeds the authorized amount and "near" at 90% or more, and it
+    reports the day it runs out at the current pace;
+  - money (`billing:read`): expected revenue from today's visits (readiness prices; unpriced visits counted
+    separately), and **money that can't be billed yet**. That is completed visits from the last 60 days that are
+    blocked (not already billed), summed in dollars from readiness `amount` and grouped by the first blocking check.
+- The "Needs attention" list is derived from these sections, worst first, and each item links to the page that fixes
+  it.
+- Viewing it is audited as `VIEW_COMMAND_CENTER`, because patient names appear in it.
+- The dashboard home renders it under the existing stat cards.
+- **Assistant**: the tool `todays_priorities` (same service, same permission filtering) answers "What should I worry
+  about today?". A dashboard button opens the panel with that question.
+
+### D-094 — Smart caregiver matching (Phase B)
+2026-10-06 · owner's idea list ("Find me a caregiver for Mrs. Johnson tomorrow 8–12") + Claude Code
+- **Who can take it**: active caregivers whose discipline fits the visit type (`VISIT_TYPE_DISCIPLINES`). Excluded are:
+  - anyone the existing `ConflictDetectorService` blocks (double booked, approved time off, expired credentials …);
+  - anyone the patient **declined**.
+
+  Each excluded caregiver is listed with the reason.
+- **Ranking**: the pure `scoreCaregiver` (`scheduling/caregiver-match.ts`, unit-tested) starts at 50 and is clamped to
+  0–100. Points are:
+
+  | Factor | Points |
+  |---|---|
+  | Patient's preferred caregiver | +25 |
+  | Continuity: completed visits with this patient in 180 days | +3 each, up to +30 |
+  | Speaks the preferred language | +10 (−5 if not listed) |
+  | Caregiver gender preference | +10 match, −15 mismatch (only when both are recorded) |
+  | Distance from staff home coordinates | ≤5 mi +15, ≤10 mi +8, >20 mi −10 |
+  | Distance fallback when there are no coordinates | same ZIP +10, service-area ZIP +6 |
+  | Week (Mon–Sun) going over 40 h with this visit | −20 (within 4 h of 40: −5) |
+  | Reliability over 90 days (at least 5 visits) | +8 if attendance ≥98% and on-time ≥95%; otherwise penalties in proportion |
+  | Each non-blocking scheduling warning | −10 |
+
+  Every factor produces a plain-language reason.
+- **Data**:
+  - `patients.preferred_language`, `patients.preferred_caregiver_gender`;
+  - `staff_profiles.gender`, `latitude`, `longitude` (entered; no geocoding service yet);
+  - the `patient_caregiver_preferences` table (`preferred` | `declined`, an office-only note).
+- **API**:
+  - `GET /schedule/visits/:id/suggestions` and `POST /schedule/suggestions` (a slot not booked yet), both
+    `visits:assign`;
+  - `GET`, `PUT` and `DELETE /patients/:id/caregiver-preferences[/:staffId]` (`patients:read` / `patients:update`).
+- Assigning is the normal visit update, so the scheduling rules run again.
+- **Web**:
+  - "Find a caregiver" on the visit page: score, reasons, one-click Assign, and who can't take it;
+  - a "Caregiver preferences" panel on the patient page;
+  - preferred language and caregiver gender on the patient form;
+  - gender and home coordinates on the staff form.
+- **Assistant**: `suggest_caregivers` (`visits:assign`) takes a visit id or a slot.
+
+### D-095 — Assistant actions behind a Confirm card (Phase C)
+2026-10-06 · owner's idea list ("Assign Maria?", "Fill all open shifts", "[Resolve]") + Claude Code
+- **The assistant never changes anything itself.** Each action (`modules/assistant/assistant-actions.ts`) is offered to
+  the model as a `prepare_<kind>` tool, only when the person holds the same permission(s) as the dashboard endpoint.
+  - The tool validates the request and returns a **preview**: title, details, parameters and button label.
+  - The model is told it has NOT happened.
+  - The chat reply carries `actions[]`, and the panel shows them as Confirm cards.
+- **Confirming** (`POST /assistant/actions` `{kind, params}`):
+  - The parameters are checked again and the person's permissions re-verified.
+  - It runs the **normal service method** (the same business rules, conflict checks and notifications).
+  - It is audited as `ASSISTANT_ACTION`, recording the kind and ids only.
+  - Ids are accepted bare or as dashboard links (the model passes links).
+- **Actions (v1)**:
+
+  | Action | Service call | Permission |
+  |---|---|---|
+  | `assign_caregiver` | `VisitsService.update` | `visits:update` |
+  | `offer_open_shift` | `OpenShiftsService.create`, then `broadcast` if allowed | `visits:create` (broadcast also needs `notifications:create`) |
+  | `decide_time_off` | `TimeOffService.decide` | `visits:approve` |
+  | `calculate_payroll` | `PayrollService.calculate` | `payroll:create` |
+  | `export_payroll` | `PayrollService.exportCsv`; the panel downloads the CSV | `payroll:export` |
+
+- After a confirmed action, the panel refreshes the page behind it. Cancel changes nothing.
+- Tested end-to-end with a real Haiku call on dev data: "Assign Emery Bramble to the Redfern visit on Friday" led to
+  lookups, then a card, then Confirm, then assigned.
+
+### D-096 — AI documentation: dictation tidy-up, incident detection, family care updates (Phase D)
+2026-10-06 · owner's idea list (voice-to-documentation, AI incident detection, family care updates) + Claude Code
+- **Shared `ClaudeService`** (`modules/ai`, global) uses the same gate as the assistant: off without
+  `ANTHROPIC_API_KEY`, and in production off until `ASSISTANT_BAA_CONFIRMED`. Model is `ASSISTANT_MODEL`
+  (Haiku 4.5).
+  - Structured answers come back via a tool call. The tool is forced on Claude 4.x / Haiku 4.5; newer models get an
+    instruction plus `auto`, because they reject forced tool choice.
+  - `GET /ai/status` tells the apps whether to show AI buttons. Prompt and response text is never logged.
+- **Dictation**: the caregiver speaks with the phone keyboard's microphone. No audio is recorded or stored by us, and
+  no microphone permission is needed. Keyboard dictation is done by the phone's OS (Apple or Google).
+- **Tidy up**: `POST /schedule/visits/:id/notes/organize` (`visit_notes:create`; the visit's own caregiver, clocked in)
+  returns a draft and saves nothing. The draft contains:
+  - a narrative, or SOAP sections for clinicians;
+  - tasks done, matched only to the visit's real task ids;
+  - concerns for the office;
+  - possible incidents (the AI's list plus the keyword rules).
+
+  The caregiver reviews it and submits it the normal way.
+- **Incident detection**: after `submit` or `sign` (controller, in the background, never failing the request),
+  `NoteAiService.scanSubmitted`:
+  - With AI on, Claude decides and writes a one-sentence reason. Keyword mentions of fall, abuse/neglect or a medical
+    emergency are flagged anyway, so they are never silently dropped.
+  - With AI off, the pure `keywordIncidents` (unit-tested, negation-aware) decides.
+  - Flags are stored on `visit_notes` (`incident_flag_type`, `incident_flag_reason`, `incident_flagged_at`, and
+    `incident_flag_status` open / reported / dismissed).
+  - A new notification type, `incident_flagged` (push and email by default), goes to `compliance:update` holders. Its
+    text contains no PHI.
+  - On the visit page, a banner lets staff **file the prefilled incident report** (`…/incident-flag/report`,
+    `compliance:create`) or **dismiss** it (`…/incident-flag/dismiss`, `compliance:update`).
+- **Family care updates**: the `care_updates` table holds one per visit.
+  - `POST …/care-update/suggest` (AI): a warm 2–4 sentence update with no diagnoses, medications or vital numbers.
+  - `POST …/care-update`: the caregiver edits and sends it.
+  - The family portal's visit list shows it; staff see it on the visit page.
+
+### D-097 — Workforce intelligence: EVV patterns, explainable Care Score, recognition badges (Phase E)
+2026-10-06 · owner's idea list (EVV anomaly detection, Care Score, recognition) + Claude Code
+- **Computed on demand; nothing is stored.**
+  - Pure functions live in `modules/insights/workforce.ts` and are unit-tested.
+  - `WorkforceService` loads visits, notes and EVV for a window.
+  - There is no nightly job or table to keep in sync. The Command Center counts the patterns on every load.
+- **EVV patterns** (`GET /insights/evv-anomalies`, `evv:approve`; default the last 14 days). The UI is the EVV page's
+  "Patterns to look at" tab, plus the Command Center item `evv_anomalies`. The patterns are:
+  - **overlap** (critical): the next clock-in comes more than 5 minutes before the previous clock-out.
+  - **impossible travel**: from one visit's clock-out point to the next clock-in point is more than 2 km, at over
+    35.8 m/s (~80 mph).
+  - **repeated corrections**: 3 or more time-correction requests.
+  - **repeated geofence misses**: 3 or more records flagged outside the geofence.
+
+  The wording describes what was seen, not wrongdoing (forgotten clock-outs and bad GPS fixes are common).
+- **Care Score** (`GET /insights/care-scores[/:staffId]`, needs both `staff:update` and `reports:read`, so agency
+  admins and supervisors; office staff have no `reports:read`; default the last 30 days). It is a weighted 0–100 over
+  the parts that can be measured. Each part shows its counts.
+
+  | Part | Weight | How it is counted |
+  |---|---|---|
+  | Attendance | 35 | Completed visits ÷ (completed + missed) |
+  | Punctuality | 25 | Visits started within 10 minutes of the agency-local scheduled time |
+  | Documentation | 20 | Notes submitted or signed within 24 hours of the visit ending |
+  | EVV accuracy | 20 | Records with no flags and no correction requests |
+
+  - Fewer than 5 visits gives no score.
+  - **Incidents are shown for context but never scored**: an incident is often nobody's fault, and scoring it would
+    discourage reporting.
+  - The score is decision support only: nothing automatic uses it (no scheduling, pay or discipline).
+  - It is **not offered to the AI assistant** (HR-sensitive); the assistant gets only `evv_patterns`.
+- **Recognition badges** (`GET /insights/my-recognition`, the caller's own; last 90 days, at least 10 visits).
+  - The badges are perfect attendance, always on time (≥95%), note pro (≥95%) and EVV star (≥95%).
+  - They are positive only, and nothing is shown for falling short.
+  - Off by default. Turned on by the agency setting `settings.recognitionBadges`, through `PATCH /agency`
+    `{recognitionBadges}` (merged into the settings JSON) and Settings → Agency.
+  - Shown under "My badges" on the app's Profile tab.
+
+### D-098 — Referral pipeline, sources report and public intake form (Phase F)
+2026-10-06 · owner's idea list (referral CRM, "I need care" intake) + Claude Code
+- **Model**: new tables `referral_sources`, `referrals` and `referral_events` (history: created, status change, note,
+  admitted).
+- **Stages**: new → contacted → assessment → authorization_pending → ready → admitted, plus lost (needs a reason).
+  - Stages can move in any direction except into `admitted`: that only happens through **Admit**.
+  - Admit builds a `CreatePatientDto` from the referral plus what it lacks (date of birth required; gender, street,
+    state, admission date optional).
+  - It calls `PatientsService.admit`, so every patient rule applies, then links the patient and marks the referral
+    admitted. A guarded update stops a double admission.
+  - It needs `referrals:manage` **and** `patients:create`.
+- **Permissions**: new `referrals:read` and `referrals:manage`, for supervisors, office staff and agency admins.
+  Billing, aides and nurses don't get them. All routes are agency-scoped and audited (`@Permissions`, plus `@Audit`
+  on changes).
+- **Sources report**: `GET /referrals/sources/report`, default the last 90 days by date received. It shows each
+  source's referrals, admitted, lost and open counts, plus:
+  - conversion: admitted ÷ (admitted + lost);
+  - average days to admit.
+
+  Referrals without a source are grouped by channel (website form or manual).
+- **Public intake form**: `POST /api/v1/intake/:agencyId`, `@Public`, at most 5 per hour per address. The web page
+  `/intake/<agencyId>` is outside sign-in.
+  - It asks only what the office needs to call back (who needs care, city/ZIP, payer type, care needs, contact). It
+    says not to send medical records.
+  - The submitter must consent to be contacted and must give a phone number or email.
+  - A hidden `website` honeypot field: if it is filled in, the form says "accepted" but nothing is stored.
+  - Each submission creates a `web_form` referral and sends the `referral_received` alert (push and email, no PHI)
+    to `referrals:manage` holders.
+  - **Embedding**: every page sends `X-Frame-Options: DENY` and `frame-ancestors 'none'`, except `/intake/*`. There,
+    the CSP's `frame-ancestors` is `'self'` plus the web app setting `INTAKE_FRAME_ANCESTORS` (space-separated
+    origins, e.g. `https://primordialhealthservices.health https://www.primordialhealthservices.health`). The Sources
+    page shows the link and an `<iframe>` snippet.
+- **Command Center**: "new referrals waiting for a first call" and "referral follow-ups due" (`referrals:read`).
+- **Assistant**: read-only `list_referrals` tool (`referrals:read`).
+- **Not done yet**: the AI intake chat from the plan. It would need the BAA (people describe health needs), so it
+  waits until after December.
+
+### D-099 — Custom roles (Phase G, P5-07)
+2026-10-06 · owner's idea list (custom roles UI) + Claude Code
+- **Routes** (`POST /roles`, `PATCH /roles/:id`, `DELETE /roles/:id`) need `settings:update` **and** `users:update`,
+  so effectively agency admins. Listing still needs `users:read` and now includes how many users have each role.
+- **No privilege escalation**: the caller must hold every permission a role carries, both its current set and the new
+  one. So nobody can create, widen or even narrow a role beyond their own access (same rule as granting roles to
+  users).
+- **Built-in roles are read-only**. They stay defined in code (`ROLE_DEFAULT_PERMISSIONS`, synced on boot), and their
+  names are reserved. Custom names are lower_snake_case and unique per agency.
+- **Deleting** is blocked while anyone has the role (409).
+- **Effect of an edit**: immediate on the API instance that made it (the `PermissionsService` cache is cleared),
+  within 30 s elsewhere.
+- **Web**: Settings → Roles (sidebar "Roles"). Custom roles are edited with a checkbox grid by area; boxes for
+  permissions the editor doesn't hold are disabled. Built-in roles are listed for reference. They are assigned in
+  Users, as before.
+
+### D-100 — Client timeline (Phase G, P5-08)
+2026-10-06 · owner's idea list (client timeline) + Claude Code
+- **Route**: `GET /patients/:id/timeline?from&to` (agency dates; default the last 90 days), with `patients:read`. The
+  patient must be visible to the caller (`PatientsService.get`, so the assigned-patient rules apply).
+- **Built on demand** from existing tables, newest first, at most 300 events. Each kind is included only when the
+  viewer holds its permission:
+
+  | Kind | Permission |
+  |---|---|
+  | Referral received | `referrals:read` |
+  | Admission and discharge dates | — |
+  | Completed, missed and cancelled visits; submitted and signed notes; family care updates | `visits:read` (the caller's own only, unless they have `visits:read_all`) |
+  | Flagged or rejected EVV records | `evv:read` |
+  | Incidents | `compliance:read` |
+  | Documents | `documents:read` |
+
+- **Headlines only**: event type, who, flags and status. Note text and incident descriptions stay on their own pages,
+  where reads are audited. Each event links there when it can.
+- **Web**: a Timeline card on the patient page, with filters (everything, visits & notes, problems) and the window
+  (30 days, 90 days or 1 year). The window is computed from the agency's today.
+
+### D-101 — Caregiver onboarding checklist (Phase G, P5-09)
+2026-10-06 · owner's idea list ("92% ready" onboarding) + Claude Code
+- **Logic**: the pure `onboardingChecklist` in `@alora/shared` (unit-tested), fed by `OnboardingService` from the
+  staff profile, user and credentials. Computed on demand; no new tables.
+- **Required items**: signed in once, phone, home address, hire date, pay rate (hourly or per visit), weekly
+  availability, service-area ZIPs, and **each credential type the discipline needs**.
+  - A credential counts when it is active and not expired. Matching is case- and space-insensitive (`TB Test` =
+    `tb_test`).
+  - An expired one says so.
+- **Optional**: the phone check-in code. It is shown but not counted.
+- **"Ready"**: every required item is done. The percentage is done ÷ required.
+- **Requirements per discipline**: defaults in `DEFAULT_REQUIRED_CREDENTIALS`.
+  - HHA: hha_certificate, cpr, tb_test, background_check.
+  - Licensed disciplines need a license.
+  - Agencies change them under Staff → Onboarding. They are stored in `agencies.settings.onboardingRequirements`.
+  - `PUT /staff/onboarding/requirements` needs `settings:update`; disciplines left out keep their current list.
+- **Routes**:
+  - `GET /staff/onboarding`: all active staff, least ready first, with what's missing.
+  - `GET /staff/:id/onboarding`.
+  - `GET /staff/onboarding/requirements`.
+
+  All three need `staff:read`. `GET /staff/me/onboarding` returns the caller's own checklist.
+- **Command Center**: "N staff members not fully onboarded" (info, `staff:read`).
+- **Web**:
+  - Staff → Onboarding page, with the readiness list and the requirements editor.
+  - An Onboarding card on each active staff member's page.
+- **App**: Profile shows "Getting started — N% ready" with what's left and who does it (the caregiver or the office),
+  until they are ready.
+
+### D-102 — Primordial Academy: training courses with a quiz (Phase G, P5-10)
+2026-10-06 · owner's idea list (Primordial Academy: training → credential) + Claude Code
+- **Model**: new tables `training_courses`, `training_questions` and `training_completions` (one row per attempt).
+  - A course has a plain-text lesson and is for chosen disciplines (none chosen = everyone).
+  - It has a pass mark (default 80%).
+  - It can optionally grant a credential type, valid for N months.
+- **Permissions**: new `training:manage` (supervisors, office staff, agency admins) to write courses and see
+  results. Taking a course needs only an active staff profile.
+- **Quiz integrity**: questions go to the app **without** `correctIndex`; answers are scored on the server.
+  - The result says which question numbers were wrong (to learn from) but never the right answers.
+  - Submissions are throttled to 10 a minute.
+- **Pass → credential**: when the course grants one, a normal `StaffCredential` is created, with:
+  - the course title;
+  - issuer "Primordial Academy";
+  - issue date today and an expiry of today + N months (`addMonths`, clamped to month end).
+
+  So it counts for onboarding (D-101) and gets the usual expiry alerts. Each pass adds a new credential; old ones
+  simply expire.
+- **Status per caregiver**: not started, failed (try again), passed (with valid-until), or expired (retake).
+- **Web**: Academy (sidebar, Care) has a course list, an editor (lesson, disciplines, pass mark, credential and
+  validity, plus a question builder that marks the right option), per-course results, and archive/restore.
+- **App**: Profile → Training lists the caregiver's courses. A course screen shows the lesson, the quiz (one choice
+  per question) and the result (retry if failed).
+
+### D-103 — "Primordial Teal" design system (supersedes D-079's palette)
+2026-10-06 · owner asked for a catchier, more innovative look in teal & coral, everywhere + Claude Code
+- **Tokens** live in `apps/web/src/app/globals.css` `@theme`:
+
+  | Token | Values | Use |
+  |---|---|---|
+  | `brand-50…950` | 700 `#0f766e` (5.4:1 on white), 950 `#042f2e` | Teal. Primary actions, links, active states, the sidebar |
+  | `accent-50…900` | 400 `#f97362` | Coral. Highlights, badges, the active bar and the logo spark. Not for small text on white |
+  | `canvas` | `#f6faf9` | Page background |
+  | `ink` | `#042f2e` | Headings |
+
+  Also in that file: the `bg-mesh` and `bg-mesh-light` hero gradients, the `skeleton` shimmer, `animate-fade-in`, the
+  `--shadow-card`, `--shadow-lift` and `--shadow-glow` shadows, and a `prefers-reduced-motion` override.
+- **Rule**: no other hue families in code. Every violet, indigo and fuchsia class was moved to the tokens (about 200
+  classes in 60 files). `npm run lint -w @alora/web` runs `scripts/check-colors.mjs`, which fails on
+  violet/indigo/fuchsia/purple/pink classes. A future palette change is then one file.
+- **Type**: Plus Jakarta Sans (`font-display`) for headings and big numbers; Inter for body text.
+- **Logo**: a teal tile, a rounded P with a leaf in the bowl, and a coral spark. One drawing in three places:
+  - `components/brand/logo.tsx` (`LogoMark` and `Logo`);
+  - `public/logo.svg` and `app/icon.svg` (the favicon), plus `app/apple-icon.png`;
+  - the mobile `assets/icon.png`, `adaptive-icon.png` and `splash-icon.png`, rendered from the SVG with sharp.
+- **Signature screens**:
+  - The sidebar has a deep-teal glow and a coral active bar.
+  - The login is a split screen with a mesh panel and a glass "Today" preview card.
+  - The dashboard hero greets by time of day (rendered on the client to avoid hydration mismatches) and has quick
+    actions: New visit, Add referral, Ask Primordial.
+  - Stat cards have gradient icon tiles, a top accent bar, skeleton loaders and a hover lift.
+  - The portal header and the intake form use the mesh, the intake form also has trust chips, and the referral board
+    has stage-colour dots.
+- **Buttons**: primary is a teal gradient with a glow; the new `accent` variant is coral with dark text; buttons
+  press down slightly when clicked.
+- **Charts**: completed is teal, missed coral, cancelled slate, not-yet-done light teal.
+- **Mobile**: the `colors` object is teal/coral, and the old indigo/violet hex values in screens were mapped to the
+  teal equivalents. The header band is `#042f2e → #0f766e → #14a896` with a coral glow; the avatar goes teal → coral;
+  `BrandMark` is the logo image. The splash background is `#042f2e`, and the Android adaptive icon is set. The new
+  look reaches phones with the next EAS build.
+- **Checks**: the axe WCAG A/AA browser tests pass with the new colours, including contrast. The dashboard-heading
+  e2e checks now accept "Good morning/afternoon/evening".
+

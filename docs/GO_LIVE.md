@@ -20,6 +20,7 @@ patient details, but the providers still see phone numbers and email addresses.
 |---|---|---|
 | [ ] **Hosting on Azure** (BAA included automatically), a domain — follow [DEPLOYMENT-AZURE.md](DEPLOYMENT-AZURE.md) | Runs everything, ≈ $33–38/month to start | Ready: template + deploy workflow (D-081) |
 | [ ] **Clearinghouse** (Availity, Waystar, …) + BAA + SFTP login (P3-08) | Sends claims, gets 835 remittances and 271 eligibility | 837P/837I files, 835 import and 270 built; sending waits on the account (P3-09) |
+| [ ] **Anthropic** (Claude) + **BAA** with zero data retention, API key (P4-25), optional. **Before the first real patient (planned December 2026): BAA signed and the key replaced, or the assistant switched off (`ASSISTANT_BAA_CONFIRMED=false`).** | The dashboard's AI assistant (Haiku 4.5, ≈ under 1¢ per question) | Built, off in production until the BAA is confirmed (D-092) |
 | [ ] **Twilio** + BAA: a phone number for texts and one for visit check-in calls (P2-11) | SMS alerts; clock-in/out by phone | Built, off until keys are set (D-071, D-073) |
 | [ ] **Azure email** (Communication Services, under the Microsoft BAA you already have), your domain verified — steps in DEPLOYMENT-AZURE §6. *Not SendGrid: it signs no BAA* | Alert emails, "forgot password" | Built, off until set (D-071, D-072, D-078) |
 | [ ] **Expo (EAS)** account, **Apple Developer** and **Google Play** accounts | Publish the caregiver app; push notifications | App built; push registers once the app has an EAS project id |

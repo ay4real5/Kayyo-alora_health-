@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { ConflictList } from '@/components/schedule/conflict-list';
+import { FindCaregiver } from '@/components/schedule/find-caregiver';
 import { OfferOpenShift, VisitEvv, VisitRecords, VisitTasks } from '@/components/schedule/visit-documentation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -81,7 +82,7 @@ export default function VisitPage() {
             [
               'Patient',
               can('patients:read') ? (
-                <Link href={`/patients/${v.patient.id}`} className="text-violet-800 hover:underline">
+                <Link href={`/patients/${v.patient.id}`} className="text-brand-800 hover:underline">
                   {v.patient.lastName}, {v.patient.firstName}
                 </Link>
               ) : (
@@ -140,6 +141,8 @@ export default function VisitPage() {
           </form>
         </Card>
       )}
+
+      {editable && can('visits:assign') && <FindCaregiver visitId={v.id} currentStaffId={v.staff?.id ?? null} />}
 
       {editable && <OfferOpenShift visitId={v.id} assigned={Boolean(v.staff)} />}
 

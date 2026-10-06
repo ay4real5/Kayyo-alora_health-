@@ -81,7 +81,7 @@ export default function MessagesPage() {
                   type="button"
                   onClick={() => setSelected(c.id)}
                   aria-current={selected === c.id ? 'true' : undefined}
-                  className={`flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left ${selected === c.id ? 'bg-violet-50' : 'hover:bg-slate-50'}`}
+                  className={`flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left ${selected === c.id ? 'bg-brand-50' : 'hover:bg-slate-50'}`}
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className={`truncate text-sm ${c.unread ? 'font-semibold text-slate-900' : 'text-slate-800'}`}>
@@ -95,7 +95,7 @@ export default function MessagesPage() {
                       {c.lastMessage?.content}
                     </span>
                     {c.unread > 0 && (
-                      <span className="shrink-0 rounded-full bg-violet-700 px-1.5 text-xs font-medium text-white" aria-label={`${c.unread} unread`}>
+                      <span className="shrink-0 rounded-full bg-brand-700 px-1.5 text-xs font-medium text-white" aria-label={`${c.unread} unread`}>
                         {c.unread}
                       </span>
                     )}
@@ -224,7 +224,7 @@ function ConversationPane({
                 {mine ? 'You' : name(m.sender)} · {when(m.createdAt)}
               </span>
               <span
-                className={`whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${mine ? 'bg-violet-700 text-white' : 'bg-slate-100 text-slate-900'} ${m.isUrgent ? 'ring-2 ring-red-500' : ''}`}
+                className={`whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${mine ? 'bg-brand-700 text-white' : 'bg-slate-100 text-slate-900'} ${m.isUrgent ? 'ring-2 ring-red-500' : ''}`}
               >
                 {m.isUrgent && <span className="mr-1 font-semibold">Urgent:</span>}
                 {m.content}
@@ -251,7 +251,7 @@ function ConversationPane({
             rows={3}
             onKeyDown={ctrlEnter}
             placeholder="Write a message… (Ctrl+Enter to send)"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-700/20"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-700/20"
           />
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -327,7 +327,7 @@ function NewConversation({ onStarted, onCancel }: { onStarted: (id: string) => v
             required
             maxLength={5000}
             rows={4}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal focus:border-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-700/20"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-700/20"
           />
         </label>
         <label className="flex items-center gap-2 text-sm text-slate-700">

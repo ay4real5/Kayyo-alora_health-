@@ -7,8 +7,11 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -107,6 +110,22 @@ export class CreateStaffDto {
   @IsOptional()
   @Matches(US_ZIP, { message: 'zip must be 12345 or 12345-6789' })
   zip?: string;
+
+  /** Caregiver matching (D-094): home location for distance to patients (WGS84), optional. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsLatitude()
+  latitude?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsLongitude()
+  longitude?: number;
+
+  /** Caregiver matching (D-094): for patients who prefer a caregiver gender. Optional. */
+  @IsOptional()
+  @IsIn(['female', 'male'])
+  gender?: 'female' | 'male';
 
   /** ZIP codes this person will travel to. */
   @IsOptional()
@@ -284,4 +303,10 @@ export class DecideTimeOffDto {
   /** approved/denied by an approver; cancelled by the requester (pending requests only). */
   @IsIn(['approved', 'denied', 'cancelled'])
   status!: 'approved' | 'denied' | 'cancelled';
+}
+
+/** Credential types each discipline needs before working (D-101), e.g. `{ "HHA": ["hha_certificate", "cpr"] }`. */
+export class OnboardingRequirementsDto {
+  @IsObject()
+  requirements!: Record<string, string[]>;
 }

@@ -192,6 +192,18 @@ Azure sends a "You've been added to an action group" email; that confirms it's s
 A second email arrives when the problem clears. It costs about $1–2 a month. To change the address, run the same command
 again with the new email.
 
+## 8. AI assistant (optional, D-092)
+
+The dashboard's "Ask Primordial" panel needs an Anthropic API key, and in production a signed BAA.
+1. At console.anthropic.com, create an organization for the LLC and ask Anthropic (sales) for a **BAA** with **zero
+   data retention**. Do not switch the assistant on with real patient data before the BAA is signed.
+2. Create an API key, and keep it in your password manager (it is a secret, so don't send it in chat).
+3. On the API app, add these environment variables, then Apply:
+   - `ANTHROPIC_API_KEY` = the key
+   - `ASSISTANT_BAA_CONFIRMED` = `true`, only once the BAA is signed
+   - `ASSISTANT_MODEL` (optional) is `claude-haiku-4-5` by default
+4. Sign in to the dashboard as a supervisor, office or admin user. The **Ask Primordial** button appears bottom right.
+
 ## Later, when needed
 
 - **Texts / phone check-in**: Twilio App Settings (see `.env.production.example`); the check-in number's webhook is

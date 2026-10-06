@@ -95,20 +95,21 @@ export function PortalShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-800 text-white">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+      <header className="bg-mesh relative overflow-hidden text-white">
+        <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-accent-400/25 blur-3xl" />
+        <div className="relative mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-5">
           <div className="flex items-center gap-3">
-            <BrandMark className="h-10 w-10 text-base" />
+            <BrandMark className="h-11 w-11" />
             <div className="leading-tight">
-              <p className="text-lg font-semibold">{me.data.agency.name}</p>
-              <p className="text-xs text-indigo-200">Patient &amp; family portal · Primordial Health</p>
+              <p className="font-display text-lg font-extrabold">{me.data.agency.name}</p>
+              <p className="text-xs text-brand-200">Patient &amp; family portal · Primordial Health</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-indigo-100 sm:inline">
+            <span className="hidden text-sm text-brand-100 sm:inline">
               {me.data.firstName} {me.data.lastName}
             </span>
-            <Link href="/change-password" className="text-sm text-indigo-100 underline hover:text-white">
+            <Link href="/change-password" className="text-sm text-brand-100 underline hover:text-white">
               Password
             </Link>
             <button
@@ -121,7 +122,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         {patient && (
-          <nav aria-label="Portal" className="mx-auto flex max-w-4xl flex-wrap gap-1 px-4 pb-3">
+          <nav aria-label="Portal" className="relative mx-auto flex max-w-4xl flex-wrap gap-1 px-4 pb-4">
             {NAV.map((item) => {
               const active = item.href === '/portal' ? pathname === '/portal' : pathname.startsWith(item.href);
               return (
@@ -129,7 +130,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`rounded-xl px-3.5 py-2 text-sm transition-colors ${active ? 'bg-white font-medium text-indigo-950 shadow-sm' : 'text-indigo-100 hover:bg-white/10 hover:text-white'}`}
+                  className={`rounded-xl px-3.5 py-2 text-sm transition-colors ${active ? 'bg-white font-semibold text-brand-900 shadow-lg shadow-brand-950/30' : 'text-brand-100 hover:bg-white/10 hover:text-white'}`}
                 >
                   {item.label}
                 </Link>

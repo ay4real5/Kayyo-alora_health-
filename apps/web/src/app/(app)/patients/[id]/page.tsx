@@ -5,10 +5,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { AuthorizationsPanel } from '@/components/patients/authorizations-panel';
+import { CaregiverPreferencesPanel } from '@/components/patients/caregiver-preferences-panel';
 import { ClinicalPanels } from '@/components/patients/clinical-panels';
 import { DocumentsPanel } from '@/components/patients/documents-panel';
 import { EligibilityPanel } from '@/components/patients/eligibility-panel';
 import { PortalAccessPanel } from '@/components/patients/portal-access-panel';
+import { TimelinePanel } from '@/components/patients/timeline-panel';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -106,6 +108,10 @@ export default function PatientDetailPage() {
         <AllergiesPanel patient={p} canEdit={canEdit} onAct={run} />
       </div>
 
+      <TimelinePanel patientId={p.id} />
+
+      {can('visits:assign') && <CaregiverPreferencesPanel patientId={p.id} />}
+
       <ClinicalPanels patientId={p.id} />
 
       {can('documents:read') && <DocumentsPanel patientId={p.id} />}
@@ -187,7 +193,7 @@ function DiagnosesPanel({ patient, canEdit, onAct }: { patient: PatientDetail; c
           <li key={d.id} className="flex items-start justify-between gap-2 py-2">
             <span>
               <span className="font-mono font-medium">{d.icd10Code}</span> {d.description}
-              {d.isPrimary && <span className="ml-2 rounded bg-violet-50 px-1.5 text-xs text-violet-800">primary</span>}
+              {d.isPrimary && <span className="ml-2 rounded bg-brand-50 px-1.5 text-xs text-brand-800">primary</span>}
             </span>
             {canEdit && (
               <Button

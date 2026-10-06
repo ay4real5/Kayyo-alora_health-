@@ -29,6 +29,11 @@ import { MessagingModule } from './modules/messaging/messaging.module.js';
 import { PortalModule } from './modules/portal/portal.module.js';
 import { ComplianceModule } from './modules/compliance/compliance.module.js';
 import { PayrollModule } from './modules/payroll/payroll.module.js';
+import { AssistantModule } from './modules/assistant/assistant.module.js';
+import { InsightsModule } from './modules/insights/insights.module.js';
+import { ReferralsModule } from './modules/referrals/referrals.module.js';
+import { TrainingModule } from './modules/training/training.module.js';
+import { AiModule } from './modules/ai/claude.service.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
 import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 
@@ -64,6 +69,11 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
     PortalModule,
     ComplianceModule,
     PayrollModule,
+    AssistantModule,
+    InsightsModule,
+    ReferralsModule,
+    TrainingModule,
+    AiModule,
     ReportsModule,
     VisitDocsModule,
     NotificationsModule,

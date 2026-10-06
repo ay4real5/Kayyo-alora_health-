@@ -8,7 +8,7 @@ test('billing sends a claim, sees it in AR aging, and replaces it with a correct
   await page.getByLabel('Email').fill('billing.staff@demo.alora.test');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   const nav = page.getByRole('navigation', { name: 'Main' });
 
   // Make sure there are claims (another test may already have made them).

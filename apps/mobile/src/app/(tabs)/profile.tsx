@@ -34,6 +34,24 @@ const CREDENTIAL_PILL: Record<Credential['state'], [string, string]> = {
   no_expiry: ['cancelled', 'No expiry'],
 };
 
+interface Recognition {
+  enabled: boolean;
+  badges: { key: string; title: string; description: string }[];
+}
+
+interface Onboarding {
+  percent: number;
+  ready: boolean;
+  items: { key: string; label: string; done: boolean; required: boolean; owner: 'caregiver' | 'office' }[];
+}
+
+const BADGE_ICONS: Record<string, 'trophy-outline' | 'time-outline' | 'document-text-outline' | 'location-outline'> = {
+  perfect_attendance: 'trophy-outline',
+  always_on_time: 'time-outline',
+  note_pro: 'document-text-outline',
+  gps_star: 'location-outline',
+};
+
 const date = (d: string | null) =>
   d ? new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : null;
 
@@ -46,6 +64,8 @@ export default function ProfileScreen() {
   const [credentials, setCredentials] = useState<Credential[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reminders, setReminders] = useState(true);
+  const [recognition, setRecognition] = useState<Recognition | null>(null);
+  const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -53,6 +73,13 @@ export default function ProfileScreen() {
       const me = (await request<StaffMe>('/staff/me')).data;
       setStaff(me);
       setCredentials((await request<Credential[]>(`/staff/${me.id}/credentials`)).data);
+      // Badges (D-097) are optional extras: never let them break the profile.
+      request<Recognition>('/insights/my-recognition')
+        .then(({ data }) => setRecognition(data))
+        .catch(() => setRecognition(null));
+      request<Onboarding | null>('/staff/me/onboarding')
+        .then(({ data }) => setOnboarding(data))
+        .catch(() => setOnboarding(null));
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -79,10 +106,10 @@ export default function ProfileScreen() {
         <Text style={{ color: colors.white, fontSize: 24, fontWeight: '800', marginTop: 12 }}>
           {user.firstName} {user.lastName}
         </Text>
-        <Text style={{ color: '#c7d2fe', fontSize: 15, marginTop: 2 }}>
+        <Text style={{ color: '#9aeedd', fontSize: 15, marginTop: 2 }}>
           {staff ? `${staff.discipline} · ${role}` : role}
         </Text>
-        {user.agency?.name ? <Text style={{ color: '#a5b4fc', fontSize: 13, marginTop: 4 }}>{user.agency.name}</Text> : null}
+        {user.agency?.name ? <Text style={{ color: '#5fdcc8', fontSize: 13, marginTop: 4 }}>{user.agency.name}</Text> : null}
       </GradientHeader>
 
       <View style={{ padding: 20, gap: 12 }}>
@@ -106,8 +133,33 @@ export default function ProfileScreen() {
           <ListRow icon="wallet-outline" label="My pay" onPress={() => router.push('/pay')} />
           <ListRow icon="briefcase-outline" label="Open shifts" onPress={() => router.push('/open-shifts')} />
           <ListRow icon="navigate-outline" label="Mileage" onPress={() => router.push('/mileage')} />
-          <ListRow icon="airplane-outline" label="Time off" onPress={() => router.push('/time-off')} last />
+          <ListRow icon="airplane-outline" label="Time off" onPress={() => router.push('/time-off')} />
+          <ListRow icon="school-outline" label="Training" onPress={() => router.push('/training')} last />
         </Card>
+
+        {onboarding && !onboarding.ready && (
+          <>
+            <SectionTitle>Getting started — {onboarding.percent}% ready</SectionTitle>
+            <Card style={{ paddingVertical: 4 }}>
+              {onboarding.items
+                .filter((i) => i.required && !i.done)
+                .map((i, n, list) => (
+                  <ListRow key={i.key} icon="ellipse-outline" label={i.label} value={i.owner === 'office' ? 'Your office adds this' : 'For you to do'} last={n === list.length - 1} />
+                ))}
+            </Card>
+          </>
+        )}
+
+        {recognition?.enabled && recognition.badges.length > 0 && (
+          <>
+            <SectionTitle>My badges</SectionTitle>
+            <Card style={{ paddingVertical: 4 }}>
+              {recognition.badges.map((b, i) => (
+                <ListRow key={b.key} icon={BADGE_ICONS[b.key] ?? 'star-outline'} label={b.title} value={b.description} last={i === recognition.badges.length - 1} />
+              ))}
+            </Card>
+          </>
+        )}
 
         <SectionTitle>Credentials</SectionTitle>
         <Card style={{ paddingVertical: credentials?.length ? 4 : 16 }}>

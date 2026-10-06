@@ -75,7 +75,7 @@ export default function PhysiciansPage() {
             {query.data?.data.map((p) => (
               <tr key={p.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/physicians/${p.id}`} className="font-medium text-violet-800 hover:underline">
+                  <Link href={`/physicians/${p.id}`} className="font-medium text-brand-800 hover:underline">
                     Dr. {p.firstName} {p.lastName}
                   </Link>
                 </td>
