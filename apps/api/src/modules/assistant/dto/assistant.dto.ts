@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsNotEmpty, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsNotEmpty, IsObject, IsString, MaxLength, ValidateNested } from 'class-validator';
 
 /** One turn of the conversation so far (the dashboard keeps the history; nothing is stored on the server). */
 export class AssistantTurnDto {
@@ -21,3 +21,13 @@ export class AssistantChatDto {
   @Type(() => AssistantTurnDto)
   messages!: AssistantTurnDto[];
 }
+
+/** A Confirm card the person pressed: the action and the parameters the preview returned (checked again). */
+export class AssistantActionDto {
+  @IsIn(['assign_caregiver', 'offer_open_shift', 'decide_time_off', 'calculate_payroll', 'export_payroll'])
+  kind!: string;
+
+  @IsObject()
+  params!: Record<string, unknown>;
+}
+
