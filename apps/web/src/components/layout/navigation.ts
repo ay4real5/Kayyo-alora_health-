@@ -22,6 +22,7 @@ import {
   Wallet,
   HeartPulse,
   Inbox,
+  KeyRound,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -52,6 +53,7 @@ export const NAVIGATION: readonly { href: string; label: string; permission: str
   { href: '/compliance/audit-log', label: 'Audit log', permission: 'audit_logs:read', icon: ScrollText, group: 'Admin' },
   { href: '/users', label: 'Users', permission: 'users:read', icon: UserCog, group: 'Admin' },
   { href: '/settings/agency', label: 'Agency settings', permission: 'settings:read', icon: Building2, group: 'Admin' },
+  { href: '/settings/roles', label: 'Roles', permission: 'users:read', icon: KeyRound, group: 'Admin' },
 ];
 
 export const NAV_GROUPS: readonly Group[] = ['Overview', 'Care', 'Billing', 'Business', 'Admin'];

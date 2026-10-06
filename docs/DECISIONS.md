@@ -1830,3 +1830,19 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Assistant**: read-only `list_referrals` tool (`referrals:read`).
 - **Not done yet**: the AI intake chat from the plan. It would need the BAA (people describe health needs), so it
   waits until after December.
+
+### D-099 — Custom roles (Phase G, P5-07)
+2026-10-06 · owner's idea list (custom roles UI) + Claude Code
+- **Routes** (`POST /roles`, `PATCH /roles/:id`, `DELETE /roles/:id`) need `settings:update` **and** `users:update`,
+  so effectively agency admins. Listing still needs `users:read` and now includes how many users have each role.
+- **No privilege escalation**: the caller must hold every permission a role carries, both its current set and the new
+  one. So nobody can create, widen or even narrow a role beyond their own access (same rule as granting roles to
+  users).
+- **Built-in roles are read-only**. They stay defined in code (`ROLE_DEFAULT_PERMISSIONS`, synced on boot), and their
+  names are reserved. Custom names are lower_snake_case and unique per agency.
+- **Deleting** is blocked while anyone has the role (409).
+- **Effect of an edit**: immediate on the API instance that made it (the `PermissionsService` cache is cleared),
+  within 30 s elsewhere.
+- **Web**: Settings → Roles (sidebar "Roles"). Custom roles are edited with a checkbox grid by area; boxes for
+  permissions the editor doesn't hold are disabled. Built-in roles are listed for reference. They are assigned in
+  Users, as before.

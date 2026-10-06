@@ -196,6 +196,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-06 | Claude Code | P5-07 | Custom roles (D-099): Settings → Roles, permission grid, no privilege escalation. |
 | 2026-10-06 | Claude Code | P5-06 | Referral pipeline (D-098): board, detail/notes/admit→patient, sources + conversion report, public intake form (embeddable), alerts, Command Center items. |
 | 2026-10-06 | Claude Code | P5-05 | Workforce intelligence (D-097): EVV patterns tab and Command Center item, explainable Care Scores (admins and supervisors), opt-in recognition badges in the app. |
 | 2026-10-06 | Claude Code | P5-04 | AI documentation (D-096): tidy-up of dictated notes, incident detection + report/dismiss, family care updates in the portal. Merged and deployed. |
