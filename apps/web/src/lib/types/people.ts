@@ -75,6 +75,10 @@ export interface StaffDetail extends StaffSummary {
   city: string | null;
   state: string | null;
   zip: string | null;
+  /** Caregiver matching (D-094): home location and gender, optional. */
+  latitude: number | null;
+  longitude: number | null;
+  gender: string | null;
   serviceAreaZipCodes: string[];
   maxPatients: number | null;
   notes: string | null;

@@ -912,6 +912,100 @@
         ]
       }
     },
+    "/api/v1/patients/{id}/caregiver-preferences": {
+      "get": {
+        "operationId": "PatientsController_caregiverPreferences",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "patients"
+        ]
+      }
+    },
+    "/api/v1/patients/{id}/caregiver-preferences/{staffId}": {
+      "put": {
+        "operationId": "PatientsController_setCaregiverPreference",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "staffId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaregiverPreferenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Prefer or decline a caregiver for this patient (D-094); declined caregivers are never suggested.",
+        "tags": [
+          "patients"
+        ]
+      },
+      "delete": {
+        "operationId": "PatientsController_removeCaregiverPreference",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "staffId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "patients"
+        ]
+      }
+    },
     "/api/v1/patients/{id}/diagnoses": {
       "get": {
         "operationId": "PatientsController_diagnoses",
@@ -2259,6 +2353,69 @@
           }
         },
         "summary": "Reschedule, reassign (staffId, or null to unassign) or edit a scheduled visit.",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/visits/{id}/suggestions": {
+      "get": {
+        "operationId": "SchedulingController_suggestionsForVisit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Who should take this visit: eligible caregivers ranked, with reasons, and who can't and why (D-094).",
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/api/v1/schedule/suggestions": {
+      "post": {
+        "operationId": "SchedulingController_suggestions",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestCaregiversDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The same for a visit not booked yet (date, times, patient, visit type).",
         "tags": [
           "schedule"
         ]
@@ -8445,6 +8602,19 @@
           "phoneHome": {
             "type": "string"
           },
+          "preferredLanguage": {
+            "type": "string",
+            "description": "Caregiver matching (D-094): the language the patient prefers their caregiver to speak.",
+            "maxLength": 50
+          },
+          "preferredCaregiverGender": {
+            "type": "string",
+            "description": "Caregiver matching (D-094): preferred caregiver gender, if any.",
+            "enum": [
+              "female",
+              "male"
+            ]
+          },
           "liveIn": {
             "type": "boolean",
             "description": "A live-in caregiver lives in the home (Virginia personal care claims get the UB modifier, D-077)."
@@ -8572,6 +8742,19 @@
           "phoneHome": {
             "type": "string"
           },
+          "preferredLanguage": {
+            "type": "string",
+            "description": "Caregiver matching (D-094): the language the patient prefers their caregiver to speak.",
+            "maxLength": 50
+          },
+          "preferredCaregiverGender": {
+            "description": "Caregiver matching (D-094): preferred caregiver gender, if any.",
+            "enum": [
+              "female",
+              "male"
+            ],
+            "type": "string"
+          },
           "liveIn": {
             "type": "boolean",
             "description": "A live-in caregiver lives in the home (Virginia personal care claims get the UB modifier, D-077)."
@@ -8671,6 +8854,26 @@
             "description": "Defaults to today."
           }
         }
+      },
+      "CaregiverPreferenceDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "preferred",
+              "declined"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "Why (e.g. \"Speaks Haitian Creole\", \"Family asked not to send\"). Not shown to caregivers.",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "kind"
+        ]
       },
       "CreateDiagnosisDto": {
         "type": "object",
@@ -8915,6 +9118,21 @@
           "zip": {
             "type": "string"
           },
+          "latitude": {
+            "type": "number",
+            "description": "Caregiver matching (D-094): home location for distance to patients (WGS84), optional."
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "gender": {
+            "type": "string",
+            "description": "Caregiver matching (D-094): for patients who prefer a caregiver gender. Optional.",
+            "enum": [
+              "female",
+              "male"
+            ]
+          },
           "serviceAreaZipCodes": {
             "description": "ZIP codes this person will travel to.",
             "maxItems": 200,
@@ -9041,6 +9259,21 @@
             "type": "string"
           },
           "zip": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Caregiver matching (D-094): home location for distance to patients (WGS84), optional."
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "gender": {
+            "description": "Caregiver matching (D-094): for patients who prefer a caregiver gender. Optional.",
+            "enum": [
+              "female",
+              "male"
+            ],
             "type": "string"
           },
           "serviceAreaZipCodes": {
@@ -9347,6 +9580,55 @@
           "override": {
             "type": "boolean",
             "description": "Book despite blocking conflicts (double-booking, approved time off, inactive staff/patient).\nRequires visits:approve; recorded in the audit trail."
+          }
+        },
+        "required": [
+          "patientId",
+          "visitType",
+          "scheduledDate",
+          "scheduledStart",
+          "scheduledEnd"
+        ]
+      },
+      "SuggestCaregiversDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "visitType": {
+            "enum": [
+              "skilled_nursing",
+              "nursing_assessment",
+              "physical_therapy",
+              "pt_evaluation",
+              "occupational_therapy",
+              "ot_evaluation",
+              "speech_therapy",
+              "medical_social_work",
+              "home_health_aide",
+              "personal_care",
+              "respite"
+            ],
+            "type": "string"
+          },
+          "serviceCode": {
+            "type": "string",
+            "description": "HCPCS/revenue code used for billing, e.g. G0299.",
+            "maxLength": 20
+          },
+          "scheduledDate": {
+            "type": "string",
+            "description": "Agency-local date, YYYY-MM-DD."
+          },
+          "scheduledStart": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM (24-hour)."
+          },
+          "scheduledEnd": {
+            "type": "string",
+            "description": "Agency-local time, HH:MM, after scheduledStart (visits don't cross midnight)."
           }
         },
         "required": [

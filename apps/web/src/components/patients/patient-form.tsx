@@ -15,6 +15,7 @@ const TEXT_FIELDS = [
   'firstName', 'lastName', 'dateOfBirth', 'gender', 'mrn', 'phoneHome', 'phoneCell', 'email', 'addressLine1',
   'addressLine2', 'city', 'state', 'zip', 'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelation',
   'primaryPhysicianId', 'medicareBeneficiaryId', 'medicaidId', 'insuranceMemberId', 'insuranceGroupNumber', 'notes',
+  'preferredLanguage', 'preferredCaregiverGender',
 ] as const;
 
 /**
@@ -96,6 +97,12 @@ export function PatientForm({
             </option>
           ))}
         </SelectField>
+        <SelectField label="Preferred caregiver gender" name="preferredCaregiverGender" defaultValue={v('preferredCaregiverGender')}>
+          <option value="">No preference</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+        </SelectField>
+        <Field label="Caregiver should speak" name="preferredLanguage" defaultValue={v('preferredLanguage')} placeholder="e.g. Spanish" hint="Used to suggest caregivers." />
         <Field label="Medical record number (MRN)" name="mrn" defaultValue={v('mrn')} />
         <Field
           label="Social Security number"

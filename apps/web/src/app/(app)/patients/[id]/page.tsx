@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { AuthorizationsPanel } from '@/components/patients/authorizations-panel';
+import { CaregiverPreferencesPanel } from '@/components/patients/caregiver-preferences-panel';
 import { ClinicalPanels } from '@/components/patients/clinical-panels';
 import { DocumentsPanel } from '@/components/patients/documents-panel';
 import { EligibilityPanel } from '@/components/patients/eligibility-panel';
@@ -105,6 +106,8 @@ export default function PatientDetailPage() {
         <DiagnosesPanel patient={p} canEdit={canEdit} onAct={run} />
         <AllergiesPanel patient={p} canEdit={canEdit} onAct={run} />
       </div>
+
+      {can('visits:assign') && <CaregiverPreferencesPanel patientId={p.id} />}
 
       <ClinicalPanels patientId={p.id} />
 

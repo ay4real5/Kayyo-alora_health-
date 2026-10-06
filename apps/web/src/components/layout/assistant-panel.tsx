@@ -24,6 +24,7 @@ const LOOKUP_LABELS: Record<string, string> = {
   list_pay_periods: 'payroll',
   compliance_overview: 'compliance',
   todays_priorities: 'today’s priorities',
+  suggest_caregivers: 'caregiver matches',
 };
 
 const EXAMPLES = ['Which visits have no caregiver this week?', 'Find the patient named …', 'How do I add a new caregiver?'];
