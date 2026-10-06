@@ -11110,9 +11110,42 @@
           "decision"
         ]
       },
+      "AssistantTurnDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ]
+      },
       "AssistantChatDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "messages": {
+            "description": "Oldest first, ending with the new question.",
+            "minItems": 1,
+            "maxItems": 30,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantTurnDto"
+            }
+          }
+        },
+        "required": [
+          "messages"
+        ]
       },
       "CreateVisitNoteDto": {
         "type": "object",
