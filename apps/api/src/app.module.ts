@@ -30,6 +30,7 @@ import { PortalModule } from './modules/portal/portal.module.js';
 import { ComplianceModule } from './modules/compliance/compliance.module.js';
 import { PayrollModule } from './modules/payroll/payroll.module.js';
 import { AssistantModule } from './modules/assistant/assistant.module.js';
+import { InsightsModule } from './modules/insights/insights.module.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
 import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
 
@@ -66,6 +67,7 @@ import { VisitDocsModule } from './modules/visit-docs/visit-docs.module.js';
     ComplianceModule,
     PayrollModule,
     AssistantModule,
+    InsightsModule,
     ReportsModule,
     VisitDocsModule,
     NotificationsModule,

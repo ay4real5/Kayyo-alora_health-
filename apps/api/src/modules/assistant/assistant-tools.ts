@@ -8,6 +8,7 @@ import { Paginated, PaginationQueryDto } from '../../common/dto/pagination.dto.j
 import type { ClaimsService } from '../billing/claims.service.js';
 import { CLAIM_STATUSES, ListClaimsQueryDto } from '../billing/dto/claims.dto.js';
 import type { ComplianceService } from '../compliance/compliance.service.js';
+import type { InsightsService } from '../insights/insights.service.js';
 import { ListPatientsQueryDto } from '../patients/dto/patients.dto.js';
 import type { PatientsService } from '../patients/patients.service.js';
 import type { PayrollService } from '../payroll/payroll.service.js';
@@ -45,6 +46,7 @@ export interface AssistantToolServices {
   claims: ClaimsService;
   payroll: PayrollService;
   compliance: ComplianceService;
+  insights: InsightsService;
 }
 
 /** The model's arguments → the same validated query object the HTTP route would build. */
@@ -73,6 +75,38 @@ const person = (p: { firstName: string; lastName: string }) => `${p.firstName} $
 
 export function buildAssistantTools(s: AssistantToolServices): AssistantTool[] {
   return [
+    {
+      name: 'todays_priorities',
+      description:
+        "The agency's Command Center: what needs attention today, worst first (uncovered visits, expired or expiring credentials, authorizations on track to run over, money that can't be billed yet and why, EVV corrections, missing visit notes, open shifts), plus today's expected revenue. Use this for questions like 'what should I worry about today?', 'how are we doing?' or 'where are we losing money?'. Sections the person can't see are left out.",
+      permission: 'visits:read',
+      inputSchema: schema({}),
+      run: async (caller) => {
+        const c = await s.insights.commandCenter(caller);
+        return {
+          today: c.today,
+          needsAttention: c.attention.map((a) => ({ severity: a.severity, item: a.title, detail: a.detail, ...(a.amount !== undefined ? { amount: a.amount } : {}), link: a.link })),
+          ...(c.coverage ? { unassignedVisits: c.coverage.unassigned } : {}),
+          ...(c.authorizations
+            ? {
+                authorizationsAtRisk: c.authorizations.atRisk.map((a) => ({
+                  patient: `${a.patient.firstName} ${a.patient.lastName}`,
+                  payer: a.payer,
+                  limit: `${a.authorized} ${a.unit}`,
+                  used: a.used,
+                  booked: a.booked,
+                  projected: a.forecast.projected,
+                  overBy: a.forecast.overBy,
+                  runsOutOn: a.forecast.runsOutOn,
+                  endDate: a.endDate,
+                  link: a.link,
+                })),
+              }
+            : {}),
+          ...(c.money ? { money: { expectedToday: c.money.expectedToday, visitsToday: c.money.visitsToday, atRisk: c.money.atRisk } } : {}),
+        };
+      },
+    },
     {
       name: 'find_patients',
       description: 'Search patients by name or MRN (medical record number). Returns basic details and a link to each patient.',
