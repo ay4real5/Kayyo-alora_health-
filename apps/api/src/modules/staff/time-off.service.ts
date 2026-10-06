@@ -106,6 +106,11 @@ export class TimeOffService {
     return toView(row);
   }
 
+  /** One request, for the requester or an approver (others get 404). */
+  async get(caller: AuthUser, id: string): Promise<TimeOffView> {
+    return toView(await this.find(caller, id));
+  }
+
   /** The requester withdraws a request that is pending, or approved but not started yet. */
   async cancel(caller: AuthUser, id: string): Promise<TimeOffView> {
     const row = await this.find(caller, id);

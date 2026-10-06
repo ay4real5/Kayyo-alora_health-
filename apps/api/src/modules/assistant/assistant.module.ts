@@ -12,7 +12,7 @@ import { PayrollModule } from '../payroll/payroll.module.js';
 import { SchedulingModule } from '../scheduling/scheduling.module.js';
 import { StaffModule } from '../staff/staff.module.js';
 import { AssistantService } from './assistant.service.js';
-import { AssistantChatDto } from './dto/assistant.dto.js';
+import { AssistantActionDto, AssistantChatDto } from './dto/assistant.dto.js';
 
 /** Each question can make several model calls: keep the per-person rate modest. */
 const CHAT_LIMIT = { default: { limit: 20, ttl: 60_000 } };
@@ -36,6 +36,14 @@ export class AssistantController {
   @HttpCode(HttpStatus.OK)
   chat(@CurrentUser() caller: AuthUser, @Body() dto: AssistantChatDto) {
     return this.assistant.chat(caller, dto);
+  }
+
+  /** Run an action the person confirmed on a Confirm card (D-095). */
+  @Throttle(CHAT_LIMIT)
+  @Post('actions')
+  @HttpCode(HttpStatus.OK)
+  action(@CurrentUser() caller: AuthUser, @Body() dto: AssistantActionDto) {
+    return this.assistant.executeAction(caller, dto.kind, dto.params);
   }
 }
 
