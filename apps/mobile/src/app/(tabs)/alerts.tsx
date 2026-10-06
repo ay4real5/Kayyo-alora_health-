@@ -30,6 +30,7 @@ const ICONS: Record<string, IconName> = {
   time_off_decided: 'airplane',
   evv_correction_decided: 'time',
   incident_flagged: 'warning',
+  referral_received: 'person-add-outline',
   system: 'shield-checkmark',
 };
 

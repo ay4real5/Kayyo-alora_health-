@@ -20,6 +20,8 @@ export const NOTIFICATION_TYPES = [
   'evv_correction_decided',
   /** A submitted visit note may describe a reportable incident (D-096) — for people who handle incidents. */
   'incident_flagged',
+  /** A new referral arrived through the public intake form (D-098) — for people who manage referrals. */
+  'referral_received',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -58,5 +60,6 @@ export const DEFAULT_DELIVERY_CHANNELS: Record<NotificationType, readonly Delive
   time_off_decided: ['push'],
   evv_correction_decided: ['push'],
   incident_flagged: ['push', 'email'],
+  referral_received: ['push', 'email'],
   system: ['email'],
 };
