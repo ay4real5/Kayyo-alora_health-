@@ -1920,3 +1920,43 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   validity, plus a question builder that marks the right option), per-course results, and archive/restore.
 - **App**: Profile → Training lists the caregiver's courses. A course screen shows the lesson, the quiz (one choice
   per question) and the result (retry if failed).
+
+### D-103 — "Primordial Teal" design system (supersedes D-079's palette)
+2026-10-06 · owner asked for a catchier, more innovative look in teal & coral, everywhere + Claude Code
+- **Tokens** live in `apps/web/src/app/globals.css` `@theme`:
+
+  | Token | Values | Use |
+  |---|---|---|
+  | `brand-50…950` | 700 `#0f766e` (5.4:1 on white), 950 `#042f2e` | Teal. Primary actions, links, active states, the sidebar |
+  | `accent-50…900` | 400 `#f97362` | Coral. Highlights, badges, the active bar and the logo spark. Not for small text on white |
+  | `canvas` | `#f6faf9` | Page background |
+  | `ink` | `#042f2e` | Headings |
+
+  Also in that file: the `bg-mesh` and `bg-mesh-light` hero gradients, the `skeleton` shimmer, `animate-fade-in`, the
+  `--shadow-card`, `--shadow-lift` and `--shadow-glow` shadows, and a `prefers-reduced-motion` override.
+- **Rule**: no other hue families in code. Every violet, indigo and fuchsia class was moved to the tokens (about 200
+  classes in 60 files). `npm run lint -w @alora/web` runs `scripts/check-colors.mjs`, which fails on
+  violet/indigo/fuchsia/purple/pink classes. A future palette change is then one file.
+- **Type**: Plus Jakarta Sans (`font-display`) for headings and big numbers; Inter for body text.
+- **Logo**: a teal tile, a rounded P with a leaf in the bowl, and a coral spark. One drawing in three places:
+  - `components/brand/logo.tsx` (`LogoMark` and `Logo`);
+  - `public/logo.svg` and `app/icon.svg` (the favicon), plus `app/apple-icon.png`;
+  - the mobile `assets/icon.png`, `adaptive-icon.png` and `splash-icon.png`, rendered from the SVG with sharp.
+- **Signature screens**:
+  - The sidebar has a deep-teal glow and a coral active bar.
+  - The login is a split screen with a mesh panel and a glass "Today" preview card.
+  - The dashboard hero greets by time of day (rendered on the client to avoid hydration mismatches) and has quick
+    actions: New visit, Add referral, Ask Primordial.
+  - Stat cards have gradient icon tiles, a top accent bar, skeleton loaders and a hover lift.
+  - The portal header and the intake form use the mesh, the intake form also has trust chips, and the referral board
+    has stage-colour dots.
+- **Buttons**: primary is a teal gradient with a glow; the new `accent` variant is coral with dark text; buttons
+  press down slightly when clicked.
+- **Charts**: completed is teal, missed coral, cancelled slate, not-yet-done light teal.
+- **Mobile**: the `colors` object is teal/coral, and the old indigo/violet hex values in screens were mapped to the
+  teal equivalents. The header band is `#042f2e → #0f766e → #14a896` with a coral glow; the avatar goes teal → coral;
+  `BrandMark` is the logo image. The splash background is `#042f2e`, and the Android adaptive icon is set. The new
+  look reaches phones with the next EAS build.
+- **Checks**: the axe WCAG A/AA browser tests pass with the new colours, including contrast. The dashboard-heading
+  e2e checks now accept "Good morning/afternoon/evening".
+

@@ -13,7 +13,7 @@ async function signIn(page: Page, email: string) {
 
 test('an admin signs in, sees live numbers, navigates and signs out', async ({ page }) => {
   await signIn(page, 'agency.admin@demo.alora.test');
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 
   const activePatients = page.getByRole('link', { name: /Active patients/ });
   await expect(activePatients).toContainText('27'); // the demo agency has 27 active patients
@@ -36,9 +36,9 @@ test('an admin signs in, sees live numbers, navigates and signs out', async ({ p
 
 test('the session survives a page reload (refresh cookie), without storing tokens in the page', async ({ page }) => {
   await signIn(page, 'office.staff@demo.alora.test');
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 
   const stored = await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }) + document.cookie);
   expect(stored).not.toMatch(/eyJ/); // no JWT anywhere scripts can reach
@@ -47,7 +47,7 @@ test('the session survives a page reload (refresh cookie), without storing token
 
 test('a caregiver only sees what their role allows', async ({ page }) => {
   await signIn(page, 'hha@demo.alora.test');
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   const nav = page.getByRole('navigation', { name: 'Main' });
   await expect(nav.getByRole('link', { name: 'Schedule' })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Users' })).toHaveCount(0);

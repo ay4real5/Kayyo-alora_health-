@@ -128,3 +128,6 @@ Owner's 25-idea list, phased. Each phase is its own branch and PR; AI features a
 - [x] **P5-10** `agent` Primordial Academy (D-102): training modules with a short quiz; passing records a credential.
 - [ ] **P5-11** `human`+`agent` Needs accounts or reviews first: portal invoices with online payments (processor account), public API and integrations, predictive client risk (clinical review), AI intake chat (BAA).
 
+## Phase 6 — Look and feel, then next innovations
+- [x] **P6-01** `agent` "Primordial Teal" redesign (D-103): tokens, logo, sidebar, login, dashboard hero, portal, intake, caregiver app colours and icons.
+

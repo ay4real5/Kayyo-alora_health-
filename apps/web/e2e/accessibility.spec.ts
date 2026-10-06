@@ -9,7 +9,7 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible({ timeout: 20_000 });
 }
 
 /** Opens each page, waits for its heading and data, and collects violations per page (one report for all). */
@@ -47,7 +47,7 @@ test('office pages have no WCAG A/AA violations', async ({ page }) => {
   const patient = await firstRowLink(page, '/patients');
   const evvRecord = await firstRowLink(page, '/evv');
   const found = await scan(page, [
-    ['/', /Welcome/],
+    ['/', /Welcome|Good (morning|afternoon|evening)/],
     ['/patients', /Patients/],
     [patient, /MRN|, /],
     ['/staff', /Staff/],

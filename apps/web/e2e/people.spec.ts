@@ -9,7 +9,7 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   if (email.startsWith('agency.admin@')) await answerTwoFactor(page); // admins must use 2FA (D-045)
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 }
 
 const nav = (page: Page) => page.getByRole('navigation', { name: 'Main' });

@@ -13,6 +13,15 @@ import { SelectField } from '@/components/ui/form-controls';
 import { useAuth } from '@/lib/auth/auth-provider';
 import type { Referral } from '@/lib/types/referrals';
 
+/** A colour per stage, warming up as the client gets closer to starting care. */
+const STAGE_DOT: Record<string, string> = {
+  new: 'bg-sky-400',
+  contacted: 'bg-brand-300',
+  assessment: 'bg-brand-500',
+  authorization_pending: 'bg-amber-400',
+  ready: 'bg-accent-400',
+};
+
 const daysSince = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
 
 function ReferralCard({ r }: { r: Referral }) {
@@ -101,9 +110,12 @@ export default function ReferralsPage() {
           <ErrorAlert error={board.error} />
           <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
             {board.data?.map((column) => (
-              <section key={column.status} className="flex flex-col gap-2 rounded-2xl bg-slate-50 p-3">
+              <section key={column.status} className="flex flex-col gap-2 rounded-2xl bg-white/70 p-3 shadow-[var(--shadow-card)] ring-1 ring-brand-900/[0.05]">
                 <h2 className="flex items-center justify-between text-sm font-semibold text-slate-800">
-                  {REFERRAL_STATUS_LABELS[column.status]}
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${STAGE_DOT[column.status]}`} />
+                    {REFERRAL_STATUS_LABELS[column.status]}
+                  </span>
                   <span className="rounded-full bg-white px-2 text-xs text-slate-600 ring-1 ring-slate-200">{column.referrals.length}</span>
                 </h2>
                 {column.referrals.map((r) => (

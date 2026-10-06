@@ -34,7 +34,7 @@ export async function answerTwoFactor(page: Page): Promise<void> {
     await field.fill(totp(step));
     await page.getByRole('button', { name: 'Verify' }).click();
     const outcome = await Promise.race([
-      page.getByRole('heading', { name: /Welcome/ }).waitFor().then(() => 'in' as const),
+      page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ }).waitFor().then(() => 'in' as const),
       page.getByRole('alert').filter({ hasText: /code/i }).waitFor().then(() => 'refused' as const),
     ]);
     if (outcome === 'in') return;

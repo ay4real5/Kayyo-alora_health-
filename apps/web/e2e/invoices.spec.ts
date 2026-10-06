@@ -10,7 +10,7 @@ test('billing invoices the private-pay patient, downloads the PDF and records th
   await page.getByLabel('Email').fill('billing.staff@demo.alora.test');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Invoices' }).click();
   await expect(page.getByRole('heading', { name: 'Invoices' })).toBeVisible();
 

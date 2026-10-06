@@ -9,7 +9,7 @@ test('billing makes an 837 file for one payer, downloads it and marks it sent', 
   await page.getByLabel('Email').fill('billing.staff@demo.alora.test');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   const nav = page.getByRole('navigation', { name: 'Main' });
 
   // Make sure there are ready claims (another test may already have made them).
