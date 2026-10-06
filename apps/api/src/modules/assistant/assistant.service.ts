@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { BadRequestException, HttpException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppEnv, type EnvironmentVariables } from '../../config/env.validation.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
@@ -17,8 +17,12 @@ import { VisitsService } from '../scheduling/visits.service.js';
 import { StaffService } from '../staff/staff.service.js';
 import { TimeOffService } from '../staff/time-off.service.js';
 import { ASSISTANT_SYSTEM_PROMPT } from './assistant-guide.js';
+import { buildAssistantActions, type ActionPreview, type ActionResult, type AssistantAction } from './assistant-actions.js';
 import { buildAssistantTools, type AssistantTool } from './assistant-tools.js';
 import type { AssistantChatDto } from './dto/assistant.dto.js';
+
+/** Marks a tool result as a prepared action rather than data. */
+const PROPOSAL = '__proposal';
 
 /** Lookups per question before the assistant must answer with what it has. */
 export const MAX_TOOL_ROUNDS = 6;
@@ -29,6 +33,8 @@ export type AssistantStatus = { enabled: true; model: string } | { enabled: fals
 
 export interface AssistantReply {
   reply: string;
+  /** Actions prepared for the person to confirm (D-095) — nothing has happened yet. */
+  actions?: ActionPreview[];
   /** Which lookups ran, in order (shown to the user as "Looked up: …"). */
   lookups: string[];
 }
@@ -46,6 +52,7 @@ export type MessagesClient = { messages: Pick<Anthropic['messages'], 'create'> }
 export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
   private readonly tools: AssistantTool[];
+  private readonly actions: AssistantAction[];
   /** Replaced in tests; created on first use from ANTHROPIC_API_KEY. */
   client: MessagesClient | null = null;
 
@@ -66,6 +73,7 @@ export class AssistantService {
     match: CaregiverMatchService,
   ) {
     this.tools = buildAssistantTools({ patients, staff, visits, openShifts, timeOff, claims, payroll, compliance, insights, match });
+    this.actions = buildAssistantActions({ visits, staff, openShifts, timeOff, payroll });
   }
 
   status(): AssistantStatus {
@@ -78,7 +86,35 @@ export class AssistantService {
   /** The tools this person may use — the rest are never shown to the model. */
   async toolsFor(caller: AuthUser): Promise<AssistantTool[]> {
     const access = await this.permissions.forUser(caller);
-    return this.tools.filter((t) => access.permissions.has(t.permission));
+    const lookups = this.tools.filter((t) => access.permissions.has(t.permission));
+    // Actions are offered as "prepare_…" tools: they only build a Confirm card (D-095).
+    const prepare: AssistantTool[] = this.actions
+      .filter((a) => a.permissions.every((p) => access.permissions.has(p)))
+      .map((a) => ({
+        name: `prepare_${a.kind}`,
+        description: `${a.description} This does NOT do it: the person gets a Confirm button and decides.`,
+        permission: a.permissions[0]!,
+        inputSchema: a.inputSchema as AssistantTool['inputSchema'],
+        run: async (c, input) => ({ [PROPOSAL]: await a.preview(c, input) }),
+      }));
+    return [...lookups, ...prepare];
+  }
+
+  /** Runs a confirmed action (D-095): the person's own permissions, every check again, audited. */
+  async executeAction(caller: AuthUser, kind: string, params: Record<string, unknown>): Promise<ActionResult> {
+    const action = this.actions.find((a) => a.kind === kind);
+    if (!action) throw new BadRequestException('Unknown action');
+    const access = await this.permissions.forUser(caller);
+    if (!action.permissions.every((p) => access.permissions.has(p))) throw new ForbiddenException('Your role can’t do that');
+    const result = await action.execute(caller, params, (p) => access.permissions.has(p));
+    await this.audit.record({
+      agencyId: caller.agencyId,
+      userId: caller.userId,
+      action: 'ASSISTANT_ACTION',
+      resourceType: kind,
+      details: { params: Object.fromEntries(Object.entries(params).filter(([k, v]) => (k.endsWith('Id') || k === 'status') && typeof v === 'string')) as Record<string, string> },
+    });
+    return result;
   }
 
   async chat(caller: AuthUser, dto: AssistantChatDto): Promise<AssistantReply> {
@@ -93,20 +129,23 @@ export class AssistantService {
 
     const messages: Anthropic.MessageParam[] = dto.messages.map((m) => ({ role: m.role, content: m.content }));
     const lookups: string[] = [];
+    const prepared: ActionPreview[] = [];
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
       const response = await this.ask(status.model, tools, today, access.roles, messages, round < MAX_TOOL_ROUNDS);
       const uses = response.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use');
       if (response.stop_reason !== 'tool_use' || uses.length === 0) {
         const reply = textOf(response);
-        if (reply) return { reply, lookups };
+        const extra = prepared.length ? { actions: prepared } : {};
+        if (reply) return { reply, lookups, ...extra };
+        if (prepared.length) return { reply: 'Please check the details below and confirm.', lookups, ...extra };
         return { reply: 'Sorry, I couldn’t answer that. Try asking it a different way.', lookups };
       }
       messages.push({ role: 'assistant', content: response.content });
       const results: Anthropic.ToolResultBlockParam[] = [];
-      for (const use of uses) results.push(await this.runTool(caller, tools, use, lookups));
+      for (const use of uses) results.push(await this.runTool(caller, tools, use, lookups, prepared));
       messages.push({ role: 'user', content: results });
     }
-    return { reply: 'That needed more lookups than I can do at once. Try a more specific question.', lookups };
+    return { reply: 'That needed more lookups than I can do at once. Try a more specific question.', lookups, ...(prepared.length ? { actions: prepared } : {}) };
   }
 
   private async ask(
@@ -153,12 +192,28 @@ export class AssistantService {
     }
   }
 
-  private async runTool(caller: AuthUser, tools: AssistantTool[], use: Anthropic.ToolUseBlock, lookups: string[]): Promise<Anthropic.ToolResultBlockParam> {
+  private async runTool(
+    caller: AuthUser,
+    tools: AssistantTool[],
+    use: Anthropic.ToolUseBlock,
+    lookups: string[],
+    prepared: ActionPreview[],
+  ): Promise<Anthropic.ToolResultBlockParam> {
     const tool = tools.find((t) => t.name === use.name);
     if (!tool) return { type: 'tool_result', tool_use_id: use.id, is_error: true, content: 'That lookup isn’t available to this person.' };
     lookups.push(tool.name);
     try {
       const result = await tool.run(caller, (use.input ?? {}) as Record<string, unknown>);
+      const proposal = (result as Record<string, unknown> | null)?.[PROPOSAL] as ActionPreview | undefined;
+      if (proposal) {
+        const key = JSON.stringify([proposal.kind, proposal.params]);
+        if (!prepared.some((x) => JSON.stringify([x.kind, x.params]) === key)) prepared.push(proposal);
+        return {
+          type: 'tool_result',
+          tool_use_id: use.id,
+          content: `Shown to the person as a Confirm card ("${proposal.title}"). It has NOT happened yet. Tell them to check it and press ${proposal.confirmLabel}; do not say it is done.`,
+        };
+      }
       await this.audit.record({
         agencyId: caller.agencyId,
         userId: caller.userId,

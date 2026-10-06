@@ -7458,6 +7458,30 @@
         ]
       }
     },
+    "/api/v1/assistant/actions": {
+      "post": {
+        "operationId": "AssistantController_action",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "assistant"
+        ]
+      }
+    },
     "/api/v1/insights/command-center": {
       "get": {
         "operationId": "InsightsController_commandCenter",
@@ -11653,6 +11677,29 @@
         },
         "required": [
           "messages"
+        ]
+      },
+      "AssistantActionDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "assign_caregiver",
+              "offer_open_shift",
+              "decide_time_off",
+              "calculate_payroll",
+              "export_payroll"
+            ]
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "kind",
+          "params"
         ]
       },
       "OrganizeNoteDto": {

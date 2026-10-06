@@ -1696,6 +1696,7 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - gender and home coordinates on the staff form.
 - **Assistant**: `suggest_caregivers` (`visits:assign`) takes a visit id or a slot.
 
+<<<<<<< HEAD
 ### D-096 — AI documentation: dictation tidy-up, incident detection, family care updates (Phase D)
 2026-10-06 · owner's idea list (voice-to-documentation, AI incident detection, family care updates) + Claude Code
 - **Shared `ClaudeService`** (`modules/ai`, global) uses the same gate as the assistant: off without
@@ -1729,3 +1730,30 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - `POST …/care-update/suggest` (AI): a warm 2–4 sentence update with no diagnoses, medications or vital numbers.
   - `POST …/care-update`: the caregiver edits and sends it.
   - The family portal's visit list shows it; staff see it on the visit page.
+=======
+### D-095 — Assistant actions behind a Confirm card (Phase C)
+2026-10-06 · owner's idea list ("Assign Maria?", "Fill all open shifts", "[Resolve]") + Claude Code
+- **The assistant never changes anything itself.** Each action (`modules/assistant/assistant-actions.ts`) is offered to
+  the model as a `prepare_<kind>` tool, only when the person holds the same permission(s) as the dashboard endpoint.
+  - The tool validates the request and returns a **preview**: title, details, parameters and button label.
+  - The model is told it has NOT happened.
+  - The chat reply carries `actions[]`, and the panel shows them as Confirm cards.
+- **Confirming** (`POST /assistant/actions` `{kind, params}`):
+  - The parameters are checked again and the person's permissions re-verified.
+  - It runs the **normal service method** (the same business rules, conflict checks and notifications).
+  - It is audited as `ASSISTANT_ACTION`, recording the kind and ids only.
+  - Ids are accepted bare or as dashboard links (the model passes links).
+- **Actions (v1)**:
+
+  | Action | Service call | Permission |
+  |---|---|---|
+  | `assign_caregiver` | `VisitsService.update` | `visits:update` |
+  | `offer_open_shift` | `OpenShiftsService.create`, then `broadcast` if allowed | `visits:create` (broadcast also needs `notifications:create`) |
+  | `decide_time_off` | `TimeOffService.decide` | `visits:approve` |
+  | `calculate_payroll` | `PayrollService.calculate` | `payroll:create` |
+  | `export_payroll` | `PayrollService.exportCsv`; the panel downloads the CSV | `payroll:export` |
+
+- After a confirmed action, the panel refreshes the page behind it. Cancel changes nothing.
+- Tested end-to-end with a real Haiku call on dev data: "Assign Emery Bramble to the Redfern visit on Friday" led to
+  lookups, then a card, then Confirm, then assigned.
+>>>>>>> origin/main

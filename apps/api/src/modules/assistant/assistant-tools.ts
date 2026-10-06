@@ -233,6 +233,7 @@ export function buildAssistantTools(s: AssistantToolServices): AssistantTool[] {
       inputSchema: schema({ status: str('Request status.', { enum: [...TIME_OFF_STATUSES] }) }),
       run: async (caller, input) =>
         page(await s.timeOff.list(caller, query(ListTimeOffQueryDto, input)), (t) => ({
+          id: t.id,
           staff: person(t.staff),
           from: t.startDate,
           to: t.endDate,
