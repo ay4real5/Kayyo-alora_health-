@@ -9,15 +9,20 @@ import {
   ConflictCheckQueryDto,
   CreateVisitDto,
   ListVisitsQueryDto,
+  SuggestCaregiversDto,
   UpdateVisitDto,
 } from './dto/scheduling.dto.js';
+import { CaregiverMatchService } from './caregiver-match.service.js';
 import { VisitsService } from './visits.service.js';
 
 /** Scheduling (DESIGN.md §6.5). Visit notes, vitals and tasks come with EVV (P2-04). */
 @ApiTags('schedule')
 @Controller('schedule')
 export class SchedulingController {
-  constructor(private readonly visits: VisitsService) {}
+  constructor(
+    private readonly visits: VisitsService,
+    private readonly match: CaregiverMatchService,
+  ) {}
 
   @Permissions('visits:read')
   @Get('visits')
@@ -40,6 +45,21 @@ export class SchedulingController {
   @Get('visits/:id')
   get(@CurrentUser() caller: AuthUser, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.visits.get(caller, id);
+  }
+
+  /** Who should take this visit: eligible caregivers ranked, with reasons, and who can't and why (D-094). */
+  @Permissions('visits:assign')
+  @Get('visits/:id/suggestions')
+  suggestionsForVisit(@CurrentUser() caller: AuthUser, @Param('id', new ParseUUIDPipe()) id: string) {
+    return this.match.forVisit(caller, id);
+  }
+
+  /** The same for a visit not booked yet (date, times, patient, visit type). */
+  @Permissions('visits:assign')
+  @Post('suggestions')
+  @HttpCode(HttpStatus.OK)
+  suggestions(@CurrentUser() caller: AuthUser, @Body() dto: SuggestCaregiversDto) {
+    return this.match.suggest(caller, { ...dto, agencyId: caller.agencyId });
   }
 
   /** Reschedule, reassign (staffId, or null to unassign) or edit a scheduled visit. */

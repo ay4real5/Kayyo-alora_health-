@@ -10,7 +10,7 @@ import { SelectField, TextAreaField } from '@/components/ui/form-controls';
 import { humanize } from '@/lib/labels';
 import type { StaffCandidate, StaffDetail } from '@/lib/types/people';
 
-const TEXT = ['employeeId', 'discipline', 'employmentType', 'hireDate', 'addressLine1', 'city', 'state', 'zip', 'notes', 'taxFilingStatus'] as const;
+const TEXT = ['employeeId', 'discipline', 'employmentType', 'hireDate', 'addressLine1', 'city', 'state', 'zip', 'notes', 'taxFilingStatus', 'gender'] as const;
 const MONEY = ['hourlyRate', 'perVisitRate', 'overtimeRate', 'mileageRate'] as const;
 const LISTS = ['serviceAreaZipCodes', 'skills', 'languages'] as const;
 
@@ -59,6 +59,11 @@ export function StaffForm({
     if (ssn) body.ssn = ssn;
     const maxPatients = String(form.get('maxPatients') ?? '').trim();
     if (maxPatients) body.maxPatients = Number(maxPatients);
+    for (const key of ['latitude', 'longitude'] as const) {
+      const value = String(form.get(key) ?? '').trim();
+      if (value) body[key] = Number(value);
+      else if (staff?.[key] !== null && staff?.[key] !== undefined) body[key] = null;
+    }
 
     setBusy(true);
     setError(null);
@@ -142,6 +147,15 @@ export function StaffForm({
         <div className="grid grid-cols-2 gap-4">
           <Field label="State" name="state" maxLength={2} defaultValue={v('state')} />
           <Field label="ZIP" name="zip" defaultValue={v('zip')} />
+        </div>
+        <SelectField label="Gender (optional)" name="gender" defaultValue={v('gender')}>
+          <option value="">Not recorded</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+        </SelectField>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Home latitude" name="latitude" type="number" step="any" min={-90} max={90} defaultValue={staff?.latitude ?? ''} hint="For distance to patients." />
+          <Field label="Home longitude" name="longitude" type="number" step="any" min={-180} max={180} defaultValue={staff?.longitude ?? ''} />
         </div>
       </Card>
 

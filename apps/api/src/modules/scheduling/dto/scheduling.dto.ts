@@ -1,5 +1,5 @@
 import { VISIT_PRIORITIES, VISIT_STATUSES, VISIT_TYPES } from '@alora/shared';
-import { OmitType, PartialType } from '@nestjs/swagger';
+import { OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
@@ -161,3 +161,13 @@ export class ConflictCheckQueryDto {
   @IsUUID()
   excludeVisitId?: string;
 }
+
+/** Who could take a visit that isn't booked yet (D-094): the same fields as a new visit, minus the caregiver. */
+export class SuggestCaregiversDto extends PickType(CreateVisitDto, [
+  'patientId',
+  'visitType',
+  'serviceCode',
+  'scheduledDate',
+  'scheduledStart',
+  'scheduledEnd',
+] as const) {}

@@ -1656,3 +1656,42 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - The dashboard home renders it under the existing stat cards.
 - **Assistant**: the tool `todays_priorities` (same service, same permission filtering) answers "What should I worry
   about today?". A dashboard button opens the panel with that question.
+
+### D-094 — Smart caregiver matching (Phase B)
+2026-10-06 · owner's idea list ("Find me a caregiver for Mrs. Johnson tomorrow 8–12") + Claude Code
+- **Who can take it**: active caregivers whose discipline fits the visit type (`VISIT_TYPE_DISCIPLINES`). Excluded are:
+  - anyone the existing `ConflictDetectorService` blocks (double booked, approved time off, expired credentials …);
+  - anyone the patient **declined**.
+
+  Each excluded caregiver is listed with the reason.
+- **Ranking**: the pure `scoreCaregiver` (`scheduling/caregiver-match.ts`, unit-tested) starts at 50 and is clamped to
+  0–100. Points are:
+
+  | Factor | Points |
+  |---|---|
+  | Patient's preferred caregiver | +25 |
+  | Continuity: completed visits with this patient in 180 days | +3 each, up to +30 |
+  | Speaks the preferred language | +10 (−5 if not listed) |
+  | Caregiver gender preference | +10 match, −15 mismatch (only when both are recorded) |
+  | Distance from staff home coordinates | ≤5 mi +15, ≤10 mi +8, >20 mi −10 |
+  | Distance fallback when there are no coordinates | same ZIP +10, service-area ZIP +6 |
+  | Week (Mon–Sun) going over 40 h with this visit | −20 (within 4 h of 40: −5) |
+  | Reliability over 90 days (at least 5 visits) | +8 if attendance ≥98% and on-time ≥95%; otherwise penalties in proportion |
+  | Each non-blocking scheduling warning | −10 |
+
+  Every factor produces a plain-language reason.
+- **Data**:
+  - `patients.preferred_language`, `patients.preferred_caregiver_gender`;
+  - `staff_profiles.gender`, `latitude`, `longitude` (entered; no geocoding service yet);
+  - the `patient_caregiver_preferences` table (`preferred` | `declined`, an office-only note).
+- **API**:
+  - `GET /schedule/visits/:id/suggestions` and `POST /schedule/suggestions` (a slot not booked yet), both
+    `visits:assign`;
+  - `GET`, `PUT` and `DELETE /patients/:id/caregiver-preferences[/:staffId]` (`patients:read` / `patients:update`).
+- Assigning is the normal visit update, so the scheduling rules run again.
+- **Web**:
+  - "Find a caregiver" on the visit page: score, reasons, one-click Assign, and who can't take it;
+  - a "Caregiver preferences" panel on the patient page;
+  - preferred language and caregiver gender on the patient form;
+  - gender and home coordinates on the staff form.
+- **Assistant**: `suggest_caregivers` (`visits:assign`) takes a visit id or a slot.

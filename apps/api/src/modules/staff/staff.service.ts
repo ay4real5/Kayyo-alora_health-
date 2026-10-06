@@ -52,6 +52,9 @@ export interface StaffDetail extends StaffSummary {
   city: string | null;
   state: string | null;
   zip: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  gender: string | null;
   serviceAreaZipCodes: string[];
   maxPatients: number | null;
   notes: string | null;
@@ -342,6 +345,9 @@ export class StaffService {
       city: profile.city,
       state: profile.state,
       zip: profile.zip,
+      latitude: profile.latitude === null ? null : Number(profile.latitude),
+      longitude: profile.longitude === null ? null : Number(profile.longitude),
+      gender: profile.gender,
       serviceAreaZipCodes: profile.serviceAreaZipCodes,
       maxPatients: profile.maxPatients,
       notes: profile.notes,
@@ -366,7 +372,7 @@ export class StaffService {
     const data: Record<string, unknown> = {};
     const copy = [
       'employeeId', 'ivrCode', 'discipline', 'employmentType', 'hourlyRate', 'perVisitRate', 'overtimeRate', 'mileageRate',
-      'taxFilingStatus', 'addressLine1', 'city', 'state', 'zip', 'serviceAreaZipCodes', 'maxPatients', 'skills',
+      'taxFilingStatus', 'addressLine1', 'city', 'state', 'zip', 'latitude', 'longitude', 'gender', 'serviceAreaZipCodes', 'maxPatients', 'skills',
       'languages', 'notes',
     ] as const;
     for (const key of copy) if (dto[key] !== undefined) data[key] = dto[key];

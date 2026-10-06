@@ -21,6 +21,7 @@ The dashboard (left sidebar, shown according to each person's role):
 
 How common tasks are done:
 - New caregiver: Users → Add user (name, email, a starting password, role such as Home health aide or Registered nurse; they choose their own password at first sign-in). Then Staff → Add staff profile: pick that person and their discipline (HHA, RN, LPN, PT, OT, ST, MSW). Caregivers then use the Primordial Caregiver phone app.
+- Finding a caregiver: a visit's page has "Find a caregiver" — ranked suggestions with reasons (past visits with the patient, the patient's preferences, language, distance, overtime, reliability) and an Assign button. Patient preferences (language, caregiver gender, preferred and declined caregivers) are on the patient's page.
 - Scheduling: Schedule → New visit; the system warns about conflicts (double booking, time off, expired credentials, missing authorization). To offer a visit to caregivers, open the visit and use "Offer as an open shift" → Offer and notify; eligible caregivers get an alert and the first to claim it gets it.
 - Time off: caregivers request it in the app; supervisors approve or deny it on Schedule → Open shifts. Approved time off blocks scheduling on those days.
 - Visits: caregivers clock in and out in the app (location checked for EVV), or by phone check-in; exceptions appear in EVV review.
