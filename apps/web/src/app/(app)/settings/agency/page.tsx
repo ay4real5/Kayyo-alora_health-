@@ -20,6 +20,7 @@ interface Agency {
   state: string | null;
   zip: string | null;
   timezone: string;
+  recognitionBadges: boolean;
 }
 
 const FIELDS = ['name', 'npi', 'taxId', 'phone', 'addressLine1', 'addressLine2', 'city', 'state', 'zip'] as const;
@@ -35,6 +36,10 @@ export default function AgencySettingsPage() {
   });
   const save = useMutation({
     mutationFn: (body: Record<string, string>) => request<Agency>('/agency', { method: 'PATCH', body }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agency'] }),
+  });
+  const recognition = useMutation({
+    mutationFn: (recognitionBadges: boolean) => request<Agency>('/agency', { method: 'PATCH', body: { recognitionBadges } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agency'] }),
   });
 
@@ -85,6 +90,25 @@ export default function AgencySettingsPage() {
               </div>
             )}
           </form>
+        </Card>
+      )}
+      {a && (
+        <Card className="flex flex-col gap-2 p-5">
+          <h2 className="text-base font-semibold text-slate-900">Caregiver recognition</h2>
+          <label className="flex items-start gap-3 text-sm text-slate-800">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={a.recognitionBadges}
+              disabled={!editable || recognition.isPending}
+              onChange={(e) => recognition.mutate(e.target.checked)}
+            />
+            <span>
+              Show caregivers badges in the app for great attendance, punctuality, notes and EVV (last 90 days). Only
+              positive badges are shown — nobody sees a score or a missing badge.
+            </span>
+          </label>
+          <ErrorAlert error={recognition.error} />
         </Card>
       )}
     </div>

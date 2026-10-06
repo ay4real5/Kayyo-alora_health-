@@ -7496,6 +7496,71 @@
         ]
       }
     },
+    "/api/v1/insights/evv-anomalies": {
+      "get": {
+        "operationId": "InsightsController_evvAnomalies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/care-scores": {
+      "get": {
+        "operationId": "InsightsController_careScores",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/care-scores/{staffId}": {
+      "get": {
+        "operationId": "InsightsController_careScore",
+        "parameters": [
+          {
+            "name": "staffId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/my-recognition": {
+      "get": {
+        "operationId": "InsightsController_myRecognition",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "insights"
+        ]
+      }
+    },
     "/api/v1/ai/status": {
       "get": {
         "operationId": "AiController_status",

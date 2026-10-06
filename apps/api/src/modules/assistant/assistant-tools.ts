@@ -9,6 +9,7 @@ import type { ClaimsService } from '../billing/claims.service.js';
 import { CLAIM_STATUSES, ListClaimsQueryDto } from '../billing/dto/claims.dto.js';
 import type { ComplianceService } from '../compliance/compliance.service.js';
 import type { InsightsService } from '../insights/insights.service.js';
+import type { WorkforceService } from '../insights/workforce.service.js';
 import { ListPatientsQueryDto } from '../patients/dto/patients.dto.js';
 import type { PatientsService } from '../patients/patients.service.js';
 import type { PayrollService } from '../payroll/payroll.service.js';
@@ -50,6 +51,7 @@ export interface AssistantToolServices {
   compliance: ComplianceService;
   insights: InsightsService;
   match: CaregiverMatchService;
+  workforce: WorkforceService;
 }
 
 /** The model's arguments → the same validated query object the HTTP route would build. */
@@ -281,6 +283,23 @@ export function buildAssistantTools(s: AssistantToolServices): AssistantTool[] {
           totalGross: p.totalGross,
           link: `/payroll/${p.id}`,
         }));
+      },
+    },
+    {
+      name: 'evv_patterns',
+      description:
+        "EVV patterns a supervisor should look at (default the last 14 days): a caregiver clocked in to two visits at once, travel between visits faster than driving allows, repeated time corrections, or repeated clock-ins away from the client's address. These describe what was seen, not wrongdoing — a forgotten clock-out or a bad GPS fix is common. Optional from/to (YYYY-MM-DD).",
+      permission: 'evv:approve',
+      inputSchema: schema({ from: str('YYYY-MM-DD'), to: str('YYYY-MM-DD') }),
+      run: async (caller, input) => {
+        const date = (v: unknown) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
+        const r = await s.workforce.anomalies(caller, date(input.from), date(input.to));
+        return {
+          from: r.from,
+          to: r.to,
+          patterns: r.items.slice(0, TOOL_ROW_LIMIT).map((a) => ({ type: a.type, severity: a.severity, caregiver: a.staffName, detail: a.detail, link: a.link })),
+          allPatternsLink: '/evv?tab=anomalies',
+        };
       },
     },
     {

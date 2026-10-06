@@ -8,6 +8,7 @@ import { AuditService } from '../audit/audit.service.js';
 import { ClaimsService } from '../billing/claims.service.js';
 import { ComplianceService } from '../compliance/compliance.service.js';
 import { InsightsService } from '../insights/insights.service.js';
+import { WorkforceService } from '../insights/workforce.service.js';
 import { PatientsService } from '../patients/patients.service.js';
 import { PayrollService } from '../payroll/payroll.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
@@ -71,8 +72,9 @@ export class AssistantService {
     compliance: ComplianceService,
     insights: InsightsService,
     match: CaregiverMatchService,
+    workforce: WorkforceService,
   ) {
-    this.tools = buildAssistantTools({ patients, staff, visits, openShifts, timeOff, claims, payroll, compliance, insights, match });
+    this.tools = buildAssistantTools({ patients, staff, visits, openShifts, timeOff, claims, payroll, compliance, insights, match, workforce });
     this.actions = buildAssistantActions({ visits, staff, openShifts, timeOff, payroll });
   }
 
