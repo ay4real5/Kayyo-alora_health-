@@ -13,6 +13,6 @@ import { VisitsService } from './visits.service.js';
   imports: [BillingModule],
   controllers: [SchedulingController, RecurringController, OpenShiftsController],
   providers: [VisitsService, ConflictDetectorService, RecurringService, OpenShiftsService, ShiftSwapsService],
-  exports: [VisitsService, ConflictDetectorService, RecurringService],
+  exports: [VisitsService, ConflictDetectorService, RecurringService, OpenShiftsService],
 })
 export class SchedulingModule {}

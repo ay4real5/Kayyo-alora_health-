@@ -34,6 +34,8 @@ export const PERMISSION_CATALOGUE = {
   reports: ['read'],
   compliance: ['create', 'read', 'update'],
   audit_logs: ['read'],
+  /** The in-app AI assistant (D-092): read-only lookups, always within the caller's own permissions. */
+  assistant: ['use'],
 } as const;
 
 type Catalogue = typeof PERMISSION_CATALOGUE;
