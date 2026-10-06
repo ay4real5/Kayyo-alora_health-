@@ -277,6 +277,9 @@ model Patient {
   phoneHome                String?   @map("phone_home") @db.VarChar(20)
   /// A live-in caregiver lives in the home (Virginia personal care: UB modifier on the claim lines, D-077).
   liveIn                   Boolean   @default(false) @map("live_in")
+  /// Caregiver matching (D-094): language the patient prefers their caregiver to speak, and caregiver gender (female | male).
+  preferredLanguage        String?   @map("preferred_language") @db.VarChar(50)
+  preferredCaregiverGender String?   @map("preferred_caregiver_gender") @db.VarChar(10)
   phoneCell                String?   @map("phone_cell") @db.VarChar(20)
   email                    String?   @db.VarChar(255)
   addressLine1             String?   @map("address_line1") @db.VarChar(255)
@@ -322,14 +325,15 @@ model Patient {
   /// Medical record numbers are unique within an agency (NULLs allowed — MRN is optional).
   claims Claim[]
 
-  medications       Medication[]
-  physicianOrders   PhysicianOrder[]
-  carePlans         CarePlan[]
-  assessments       Assessment[]
-  conversations     Conversation[]
-  invoices          Invoice[]
-  eligibilityChecks EligibilityCheck[]
-  incidentReports   IncidentReport[]
+  medications          Medication[]
+  physicianOrders      PhysicianOrder[]
+  carePlans            CarePlan[]
+  assessments          Assessment[]
+  conversations        Conversation[]
+  invoices             Invoice[]
+  eligibilityChecks    EligibilityCheck[]
+  incidentReports      IncidentReport[]
+  caregiverPreferences PatientCaregiverPreference[]
 
   @@unique([agencyId, mrn])
   @@index([agencyId])
@@ -473,27 +477,33 @@ model StaffProfile {
   maxPatients         Int?      @map("max_patients")
   skills              String[]
   languages           String[]
+  /// Caregiver matching (D-094): optional; female | male.
+  gender              String?   @db.VarChar(10)
+  /// Home location for distance, entered by the office (optional).
+  latitude            Decimal?  @db.Decimal(10, 8)
+  longitude           Decimal?  @db.Decimal(11, 8)
   notes               String?
   isActive            Boolean   @default(true) @map("is_active")
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agency            Agency              @relation(fields: [agencyId], references: [id])
-  credentials       StaffCredential[]
-  incidentReports   IncidentReport[]
-  payStubs          PayStub[]
-  mileageLogs       MileageLog[]
-  availability      StaffAvailability[]
-  timeOff           StaffTimeOff[]
-  visits            Visit[]
-  recurrenceRules   RecurrenceRule[]
-  documents         Document[]
-  evvRecords        EvvRecord[]
-  openShiftsClaimed OpenShift[]
-  swapsRequested    ShiftSwapRequest[]  @relation("SwapRequesting")
-  swapsTargeted     ShiftSwapRequest[]  @relation("SwapTarget")
-  visitNotes        VisitNote[]
+  user               User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agency             Agency                       @relation(fields: [agencyId], references: [id])
+  credentials        StaffCredential[]
+  incidentReports    IncidentReport[]
+  payStubs           PayStub[]
+  mileageLogs        MileageLog[]
+  availability       StaffAvailability[]
+  timeOff            StaffTimeOff[]
+  visits             Visit[]
+  recurrenceRules    RecurrenceRule[]
+  documents          Document[]
+  evvRecords         EvvRecord[]
+  openShiftsClaimed  OpenShift[]
+  swapsRequested     ShiftSwapRequest[]           @relation("SwapRequesting")
+  swapsTargeted      ShiftSwapRequest[]           @relation("SwapTarget")
+  visitNotes         VisitNote[]
+  patientPreferences PatientCaregiverPreference[]
 
   @@unique([agencyId, employeeId])
   @@unique([agencyId, ivrCode])
@@ -1781,4 +1791,23 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+/// A patient's preferred or declined caregivers (D-094). Declined caregivers are never suggested.
+model PatientCaregiverPreference {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  /// preferred | declined
+  kind           String   @db.VarChar(10)
+  note           String?  @db.VarChar(500)
+  createdById    String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, staffProfileId])
+  @@index([staffProfileId])
+  @@map("patient_caregiver_preferences")
 }
