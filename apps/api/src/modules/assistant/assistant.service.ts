@@ -127,7 +127,14 @@ export class AssistantService {
         max_tokens: 2048,
         system: [
           { type: 'text', text: ASSISTANT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
-          { type: 'text', text: `Today is ${today} in the agency's time zone. The person asking has the role(s): ${roles.join(', ') || 'none'}.` },
+          {
+            type: 'text',
+            text:
+              `Today is ${today} in the agency's time zone. The person asking has the role(s): ${roles.join(', ') || 'none'}. ` +
+              `Lookups available to them: ${tools.map((t) => t.name).join(', ') || 'none'}. ` +
+              'If answering would need information none of these lookups cover (for example payroll, billing or compliance), ' +
+              'say plainly that their role doesn’t have access to that and who usually does (an administrator); don’t ask follow-up questions about it or link to those pages.',
+          },
         ],
         tools: toolDefs,
         // On the last round the model must answer from what it has.

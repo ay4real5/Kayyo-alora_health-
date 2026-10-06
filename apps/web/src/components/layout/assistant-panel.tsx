@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Fragment, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { NAVIGATION } from './navigation';
 
 interface Turn {
   role: 'user' | 'assistant';
@@ -140,7 +141,7 @@ export function AssistantPanel() {
           ) : (
             <div key={i} className="max-w-[95%] space-y-1">
               <div className="rounded-2xl rounded-bl-md bg-slate-100 px-3 py-2 text-sm text-slate-900">
-                <RichText text={t.content} onNavigate={() => setOpen(false)} />
+                <RichText text={t.content} canOpen={(path) => canOpen(path, can)} onNavigate={() => setOpen(false)} />
               </div>
               {t.lookups && t.lookups.length > 0 && (
                 <p className="px-1 text-xs text-slate-500">Looked up: {[...new Set(t.lookups.map((l) => LOOKUP_LABELS[l] ?? l))].join(', ')}</p>
@@ -195,7 +196,14 @@ export function AssistantPanel() {
  * The few bits of Markdown the assistant uses: paragraphs, "- " bullet lists, **bold** and [links](/path). Links work
  * only for paths inside the dashboard; everything else is shown as plain text (React escapes it).
  */
-export function RichText({ text, onNavigate }: { text: string; onNavigate?: () => void }) {
+/** Whether this person can open a dashboard path: the sidebar entry it belongs to decides (most specific wins). */
+export function canOpen(path: string, can: (permission: string) => boolean): boolean {
+  const entry = NAVIGATION.filter((n) => (n.href === '/' ? path === '/' : path === n.href || path.startsWith(`${n.href}/`)))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  return !entry || entry.permission === null || can(entry.permission);
+}
+
+export function RichText({ text, onNavigate, canOpen: allowed = () => true }: { text: string; onNavigate?: () => void; canOpen?: (path: string) => boolean }) {
   const blocks = text.split(/\n{2,}/);
   return (
     <div className="space-y-2">
@@ -205,7 +213,7 @@ export function RichText({ text, onNavigate }: { text: string; onNavigate?: () =
           return (
             <ul key={b} className="list-disc space-y-1 pl-5">
               {lines.map((l, i) => (
-                <li key={i}>{inline(l.replace(/^\s*[-*•]\s+/, ''), onNavigate)}</li>
+                <li key={i}>{inline(l.replace(/^\s*[-*•]\s+/, ''), allowed, onNavigate)}</li>
               ))}
             </ul>
           );
@@ -215,7 +223,7 @@ export function RichText({ text, onNavigate }: { text: string; onNavigate?: () =
             {lines.map((l, i) => (
               <Fragment key={i}>
                 {i > 0 && <br />}
-                {inline(l, onNavigate)}
+                {inline(l, allowed, onNavigate)}
               </Fragment>
             ))}
           </p>
@@ -225,7 +233,7 @@ export function RichText({ text, onNavigate }: { text: string; onNavigate?: () =
   );
 }
 
-function inline(text: string, onNavigate?: () => void): ReactNode[] {
+function inline(text: string, allowed: (path: string) => boolean, onNavigate?: () => void): ReactNode[] {
   const out: ReactNode[] = [];
   const pattern = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*/g;
   let last = 0;
@@ -234,7 +242,7 @@ function inline(text: string, onNavigate?: () => void): ReactNode[] {
     if (m[1] !== undefined) {
       const href = m[2]!;
       out.push(
-        href.startsWith('/') && !href.startsWith('//') ? (
+        href.startsWith('/') && !href.startsWith('//') && allowed(href) ? (
           <Link key={m.index} href={href} onClick={onNavigate} className="font-medium text-violet-800 underline">
             {m[1]}
           </Link>
