@@ -1588,6 +1588,18 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   the shared `TIME_OFF_TYPES`, which also has `bereavement`. Reconcile the two lists if the owner wants bereavement
   leave.
 
+### D-091 — Android push notifications through Firebase Cloud Messaging
+2026-10-05 · owner ("when a shift is made open the caregiver app should show a notification") + Claude Code
+- Phone notifications travel: API (`PUSH_PROVIDER=expo`) → Expo push service → **FCM** → Android. Android only
+  delivers through FCM, so a Firebase project is required (`primordial-8c9f0`, free Spark plan, used for messaging
+  only).
+- Notification text is PHI-free by contract (D-071), so no BAA is needed with Google for this.
+- `google-services.json` is not a secret but stays out of the public repo: it is gitignored, provided to EAS as a
+  secret file variable, and read by `app.config.ts`.
+- The FCM V1 service-account key is uploaded by the owner straight to Expo credentials.
+- Open shifts already notify eligible caregivers when offered from the dashboard ("Offer and notify"). The gap was
+  only the phone notification itself.
+
 ### D-092 — In-app AI assistant (Phase 1: read-only)
 2026-10-06 · owner ("an AI assistant that knows the system in and out … use a very low model") + Claude Code
 - **What**: an "Ask Primordial" side panel in the dashboard that answers how-to questions and looks things up in

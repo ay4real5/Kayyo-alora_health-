@@ -55,8 +55,14 @@ listing isn't needed: an agency app can stay "unlisted" or on internal testing.
 
 - API App Settings: `PUSH_PROVIDER=expo`, plus `EXPO_ACCESS_TOKEN` (expo.dev → Account settings → Access tokens).
   Push text never contains patient details (D-071).
-- Android also needs Firebase credentials uploaded to Expo (`eas credentials` → Android → FCM V1 key).
-  iOS push keys are created automatically by `eas build`.
+- **Android** needs a Firebase project. The owner created `primordial-8c9f0` on the free Spark plan, which is used
+  **only** to deliver notifications (D-091). Two pieces are needed:
+  - `google-services.json` (app config, not secret) is kept out of git. It sits at `apps/mobile/google-services.json`
+    for local builds, and EAS builds get it from the project file variable `GOOGLE_SERVICES_JSON` (preview +
+    production), wired up in `app.config.ts`.
+  - The **FCM V1 service account key** (secret) is uploaded by the owner at expo.dev → project → Credentials →
+    Android → FCM V1. It never goes in the repo or the chat.
+- iOS push keys are created automatically by `eas build` once the Apple account exists.
 
 ## Updating the app
 
