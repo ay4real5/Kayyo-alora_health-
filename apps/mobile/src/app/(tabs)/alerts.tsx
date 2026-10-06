@@ -94,7 +94,7 @@ export default function AlertsScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <View>
             <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800' }}>Alerts</Text>
-            <Text style={{ color: '#c7d2fe', fontSize: 15, marginTop: 4 }}>{unread ? `${unread} unread` : 'You’re all caught up'}</Text>
+            <Text style={{ color: '#9aeedd', fontSize: 15, marginTop: 4 }}>{unread ? `${unread} unread` : 'You’re all caught up'}</Text>
           </View>
           {unread > 0 && (
             <Pressable accessibilityRole="button" onPress={() => void markAll()} style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 }}>
@@ -138,7 +138,7 @@ export default function AlertsScreen() {
               if (target) router.push(target);
             }}
           >
-            <Card style={[{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }, !item.isRead && { borderWidth: 1, borderColor: '#ddd6fe' }]}>
+            <Card style={[{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }, !item.isRead && { borderWidth: 1, borderColor: '#9aeedd' }]}>
               <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name={ICONS[item.type] ?? 'notifications'} size={20} color={colors.brand} />
               </View>
@@ -147,7 +147,7 @@ export default function AlertsScreen() {
                 {item.body ? <Text style={{ fontSize: 14, color: colors.muted }}>{item.body}</Text> : null}
                 <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{ago(item.createdAt)}</Text>
               </View>
-              {!item.isRead && <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: '#c026d3', marginTop: 6 }} />}
+              {!item.isRead && <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: '#ef5a46', marginTop: 6 }} />}
             </Card>
           </Pressable>
         )}

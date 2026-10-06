@@ -82,7 +82,7 @@ function QuestionsEditor({ value, onChange }: { value: Question[]; onChange: (q:
             ))}
             <div className="flex gap-3 text-sm">
               {q.options.length < 6 && (
-                <button type="button" className="text-violet-800 hover:underline" onClick={() => set(i, { ...q, options: [...q.options, ''] })}>
+                <button type="button" className="text-brand-800 hover:underline" onClick={() => set(i, { ...q, options: [...q.options, ''] })}>
                   Add option
                 </button>
               )}
@@ -253,7 +253,7 @@ export default function TrainingPage() {
         <ul className="divide-y divide-slate-100">
           {courses.data?.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center gap-3 py-2 text-sm">
-              <button type="button" className={`mr-auto text-left font-medium hover:underline ${c.isActive ? 'text-violet-800' : 'text-slate-500 line-through'}`} onClick={() => setMode(c.id)}>
+              <button type="button" className={`mr-auto text-left font-medium hover:underline ${c.isActive ? 'text-brand-800' : 'text-slate-500 line-through'}`} onClick={() => setMode(c.id)}>
                 {c.title}
               </button>
               <span className="text-slate-600">{c.disciplines.length ? c.disciplines.join(', ') : 'Everyone'}</span>

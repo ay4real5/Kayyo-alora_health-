@@ -52,14 +52,14 @@ export default function ResetPasswordPage() {
         {done ? (
           <div role="status" className="mt-4 flex flex-col gap-4 text-sm text-slate-700">
             <p>Your password was changed and you were signed out everywhere. Sign in with the new password.</p>
-            <Link href="/login" className="text-violet-800 underline">
+            <Link href="/login" className="text-brand-800 underline">
               Sign in
             </Link>
           </div>
         ) : !token ? (
           <div className="mt-4 flex flex-col gap-4 text-sm text-slate-700">
             <Alert>This page needs the link from your reset email. Open the link again, or ask for a new one.</Alert>
-            <Link href="/forgot-password" className="text-violet-800 underline">
+            <Link href="/forgot-password" className="text-brand-800 underline">
               Send me a new link
             </Link>
           </div>

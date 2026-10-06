@@ -8,7 +8,7 @@ test('billing staff read the reports dashboard, switch ranges, see the table vie
   await page.getByLabel('Email').fill('billing.staff@demo.alora.test');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Reports' }).click();
 
   const numbers = page.getByRole('region', { name: 'Key numbers' });
@@ -35,7 +35,7 @@ test('a supervisor sees reports but no money', async ({ page }) => {
   await page.getByLabel('Email').fill('supervisor@demo.alora.test');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Reports' }).click();
   await expect(page.getByRole('region', { name: 'Key numbers' }).getByText('EVV verified')).toBeVisible();
   await expect(page.getByText('Outstanding')).toHaveCount(0);

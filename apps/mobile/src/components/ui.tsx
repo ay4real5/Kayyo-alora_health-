@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { ComponentProps, ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -14,13 +15,13 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-/** Primordial Health palette (D-079/D-080): indigo & violet, like the dashboard. */
+/** Primordial Teal palette (D-103): teal brand, coral accent — the same tokens as the dashboard. */
 export const colors = {
-  brand: '#6d28d9',
-  brandDark: '#5b21b6',
-  brandSoft: '#ede9fe',
-  ink: '#1e1b4b',
-  indigo: '#312e81',
+  brand: '#0f766e',
+  brandDark: '#115e59',
+  brandSoft: '#ccf7ee',
+  ink: '#042f2e',
+  indigo: '#134e4a',
   text: '#0f172a',
   muted: '#5b6477',
   border: '#e2e8f0',
@@ -30,15 +31,19 @@ export const colors = {
   successBg: '#ecfdf5',
   warning: '#92400e',
   warningBg: '#fffbeb',
-  bg: '#f5f5fa',
+  bg: '#f6faf9',
   white: '#ffffff',
+  accent: '#f97362',
+  accentSoft: '#fff4f2',
+  /** Secondary text on the dark teal header band. */
+  headerSubtle: '#9aeedd',
 };
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 /** Soft card shadow on both platforms. */
 export const shadow: ViewStyle = Platform.select({
-  ios: { shadowColor: '#1e1b4b', shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
+  ios: { shadowColor: '#042f2e', shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
   default: { elevation: 2 },
 }) as ViewStyle;
 
@@ -105,8 +110,8 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 }
 
 const PILL: Record<string, [string, string]> = {
-  scheduled: ['#ede9fe', '#5b21b6'],
-  in_progress: ['#e0e7ff', '#3730a3'],
+  scheduled: ['#ccf7ee', '#115e59'],
+  in_progress: ['#e0f2fe', '#075985'],
   completed: ['#ecfdf5', '#047857'],
   missed: ['#fff1f2', '#be123c'],
   cancelled: ['#f1f5f9', '#475569'],
@@ -126,7 +131,7 @@ export function Pill({ status, label }: { status: string; label?: string }) {
 export function Avatar({ first, last, size = 44 }: { first: string; last: string; size?: number }) {
   return (
     <LinearGradient
-      colors={['#8b5cf6', '#c026d3']}
+      colors={['#2fc2ae', '#ef5a46']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }}
@@ -187,10 +192,11 @@ export function ListRow({
   );
 }
 
-/** The indigo → violet header band used at the top of the main tabs. */
+/** The deep-teal header band at the top of the main tabs, with a coral glow. */
 export function GradientHeader({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return (
-    <LinearGradient colors={['#1e1b4b', '#312e81', '#6d28d9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, style]}>
+    <LinearGradient colors={['#042f2e', '#0f766e', '#14a896']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, style]}>
+      <View pointerEvents="none" style={styles.headerGlow} />
       {children}
     </LinearGradient>
   );
@@ -214,7 +220,7 @@ export const styles = StyleSheet.create({
   },
   button: { borderRadius: 16, paddingVertical: 15, alignItems: 'center', minHeight: 54, justifyContent: 'center', paddingHorizontal: 16 },
   primary: { backgroundColor: colors.brand },
-  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#ddd6fe' },
+  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#9aeedd' },
   dangerButton: { backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: '#fecdd3' },
   buttonText: { fontSize: 17, fontWeight: '700' },
   error: { color: colors.danger, backgroundColor: colors.dangerBg, padding: 12, borderRadius: 12, fontSize: 15 },
@@ -225,19 +231,11 @@ export const styles = StyleSheet.create({
   rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
   rowLabel: { flex: 1, fontSize: 16, fontWeight: '500' },
   rowValue: { fontSize: 15, color: colors.muted, maxWidth: '45%' },
-  header: { paddingHorizontal: 20, paddingBottom: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  header: { paddingHorizontal: 20, paddingBottom: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, overflow: 'hidden' },
+  headerGlow: { position: 'absolute', right: -60, top: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(249,115,98,0.22)' },
 });
 
-/** The Primordial Health tile: a violet square with a P. */
+/** The Primordial Health mark (D-103), the same drawing as the app icon. */
 export function BrandMark({ size = 56 }: { size?: number }) {
-  return (
-    <LinearGradient
-      colors={['#8b5cf6', '#4f46e5']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ width: size, height: size, borderRadius: size * 0.3, alignItems: 'center', justifyContent: 'center' }}
-    >
-      <Text style={{ color: colors.white, fontSize: size * 0.45, fontWeight: '800' }}>P</Text>
-    </LinearGradient>
-  );
+  return <Image source={require('../../assets/splash-icon.png')} style={{ width: size, height: size }} accessibilityIgnoresInvertColors />;
 }

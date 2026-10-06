@@ -36,7 +36,7 @@ export default function LoginScreen() {
       <GradientHeader style={{ paddingTop: insets.top + 48, paddingBottom: 72, alignItems: 'center' }}>
         <BrandMark size={64} />
         <Text style={{ color: colors.white, fontSize: 30, fontWeight: '800', marginTop: 16 }}>Primordial Health</Text>
-        <Text style={{ color: '#c7d2fe', fontSize: 16, marginTop: 4 }}>Caregiver app</Text>
+        <Text style={{ color: '#9aeedd', fontSize: 16, marginTop: 4 }}>Caregiver app</Text>
       </GradientHeader>
       <View style={{ paddingHorizontal: 20, marginTop: -44 }}>
       <Card style={{ padding: 20, gap: 16 }}>

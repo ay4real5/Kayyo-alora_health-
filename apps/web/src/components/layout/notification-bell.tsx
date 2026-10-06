@@ -68,7 +68,7 @@ export function NotificationBell() {
         <Bell aria-hidden className="h-5 w-5 text-slate-600" />
         {count > 0 && (
           <span
-            className="rounded-full bg-fuchsia-600 px-1.5 text-xs font-semibold text-white"
+            className="rounded-full bg-accent-600 px-1.5 text-xs font-semibold text-white"
             aria-hidden
           >
             {count > 99 ? '99+' : count}
@@ -89,7 +89,7 @@ export function NotificationBell() {
             {count > 0 && (
               <button
                 type="button"
-                className="text-xs text-violet-800 underline"
+                className="text-xs text-brand-800 underline"
                 onClick={() => markAll.mutate()}
               >
                 Mark all read
@@ -102,7 +102,7 @@ export function NotificationBell() {
             {latest.data?.map((n) => (
               <li
                 key={n.id}
-                className={`rounded-md p-2 text-sm ${n.isRead ? 'text-slate-600' : 'bg-violet-50 text-slate-900'}`}
+                className={`rounded-md p-2 text-sm ${n.isRead ? 'text-slate-600' : 'bg-brand-50 text-slate-900'}`}
               >
                 <p className="font-medium">{n.title}</p>
                 {n.body && <p className="text-xs">{n.body}</p>}

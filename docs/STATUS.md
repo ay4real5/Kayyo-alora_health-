@@ -198,6 +198,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-06 | Claude Code | P6-01 | Primordial Teal redesign (D-103): teal & coral tokens, new logo and icons, new login, dashboard hero, portal, intake, app colours. |
 | 2026-10-06 | Claude Code | P5-10 | Primordial Academy (D-102): courses + quiz on the dashboard, Training in the app, pass records a credential. |
 | 2026-10-06 | Claude Code | P5-09 | Onboarding checklist (D-101): readiness % per staff member, per-discipline credential requirements, app "Getting started". |
 | 2026-10-06 | Claude Code | P5-08 | Client timeline (D-100): one permission-filtered chronological view on the patient page. |

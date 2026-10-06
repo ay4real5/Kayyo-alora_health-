@@ -140,7 +140,7 @@ export default function ClaimFilesPage() {
         subtitle="Make an 837 file for each payer, upload it to your clearinghouse, then load the acknowledgments it sends back."
         actions={
           can('billing:create') && (
-            <label className="inline-flex cursor-pointer items-center rounded-md bg-violet-700 px-4 py-2 text-sm font-medium text-white hover:bg-violet-800">
+            <label className="inline-flex cursor-pointer items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800">
               Load 999 / 277CA
               <input type="file" accept=".999,.277,.edi,.txt,.x12" className="sr-only" onChange={onFile} aria-label="Acknowledgment file" />
             </label>
@@ -242,7 +242,7 @@ export default function ClaimFilesPage() {
                       ? f.claims.map((c, i) => (
                           <span key={c.id}>
                             {i > 0 && ', '}
-                            <Link href={`/billing/claims/${c.id}`} className="font-mono text-violet-800 hover:underline">
+                            <Link href={`/billing/claims/${c.id}`} className="font-mono text-brand-800 hover:underline">
                               {c.claimNumber}
                             </Link>
                           </span>

@@ -46,7 +46,7 @@ export function MessageAttachment({ conversationId, document: doc, from }: { con
     );
   }
   return (
-    <button type="button" className="text-xs text-violet-800 underline" onClick={() => open.mutate()} disabled={open.isPending}>
+    <button type="button" className="text-xs text-brand-800 underline" onClick={() => open.mutate()} disabled={open.isPending}>
       {open.isPending ? 'Opening…' : `Attached: ${doc.title} — download`}
     </button>
   );

@@ -45,9 +45,9 @@ export function AssistantActionCard({ action, onNavigate }: { action: ActionPrev
   if (dismissed) return <p className="px-1 text-xs text-slate-500">Cancelled — nothing was changed.</p>;
 
   return (
-    <div className="rounded-2xl border border-violet-200 bg-white p-3 text-sm shadow-sm">
+    <div className="rounded-2xl border border-brand-200 bg-white p-3 text-sm shadow-sm">
       <p className="flex items-start gap-2 font-semibold text-slate-900">
-        <ShieldCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-violet-700" />
+        <ShieldCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
         {action.title}
       </p>
       <ul className="mt-1.5 list-disc space-y-0.5 pl-9 text-slate-700">
@@ -79,7 +79,7 @@ export function AssistantActionCard({ action, onNavigate }: { action: ActionPrev
               type="button"
               onClick={() => run.mutate()}
               disabled={run.isPending}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-violet-700 px-3 py-1.5 font-semibold text-white hover:bg-violet-600 disabled:bg-slate-400"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-700 px-3 py-1.5 font-semibold text-white hover:bg-brand-600 disabled:bg-slate-400"
             >
               {run.isPending && <Loader2 aria-hidden className="h-4 w-4 animate-spin" />}
               {action.confirmLabel}

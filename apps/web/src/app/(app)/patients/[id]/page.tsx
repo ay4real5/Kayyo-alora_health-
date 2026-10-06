@@ -193,7 +193,7 @@ function DiagnosesPanel({ patient, canEdit, onAct }: { patient: PatientDetail; c
           <li key={d.id} className="flex items-start justify-between gap-2 py-2">
             <span>
               <span className="font-mono font-medium">{d.icd10Code}</span> {d.description}
-              {d.isPrimary && <span className="ml-2 rounded bg-violet-50 px-1.5 text-xs text-violet-800">primary</span>}
+              {d.isPrimary && <span className="ml-2 rounded bg-brand-50 px-1.5 text-xs text-brand-800">primary</span>}
             </span>
             {canEdit && (
               <Button

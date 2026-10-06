@@ -74,7 +74,7 @@ function Evv() {
               role="tab"
               aria-selected={tab === key}
               onClick={() => setTab(key)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium ${tab === key ? 'bg-violet-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300'}`}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium ${tab === key ? 'bg-brand-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300'}`}
             >
               {label}
             </button>
@@ -151,7 +151,7 @@ function Evv() {
                   <td className="py-2 pr-4">
                     <Link
                       href={`/evv/${r.id}`}
-                      className="font-medium text-violet-800 hover:underline"
+                      className="font-medium text-brand-800 hover:underline"
                     >
                       {formatDate(r.serviceDate)}
                     </Link>

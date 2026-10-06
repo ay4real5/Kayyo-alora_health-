@@ -50,7 +50,7 @@ export interface CommandCenterData {
 const SEVERITY: Record<Severity, { icon: LucideIcon; tone: string; label: string }> = {
   critical: { icon: CircleAlert, tone: 'text-rose-700 bg-rose-50', label: 'Urgent' },
   warning: { icon: AlertTriangle, tone: 'text-amber-800 bg-amber-50', label: 'Soon' },
-  info: { icon: Info, tone: 'text-indigo-700 bg-indigo-50', label: 'FYI' },
+  info: { icon: Info, tone: 'text-brand-700 bg-brand-50', label: 'FYI' },
 };
 
 const dollars = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -93,7 +93,7 @@ export function CommandCenter() {
             <button
               type="button"
               onClick={() => askPrimordial('What should I worry about today?')}
-              className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-800 hover:bg-violet-100"
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-100"
             >
               <Sparkles aria-hidden className="h-4 w-4" /> Ask Primordial about today
             </button>
@@ -119,7 +119,7 @@ export function CommandCenter() {
                       <span className="block text-sm font-semibold text-slate-900">{a.title}</span>
                       <span className="block text-sm text-slate-600">{a.detail}</span>
                     </span>
-                    <ArrowRight aria-hidden className="mt-2 h-4 w-4 text-slate-400 group-hover:text-violet-700" />
+                    <ArrowRight aria-hidden className="mt-2 h-4 w-4 text-slate-400 group-hover:text-brand-700" />
                   </Link>
                 </li>
               );
@@ -159,7 +159,7 @@ export function CommandCenter() {
                 ))}
               </ul>
             )}
-            <Link href="/billing/ready" className="text-sm font-medium text-violet-800 underline">
+            <Link href="/billing/ready" className="text-sm font-medium text-brand-800 underline">
               Fix in Ready to bill
             </Link>
           </Card>
@@ -201,7 +201,7 @@ export function CommandCenter() {
               {c.authorizations.atRisk.map((a) => (
                 <tr key={`${a.id}-${a.unit}`}>
                   <td className="py-2">
-                    <Link href={a.link} className="font-medium text-violet-800 underline">
+                    <Link href={a.link} className="font-medium text-brand-800 underline">
                       {a.patient.firstName} {a.patient.lastName}
                     </Link>
                   </td>

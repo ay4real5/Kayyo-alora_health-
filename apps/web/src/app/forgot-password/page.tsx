@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
                 for you.
               </p>
             )}
-            <Link href="/login" className="text-violet-800 underline">
+            <Link href="/login" className="text-brand-800 underline">
               Back to sign in
             </Link>
           </div>
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
               <Button type="submit" disabled={busy}>
                 {busy ? 'Sending…' : 'Send reset link'}
               </Button>
-              <Link href="/login" className="text-sm text-violet-800 underline">
+              <Link href="/login" className="text-sm text-brand-800 underline">
                 Back to sign in
               </Link>
             </form>

@@ -9,7 +9,7 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   if (email.startsWith('agency.admin@')) await answerTwoFactor(page);
-  else await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  else await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 }
 
 async function signOut(page: Page) {

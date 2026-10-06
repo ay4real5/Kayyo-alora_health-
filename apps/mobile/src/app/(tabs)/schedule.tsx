@@ -66,7 +66,7 @@ export default function ScheduleScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <View>
             <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800' }}>Schedule</Text>
-            <Text style={{ color: '#c7d2fe', fontSize: 15, marginTop: 4 }}>
+            <Text style={{ color: '#9aeedd', fontSize: 15, marginTop: 4 }}>
               {days ? `${total} visit${total === 1 ? '' : 's'} in the next ${DAYS} days` : 'Loading…'}
             </Text>
           </View>

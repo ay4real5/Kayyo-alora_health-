@@ -48,7 +48,7 @@ export function CareScoreCard({ staffId }: { staffId: string }) {
         <h2 className="flex items-center gap-3 text-base font-semibold text-slate-900">
           Care Score {s && <ScorePill score={s.score} />}
         </h2>
-        <Link href="/staff/care-scores" className="text-sm text-violet-800 hover:underline">
+        <Link href="/staff/care-scores" className="text-sm text-brand-800 hover:underline">
           All caregivers
         </Link>
       </div>

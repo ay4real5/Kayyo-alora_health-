@@ -8,7 +8,7 @@ export function PageHeader({ title, subtitle, actions }: { title: ReactNode; sub
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+        <h1 className="font-display text-[26px] font-extrabold tracking-tight text-ink">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-slate-600">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -67,7 +67,7 @@ export function StatusBadge({ status }: { status: string }) {
     expiring_soon: 'bg-amber-50 text-amber-800 ring-amber-600/20',
     expired: 'bg-red-50 text-red-800 ring-red-600/20',
     no_expiry: 'bg-slate-100 text-slate-600 ring-slate-500/20',
-    in_progress: 'bg-violet-50 text-violet-800 ring-violet-600/20',
+    in_progress: 'bg-brand-50 text-brand-800 ring-brand-600/20',
     completed: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
     missed: 'bg-red-50 text-red-800 ring-red-600/20',
     exception: 'bg-amber-50 text-amber-800 ring-amber-600/20',
@@ -85,8 +85,8 @@ export function StatusBadge({ status }: { status: string }) {
     overdue: 'bg-red-50 text-red-800 ring-red-600/20',
     // Referral stages (D-098)
     new: 'bg-sky-50 text-sky-800 ring-sky-600/20',
-    contacted: 'bg-violet-50 text-violet-800 ring-violet-600/20',
-    assessment: 'bg-violet-50 text-violet-800 ring-violet-600/20',
+    contacted: 'bg-brand-50 text-brand-800 ring-brand-600/20',
+    assessment: 'bg-brand-50 text-brand-800 ring-brand-600/20',
     authorization_pending: 'bg-amber-50 text-amber-800 ring-amber-600/20',
     ready: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
     admitted: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',

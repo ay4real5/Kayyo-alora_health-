@@ -179,7 +179,7 @@ export default function RolesPage() {
                     {r.users} {r.users === 1 ? 'person' : 'people'} · {r.permissions.length} permissions
                   </span>
                 </span>
-                <span className="text-sm text-violet-800">{open === r.id ? 'Hide' : 'Show'}</span>
+                <span className="text-sm text-brand-800">{open === r.id ? 'Hide' : 'Show'}</span>
               </button>
               {open === r.id && (
                 <>

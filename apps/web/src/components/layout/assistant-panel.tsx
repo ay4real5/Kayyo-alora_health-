@@ -117,7 +117,7 @@ export function AssistantPanel() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 hover:from-violet-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-gradient-to-br from-brand-600 to-brand-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-900/30 hover:from-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
       >
         <Sparkles aria-hidden className="h-4 w-4" /> Ask Primordial
       </button>
@@ -130,13 +130,13 @@ export function AssistantPanel() {
       className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-slate-200 bg-white shadow-2xl sm:w-[26rem]"
     >
       <header className="flex items-center gap-3 bg-ink px-4 py-3 text-white">
-        <Sparkles aria-hidden className="h-5 w-5 text-violet-300" />
+        <Sparkles aria-hidden className="h-5 w-5 text-brand-300" />
         <div className="flex-1 leading-tight">
           <p className="font-semibold">Primordial assistant</p>
-          <p className="text-xs text-indigo-200">Finds things, explains the system, and prepares changes for you to confirm.</p>
+          <p className="text-xs text-brand-200">Finds things, explains the system, and prepares changes for you to confirm.</p>
         </div>
         {turns.length > 0 && (
-          <button type="button" onClick={() => setTurns([])} className="rounded-lg px-2 py-1 text-xs text-indigo-100 hover:bg-white/10">
+          <button type="button" onClick={() => setTurns([])} className="rounded-lg px-2 py-1 text-xs text-brand-100 hover:bg-white/10">
             New chat
           </button>
         )}
@@ -155,7 +155,7 @@ export function AssistantPanel() {
                   <button
                     type="button"
                     onClick={() => (q.endsWith('…') ? setDraft(q.replace('…', '')) : send(q))}
-                    className="w-full rounded-xl border border-violet-100 bg-violet-50 px-3 py-2 text-left text-violet-900 hover:bg-violet-100"
+                    className="w-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-left text-brand-900 hover:bg-brand-100"
                   >
                     {q}
                   </button>
@@ -166,7 +166,7 @@ export function AssistantPanel() {
         )}
         {turns.map((t, i) =>
           t.role === 'user' ? (
-            <p key={i} className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-violet-700 px-3 py-2 text-sm text-white">
+            <p key={i} className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-brand-700 px-3 py-2 text-sm text-white">
               {t.content}
             </p>
           ) : (
@@ -209,13 +209,13 @@ export function AssistantPanel() {
             rows={2}
             maxLength={4000}
             placeholder="Ask a question…"
-            className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none"
+            className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
           />
           <button
             type="submit"
             disabled={!draft.trim() || ask.isPending}
             aria-label="Send"
-            className="rounded-xl bg-violet-700 p-2.5 text-white hover:bg-violet-600 disabled:bg-slate-300"
+            className="rounded-xl bg-brand-700 p-2.5 text-white hover:bg-brand-600 disabled:bg-slate-300"
           >
             <Send aria-hidden className="h-4 w-4" />
           </button>
@@ -277,7 +277,7 @@ function inline(text: string, allowed: (path: string) => boolean, onNavigate?: (
       const href = m[2]!;
       out.push(
         href.startsWith('/') && !href.startsWith('//') && allowed(href) ? (
-          <Link key={m.index} href={href} onClick={onNavigate} className="font-medium text-violet-800 underline">
+          <Link key={m.index} href={href} onClick={onNavigate} className="font-medium text-brand-800 underline">
             {m[1]}
           </Link>
         ) : (

@@ -13,12 +13,21 @@ import { SelectField } from '@/components/ui/form-controls';
 import { useAuth } from '@/lib/auth/auth-provider';
 import type { Referral } from '@/lib/types/referrals';
 
+/** A colour per stage, warming up as the client gets closer to starting care. */
+const STAGE_DOT: Record<string, string> = {
+  new: 'bg-sky-400',
+  contacted: 'bg-brand-300',
+  assessment: 'bg-brand-500',
+  authorization_pending: 'bg-amber-400',
+  ready: 'bg-accent-400',
+};
+
 const daysSince = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
 
 function ReferralCard({ r }: { r: Referral }) {
   const days = daysSince(r.statusChangedAt);
   return (
-    <Link href={`/referrals/${r.id}`} className="block rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm hover:border-violet-300">
+    <Link href={`/referrals/${r.id}`} className="block rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm hover:border-brand-300">
       <p className="font-medium text-slate-900">
         {r.clientFirstName} {r.clientLastName}
       </p>
@@ -89,7 +98,7 @@ export default function ReferralsPage() {
             role="tab"
             aria-selected={view === key}
             onClick={() => setView(key)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${view === key ? 'bg-violet-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300'}`}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium ${view === key ? 'bg-brand-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300'}`}
           >
             {label}
           </button>
@@ -101,9 +110,12 @@ export default function ReferralsPage() {
           <ErrorAlert error={board.error} />
           <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
             {board.data?.map((column) => (
-              <section key={column.status} className="flex flex-col gap-2 rounded-2xl bg-slate-50 p-3">
+              <section key={column.status} className="flex flex-col gap-2 rounded-2xl bg-white/70 p-3 shadow-[var(--shadow-card)] ring-1 ring-brand-900/[0.05]">
                 <h2 className="flex items-center justify-between text-sm font-semibold text-slate-800">
-                  {REFERRAL_STATUS_LABELS[column.status]}
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${STAGE_DOT[column.status]}`} />
+                    {REFERRAL_STATUS_LABELS[column.status]}
+                  </span>
                   <span className="rounded-full bg-white px-2 text-xs text-slate-600 ring-1 ring-slate-200">{column.referrals.length}</span>
                 </h2>
                 {column.referrals.map((r) => (
@@ -142,7 +154,7 @@ export default function ReferralsPage() {
               {list.data?.data.map((r) => (
                 <tr key={r.id}>
                   <td className="py-2 pr-4">
-                    <Link href={`/referrals/${r.id}`} className="font-medium text-violet-800 hover:underline">
+                    <Link href={`/referrals/${r.id}`} className="font-medium text-brand-800 hover:underline">
                       {r.clientLastName}, {r.clientFirstName}
                     </Link>
                   </td>

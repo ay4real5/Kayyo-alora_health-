@@ -7,7 +7,7 @@ test('office staff read the care-team thread, reply, and start a group message',
   await page.getByLabel('Email').fill('office.staff@demo.alora.test');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 
   // The seeded demo has unread messages for the office.
   const nav = page.getByRole('navigation', { name: 'Main' });

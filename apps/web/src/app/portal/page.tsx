@@ -39,7 +39,7 @@ export default function PortalHome() {
               {next.caregiver && <span className="block text-slate-600">with {next.caregiver}</span>}
             </p>
           )}
-          <Link href="/portal/visits" className="text-sm text-violet-800 underline">
+          <Link href="/portal/visits" className="text-sm text-brand-800 underline">
             All visits
           </Link>
         </Card>
@@ -50,7 +50,7 @@ export default function PortalHome() {
               ? `${messages.data.unread} new message${messages.data.unread === 1 ? '' : 's'} from the care team.`
               : 'Write to the care team about anything non-urgent.'}
           </p>
-          <Link href="/portal/messages" className="text-sm text-violet-800 underline">
+          <Link href="/portal/messages" className="text-sm text-brand-800 underline">
             Open messages
           </Link>
         </Card>

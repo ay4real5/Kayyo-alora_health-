@@ -87,7 +87,7 @@ function LoginForm() {
             <>
               <Field label="Email" name="email" type="email" autoComplete="username" required autoFocus />
               <Field label="Password" name="password" type="password" autoComplete="current-password" required />
-              <Link href="/forgot-password" className="-mt-2 self-start text-sm text-violet-800 underline">
+              <Link href="/forgot-password" className="-mt-2 self-start text-sm text-brand-800 underline">
                 Forgot your password?
               </Link>
             </>
@@ -106,7 +106,7 @@ function LoginForm() {
               />
               <button
                 type="button"
-                className="self-start text-sm text-violet-800 underline"
+                className="self-start text-sm text-brand-800 underline"
                 onClick={() => setUseRecovery((v) => !v)}
               >
                 {useRecovery ? 'Use my authenticator app instead' : "I don't have my phone — use a backup code"}

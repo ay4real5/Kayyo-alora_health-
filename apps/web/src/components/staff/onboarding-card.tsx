@@ -11,7 +11,7 @@ export function ReadinessBar({ percent }: { percent: number }) {
   return (
     <span className="flex items-center gap-2">
       <span className="h-2 w-24 overflow-hidden rounded-full bg-slate-200" aria-hidden>
-        <span className={`block h-full ${percent === 100 ? 'bg-emerald-500' : 'bg-violet-600'}`} style={{ width: `${percent}%` }} />
+        <span className={`block h-full ${percent === 100 ? 'bg-emerald-500' : 'bg-brand-600'}`} style={{ width: `${percent}%` }} />
       </span>
       <span className="text-sm font-medium text-slate-800">{percent}% ready</span>
     </span>
