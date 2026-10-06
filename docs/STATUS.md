@@ -127,17 +127,18 @@
 
 ## In progress
 
-**Primordial Intelligence (Phase 5, owner's 25-idea list; plan in ROADMAP P5-01…P5-07).**
-- Done: Phases A to E (P5-01 to P5-05, D-093 to D-097) are merged and deployed.
-- Phase F (P5-06, D-098, referrals and the intake form) is on `task/P5-06-referrals`, with a PR open.
-- After Phase F deploys, set the web app setting `INTAKE_FRAME_ANCESTORS` to the agency website's origins so the
-  intake form can be embedded there.
-- **Next:** Phase G (P5-07, platform). Most of it needs the owner first: a payments processor account, and a clinical
-  review before predictive risk. Parts that need no account:
-  - custom roles UI;
-  - a client timeline;
-  - a caregiver onboarding checklist;
-  - Primordial Academy (training → credential).
+**Primordial Intelligence (Phase 5, owner's 25-idea list; ROADMAP P5-01…P5-11).**
+- Merged and deployed: P5-01 to P5-06 (D-093 to D-098).
+- P5-07 (custom roles) and P5-08 (timeline) are merged; their deploy was started on 2026-10-06.
+- `INTAKE_FRAME_ANCESTORS` is set on the production web app (`https://primordialhealthservices.health` and the `www`
+  host).
+- Open PRs, stacked in order:
+  - P5-09 onboarding (#24), on `task/P5-09-onboarding`.
+  - P5-10 Academy, on `task/P5-10-academy`. Its PR opens once #24 merges. It includes migration
+    `20261006191813_academy`.
+- **Next:** merge #24, open and merge the P5-10 PR, then deploy.
+- After that, P5-11 is all owner-dependent: payments (processor account), public API, predictive risk (clinical
+  review) and the AI intake chat (BAA).
 
 **AI assistant (P4-24, D-092) is deployed to production (2026-10-06) but off there.**
 - It was tested end-to-end locally with Claude Haiku 4.5 against the dev database (demo agency).
@@ -196,6 +197,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-06 | Claude Code | P5-10 | Primordial Academy (D-102): courses + quiz on the dashboard, Training in the app, pass records a credential. |
 | 2026-10-06 | Claude Code | P5-09 | Onboarding checklist (D-101): readiness % per staff member, per-discipline credential requirements, app "Getting started". |
 | 2026-10-06 | Claude Code | P5-08 | Client timeline (D-100): one permission-filtered chronological view on the patient page. |
 | 2026-10-06 | Claude Code | P5-07 | Custom roles (D-099): Settings → Roles, permission grid, no privilege escalation. |

@@ -69,6 +69,7 @@ model Agency {
   payPeriods        PayPeriod[]
   referralSources   ReferralSource[]
   referrals         Referral[]
+  trainingCourses   TrainingCourse[]
 
   @@map("agencies")
 }
@@ -496,6 +497,7 @@ model StaffProfile {
   user               User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
   agency             Agency                       @relation(fields: [agencyId], references: [id])
   credentials        StaffCredential[]
+  trainingCompletions TrainingCompletion[]
   incidentReports    IncidentReport[]
   payStubs           PayStub[]
   mileageLogs        MileageLog[]
@@ -1929,4 +1931,66 @@ model ReferralEvent {
 
   @@index([referralId, createdAt])
   @@map("referral_events")
+}
+
+/// Primordial Academy (D-102): a short training module with a quiz. Passing can record a credential.
+model TrainingCourse {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId        String   @map("agency_id") @db.Uuid
+  title           String   @db.VarChar(200)
+  summary         String?  @db.VarChar(500)
+  /// The lesson, as plain text with blank lines between paragraphs.
+  content         String
+  /// Disciplines it is for (e.g. HHA, CNA); empty = everyone.
+  disciplines     String[]
+  /// Pass mark, percent of questions right.
+  passPercent     Int      @default(80) @map("pass_percent")
+  /// When set, passing records a credential of this type (e.g. infection_control).
+  credentialType  String?  @map("credential_type") @db.VarChar(100)
+  /// How long that credential lasts; null = no expiry.
+  validityMonths  Int?     @map("validity_months")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency      Agency               @relation(fields: [agencyId], references: [id])
+  questions   TrainingQuestion[]
+  completions TrainingCompletion[]
+
+  @@index([agencyId, isActive])
+  @@map("training_courses")
+}
+
+model TrainingQuestion {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId     String   @map("course_id") @db.Uuid
+  sortOrder    Int      @map("sort_order")
+  prompt       String   @db.VarChar(1000)
+  options      String[]
+  /// Index into options of the right answer. Never sent to people taking the quiz.
+  correctIndex Int      @map("correct_index")
+
+  course TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, sortOrder])
+  @@map("training_questions")
+}
+
+/// One attempt at a course's quiz.
+model TrainingCompletion {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId       String   @map("course_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  scorePercent   Int      @map("score_percent")
+  passed         Boolean
+  /// The credential recorded for a pass, when the course grants one.
+  credentialId   String?  @map("credential_id") @db.Uuid
+  completedAt    DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+
+  course       TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile   @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([staffProfileId, courseId, completedAt])
+  @@index([courseId])
+  @@map("training_completions")
 }

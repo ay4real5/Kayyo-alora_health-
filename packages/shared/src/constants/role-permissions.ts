@@ -79,6 +79,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'compliance:update',
     'referrals:read',
     'referrals:manage',
+    'training:manage',
   ],
 
   registered_nurse: [
@@ -161,6 +162,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'compliance:create',
     'referrals:read',
     'referrals:manage',
+    'training:manage',
   ],
 
   /** Patients/family: only the /portal endpoints, which have their own own-data guard (P3-14). */

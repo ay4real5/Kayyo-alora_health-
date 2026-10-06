@@ -125,6 +125,6 @@ Owner's 25-idea list, phased. Each phase is its own branch and PR; AI features a
 - [x] **P5-07** `agent` Custom roles UI (D-099): agency roles with a permission grid, no privilege escalation.
 - [x] **P5-08** `agent` Client timeline (D-100): one chronological view per patient (visits, notes, incidents, care updates, EVV, referral and admission).
 - [x] **P5-09** `agent` Caregiver onboarding checklist (D-101) ("92% ready"): profile, availability, required credentials per discipline.
-- [ ] **P5-10** `agent` Primordial Academy: training modules with a short quiz; passing records a credential.
+- [x] **P5-10** `agent` Primordial Academy (D-102): training modules with a short quiz; passing records a credential.
 - [ ] **P5-11** `human`+`agent` Needs accounts or reviews first: portal invoices with online payments (processor account), public API and integrations, predictive client risk (clinical review), AI intake chat (BAA).
 

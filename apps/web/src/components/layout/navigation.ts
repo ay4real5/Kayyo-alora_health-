@@ -23,6 +23,7 @@ import {
   HeartPulse,
   Inbox,
   KeyRound,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -39,6 +40,7 @@ export const NAVIGATION: readonly { href: string; label: string; permission: str
   { href: '/patients', label: 'Patients', permission: 'patients:read', icon: HeartPulse, group: 'Care' },
   { href: '/staff', label: 'Staff', permission: 'staff:read', icon: Users, group: 'Care' },
   { href: '/physicians', label: 'Physicians', permission: 'physicians:read', icon: Stethoscope, group: 'Care' },
+  { href: '/training', label: 'Academy', permission: 'training:manage', icon: GraduationCap, group: 'Care' },
   { href: '/billing/ready', label: 'Ready to bill', permission: 'billing:read', icon: ClipboardCheck, group: 'Billing' },
   { href: '/billing/claims', label: 'Claims', permission: 'billing:read', icon: FileText, group: 'Billing' },
   { href: '/billing/files', label: 'Claim files', permission: 'billing:read', icon: FileStack, group: 'Billing' },

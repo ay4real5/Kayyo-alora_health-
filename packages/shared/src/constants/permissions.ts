@@ -34,6 +34,8 @@ export const PERMISSION_CATALOGUE = {
   reports: ['read'],
   compliance: ['create', 'read', 'update'],
   audit_logs: ['read'],
+  /** Primordial Academy (D-102): write training courses and see results. Taking courses needs no permission. */
+  training: ['manage'],
   /** Referral pipeline (D-098): prospective clients before admission, and their sources. */
   referrals: ['read', 'manage'],
   /** The in-app AI assistant (D-092): read-only lookups, always within the caller's own permissions. */

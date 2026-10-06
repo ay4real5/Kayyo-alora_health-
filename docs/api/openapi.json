@@ -8188,6 +8188,189 @@
         "security": []
       }
     },
+    "/api/v1/training/my": {
+      "get": {
+        "operationId": "TrainingController_myCourses",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "training"
+        ]
+      }
+    },
+    "/api/v1/training/my/{id}": {
+      "get": {
+        "operationId": "TrainingController_myCourse",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "training"
+        ]
+      }
+    },
+    "/api/v1/training/my/{id}/submit": {
+      "post": {
+        "operationId": "TrainingController_submit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitQuizDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "training"
+        ]
+      }
+    },
+    "/api/v1/training/courses": {
+      "get": {
+        "operationId": "TrainingController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "training"
+        ]
+      },
+      "post": {
+        "operationId": "TrainingController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "training"
+        ]
+      }
+    },
+    "/api/v1/training/courses/{id}": {
+      "get": {
+        "operationId": "TrainingController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "training"
+        ]
+      },
+      "patch": {
+        "operationId": "TrainingController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "training"
+        ]
+      }
+    },
+    "/api/v1/training/courses/{id}/results": {
+      "get": {
+        "operationId": "TrainingController_results",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "training"
+        ]
+      }
+    },
     "/api/v1/ai/status": {
       "get": {
         "operationId": "AiController_status",
@@ -12797,6 +12980,18 @@
           "clientFirstName",
           "clientLastName"
         ]
+      },
+      "SubmitQuizDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CourseDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateCourseDto": {
+        "type": "object",
+        "properties": {}
       },
       "OrganizeNoteDto": {
         "type": "object",
