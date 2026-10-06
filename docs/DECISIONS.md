@@ -1587,3 +1587,35 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - The types are `vacation | sick | personal | other` (`time-off.dto.ts`). The older staff-profile time-off DTO still uses
   the shared `TIME_OFF_TYPES`, which also has `bereavement`. Reconcile the two lists if the owner wants bereavement
   leave.
+
+### D-092 — In-app AI assistant (Phase 1: read-only)
+2026-10-06 · owner ("an AI assistant that knows the system in and out … use a very low model") + Claude Code
+- **What**: an "Ask Primordial" side panel in the dashboard that answers how-to questions and looks things up in
+  plain English. It is for roles with the new permission **`assistant:use`**: supervisor, office staff and billing
+  staff, plus admins via all permissions. It is **not** for caregivers or portal users.
+- **How**: `POST /assistant/chat` runs Claude with **read-only tools** (`modules/assistant/assistant-tools.ts`):
+  `find_patients`, `find_staff`, `list_visits`, `list_open_shifts`, `list_time_off`, `list_claims`,
+  `list_pay_periods`, `compliance_overview`.
+  - Each tool calls the existing service **as the signed-in person**, so record filtering (assigned patients, own
+    visits, agency scope) is unchanged.
+  - A tool is offered to the model only if the person holds its permission.
+  - Inputs go through the same DTO validation as the HTTP routes.
+  - Results are trimmed to the fields needed (no SSN, at most 25 rows) and carry dashboard links the panel renders
+    (internal paths only).
+  - The product guide (`assistant-guide.ts`) is the system prompt, prompt-cached.
+  - At most 6 lookup rounds per question; 20 questions a minute per person.
+- **Model**: `ASSISTANT_MODEL`, default **Claude Haiku 4.5** at the owner's request, for the lowest cost (about
+  $1/$5 per million input/output tokens, so well under a cent per typical question). It can be switched to a Sonnet
+  or Opus model by changing the setting, without code changes.
+- **HIPAA**:
+  - Patient details are sent to the model, so **production refuses to switch the assistant on** until
+    `ASSISTANT_BAA_CONFIRMED=true`, which may only be set once a BAA with Anthropic is signed. Anthropic's HIPAA
+    offering requires its zero-data-retention configuration.
+  - Off entirely without `ANTHROPIC_API_KEY`.
+  - Conversations are not stored, and the panel keeps them in memory only.
+  - Message text is never logged. Each lookup is audited as `ASSISTANT_LOOKUP` (tool name and result count, never the
+    search words, D-035), and each question as `ASSISTANT_CHAT`.
+- **Later phases**:
+  - Phase 2: actions (payroll export, approvals, open shifts) behind an explicit **Confirm** card that calls the
+    normal endpoints.
+  - Phase 3 (optional): a caregiver version in the app, limited to their own visits.

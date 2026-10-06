@@ -105,6 +105,9 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P4-15** `human` Expo, Google Play ($25) and Apple Developer ($99/yr) accounts; first preview build on a phone (MOBILE-RELEASE.md).
 - [x] **P4-20** `agent` Uptime/capacity email alerts (Azure Monitor metric alerts, D-087). Owner deploys once: DEPLOYMENT-AZURE §7.
 - [x] **P4-21** `agent` Backup restore drill workflow (quarterly) + restore runbook, BACKUP-RESTORE.md (D-088).
+- [x] **P4-24** `agent` In-app AI assistant, Phase 1 (read-only lookups + how-to, D-092).
+- [ ] **P4-25** `human` Anthropic account + **BAA** (zero data retention), API key → API app settings, then `ASSISTANT_BAA_CONFIRMED=true`.
+- [ ] **P4-26** `agent` Assistant Phase 2: actions behind a Confirm card (payroll export, time off decisions, offer open shift). deps: P4-25
 - [ ] **P4-19** `agent` Move email off Azure Communication Services before it retires on 2028-09-30 (D-085): SES (already built) or Microsoft 365 via Graph. Target 2027-12.
 - [x] **P4-22** `agent` Caregiver extras: mileage and time off in the app, photos in messages; supervisor time-off queue on the dashboard (D-089, D-090).
 - [x] **P4-17** `agent` "Create agency" workflow that emails the new admin a set-password link (D-084). deps: P4-16
