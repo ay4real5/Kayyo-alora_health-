@@ -17,6 +17,7 @@ import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { CredentialsService } from './credentials.service.js';
+import { OnboardingService } from './onboarding.service.js';
 import {
   CreateCredentialDto,
   CreateStaffDto,
@@ -28,6 +29,7 @@ import {
   TerminateStaffDto,
   UpdateCredentialDto,
   UpdateStaffDto,
+  OnboardingRequirementsDto,
 } from './dto/staff.dto.js';
 import { StaffService } from './staff.service.js';
 
@@ -44,7 +46,43 @@ export class StaffController {
   constructor(
     private readonly staff: StaffService,
     private readonly credentials: CredentialsService,
+    private readonly onboarding: OnboardingService,
   ) {}
+
+  // ── Onboarding checklist (D-101) ──────────────────────────────────────────────────────────────────────
+
+  /** Every active staff member's readiness, least ready first. */
+  @Permissions('staff:read')
+  @Get('onboarding')
+  onboardingOverview(@CurrentUser() caller: AuthUser) {
+    return this.onboarding.overview(caller);
+  }
+
+  /** Credentials each discipline needs (agency setting, with defaults). */
+  @Permissions('staff:read')
+  @Get('onboarding/requirements')
+  onboardingRequirements(@CurrentUser() caller: AuthUser) {
+    return this.onboarding.requirements(caller.agencyId);
+  }
+
+  @Permissions('settings:update')
+  @Audit({ action: 'UPDATE_ONBOARDING_REQUIREMENTS', resourceType: 'agency' })
+  @Put('onboarding/requirements')
+  setOnboardingRequirements(@CurrentUser() caller: AuthUser, @Body() body: OnboardingRequirementsDto) {
+    return this.onboarding.setRequirements(caller, body.requirements);
+  }
+
+  /** The caller's own checklist, for the app. */
+  @Get('me/onboarding')
+  myOnboarding(@CurrentUser() caller: AuthUser) {
+    return this.onboarding.mine(caller);
+  }
+
+  @Permissions('staff:read')
+  @Get(':id/onboarding')
+  staffOnboarding(@CurrentUser() caller: AuthUser, @Param('id', new ParseUUIDPipe()) id: string) {
+    return this.onboarding.forStaff(caller, id);
+  }
 
   @Permissions('staff:read')
   @Get()

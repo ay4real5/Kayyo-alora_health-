@@ -9,6 +9,7 @@ import type { CheckCode } from '../billing/billing-readiness.js';
 import { BillingReadinessService } from '../billing/billing-readiness.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import { ReferralsService } from '../referrals/referrals.service.js';
+import { OnboardingService } from '../staff/onboarding.service.js';
 import { WorkforceService } from './workforce.service.js';
 
 /** How far back "money at risk" looks: unbilled, blocked completed visits from the last 60 days. */
@@ -60,6 +61,8 @@ export interface CommandCenter {
   credentials?: { expired: number; expiringIn7Days: number; expiringIn30Days: number };
   /** New referrals not yet contacted, and follow-ups due by today (D-098). */
   referrals?: { newWaiting: number; followUpsDue: number };
+  /** Active staff whose onboarding checklist isn't complete (D-101). */
+  onboarding?: { notReady: number };
   authorizations?: { atRisk: (AuthorizationRisk & { link: string })[] };
   money?: {
     expectedToday: number;
@@ -90,6 +93,7 @@ export class InsightsService {
     private readonly readiness: BillingReadinessService,
     private readonly workforce: WorkforceService,
     private readonly referrals: ReferralsService,
+    private readonly onboarding: OnboardingService,
   ) {}
 
   async commandCenter(caller: AuthUser): Promise<CommandCenter> {
@@ -120,6 +124,7 @@ export class InsightsService {
     if (authorizations) result.authorizations = { atRisk: authorizations.map((a) => ({ ...a, link: `/patients/${a.patient.id}` })) };
     if (money) result.money = money;
     if (can('referrals:read')) result.referrals = await this.referrals.attention(caller.agencyId);
+    if (can('staff:read')) result.onboarding = { notReady: (await this.onboarding.overview(caller)).filter((s) => !s.ready).length };
     result.attention = attentionItems(result);
 
     // Patient names appear here (unassigned visits, authorizations): record the view, as for any PHI read.
@@ -347,6 +352,16 @@ export function attentionItems(c: CommandCenter): AttentionItem[] {
       detail: 'Follow-up date is today or earlier.',
       count: c.referrals.followUpsDue,
       link: '/referrals',
+    });
+  }
+  if (c.onboarding) {
+    add({
+      key: 'onboarding',
+      severity: 'info',
+      title: `${plural(c.onboarding.notReady, 'staff member')} not fully onboarded`,
+      detail: 'Missing profile details, availability or required credentials.',
+      count: c.onboarding.notReady,
+      link: '/staff/onboarding',
     });
   }
   if (c.documentation) {
