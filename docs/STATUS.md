@@ -128,17 +128,18 @@
 ## In progress
 
 **Primordial Intelligence (Phase 5, owner's 25-idea list; ROADMAP P5-01…P5-11).**
-- Merged and deployed: P5-01 to P5-06 (D-093 to D-098).
-- P5-07 (custom roles) and P5-08 (timeline) are merged; their deploy was started on 2026-10-06.
+- P5-01 to P5-10 (D-093 to D-102) are all merged and deployed to production, as of 2026-10-06. Last deploy: run
+  37519979037.
 - `INTAKE_FRAME_ANCESTORS` is set on the production web app (`https://primordialhealthservices.health` and the `www`
   host).
-- Open PRs, stacked in order:
-  - P5-09 onboarding (#24), on `task/P5-09-onboarding`.
-  - P5-10 Academy, on `task/P5-10-academy`. Its PR opens once #24 merges. It includes migration
-    `20261006191813_academy`.
-- **Next:** merge #24, open and merge the P5-10 PR, then deploy.
-- After that, P5-11 is all owner-dependent: payments (processor account), public API, predictive risk (clinical
-  review) and the AI intake chat (BAA).
+- **Next:** P5-11 is all owner-dependent:
+  - payments (processor account);
+  - public API;
+  - predictive risk (clinical review);
+  - AI intake chat (BAA).
+
+  Until the owner provides those, pick up remaining agent tasks from earlier phases, or polish from owner feedback.
+- **Still open**: PR #13 (Android push) waits on the owner's phone test.
 
 **AI assistant (P4-24, D-092) is deployed to production (2026-10-06) but off there.**
 - It was tested end-to-end locally with Claude Haiku 4.5 against the dev database (demo agency).
