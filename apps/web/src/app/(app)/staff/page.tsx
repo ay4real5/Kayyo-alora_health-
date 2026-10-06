@@ -55,6 +55,9 @@ export default function StaffPage() {
                 Care Scores
               </ButtonLink>
             )}
+            <ButtonLink href="/staff/onboarding" variant="secondary">
+              Onboarding
+            </ButtonLink>
             <ButtonLink href="/staff/credentials" variant="secondary">
               Credentials needing attention
             </ButtonLink>

@@ -1475,6 +1475,123 @@
         ]
       }
     },
+    "/api/v1/staff/onboarding": {
+      "get": {
+        "operationId": "StaffController_onboardingOverview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/onboarding/requirements": {
+      "get": {
+        "operationId": "StaffController_onboardingRequirements",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Credentials each discipline needs (agency setting, with defaults).",
+        "tags": [
+          "staff"
+        ]
+      },
+      "put": {
+        "operationId": "StaffController_setOnboardingRequirements",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingRequirementsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/me/onboarding": {
+      "get": {
+        "operationId": "StaffController_myOnboarding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The caller's own checklist, for the app.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/onboarding": {
+      "get": {
+        "operationId": "StaffController_staffOnboarding",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/api/v1/staff": {
       "get": {
         "operationId": "StaffController_list",
@@ -9843,6 +9960,23 @@
             "type": "boolean"
           }
         }
+      },
+      "OnboardingRequirementsDto": {
+        "type": "object",
+        "properties": {
+          "requirements": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "requirements"
+        ]
       },
       "CreateStaffDto": {
         "type": "object",

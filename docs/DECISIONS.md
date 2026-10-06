@@ -1867,3 +1867,32 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   where reads are audited. Each event links there when it can.
 - **Web**: a Timeline card on the patient page, with filters (everything, visits & notes, problems) and the window
   (30 days, 90 days or 1 year). The window is computed from the agency's today.
+
+### D-101 — Caregiver onboarding checklist (Phase G, P5-09)
+2026-10-06 · owner's idea list ("92% ready" onboarding) + Claude Code
+- **Logic**: the pure `onboardingChecklist` in `@alora/shared` (unit-tested), fed by `OnboardingService` from the
+  staff profile, user and credentials. Computed on demand; no new tables.
+- **Required items**: signed in once, phone, home address, hire date, pay rate (hourly or per visit), weekly
+  availability, service-area ZIPs, and **each credential type the discipline needs**.
+  - A credential counts when it is active and not expired. Matching is case- and space-insensitive (`TB Test` =
+    `tb_test`).
+  - An expired one says so.
+- **Optional**: the phone check-in code. It is shown but not counted.
+- **"Ready"**: every required item is done. The percentage is done ÷ required.
+- **Requirements per discipline**: defaults in `DEFAULT_REQUIRED_CREDENTIALS`.
+  - HHA: hha_certificate, cpr, tb_test, background_check.
+  - Licensed disciplines need a license.
+  - Agencies change them under Staff → Onboarding. They are stored in `agencies.settings.onboardingRequirements`.
+  - `PUT /staff/onboarding/requirements` needs `settings:update`; disciplines left out keep their current list.
+- **Routes**:
+  - `GET /staff/onboarding`: all active staff, least ready first, with what's missing.
+  - `GET /staff/:id/onboarding`.
+  - `GET /staff/onboarding/requirements`.
+
+  All three need `staff:read`. `GET /staff/me/onboarding` returns the caller's own checklist.
+- **Command Center**: "N staff members not fully onboarded" (info, `staff:read`).
+- **Web**:
+  - Staff → Onboarding page, with the readiness list and the requirements editor.
+  - An Onboarding card on each active staff member's page.
+- **App**: Profile shows "Getting started — N% ready" with what's left and who does it (the caregiver or the office),
+  until they are ready.
