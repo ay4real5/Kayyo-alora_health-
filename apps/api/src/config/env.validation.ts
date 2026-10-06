@@ -183,6 +183,28 @@ export class EnvironmentVariables {
   @IsBoolean()
   RATE_LIMITS_DISABLED: boolean = false;
 
+  // ── In-app AI assistant (D-092). Off until ANTHROPIC_API_KEY is set; in production also needs the BAA confirmed.
+  /** Anthropic API key for the assistant (a secret — App Settings / .env only). */
+  @Transform(trimmed)
+  @IsOptional()
+  @IsString()
+  ANTHROPIC_API_KEY?: string;
+
+  /** Which Claude model answers. Haiku 4.5 is the low-cost default; Sonnet/Opus can be set here without a code change. */
+  @Transform(trimmed)
+  @IsOptional()
+  @Matches(/^claude-[a-z0-9-]+$/, { message: 'ASSISTANT_MODEL must be a Claude model id, e.g. claude-haiku-4-5' })
+  ASSISTANT_MODEL: string = 'claude-haiku-4-5';
+
+  /**
+   * Set to true only once a Business Associate Agreement with Anthropic is signed: the assistant sends patient
+   * details to the model, so production refuses to turn it on without this.
+   */
+  @Transform(({ value }) => (value === undefined || value === '' ? undefined : String(value).trim().toLowerCase() === 'true' || value === true))
+  @IsOptional()
+  @IsBoolean()
+  ASSISTANT_BAA_CONFIRMED: boolean = false;
+
   // ── Outside notification channels (D-071). Each stays off until its settings are present — and must only be
   // switched on once the provider has signed a BAA (P2-11, P3-19). Texts are PHI-free either way.
 

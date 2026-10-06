@@ -7263,6 +7263,44 @@
         ]
       }
     },
+    "/api/v1/assistant/status": {
+      "get": {
+        "operationId": "AssistantController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "assistant"
+        ]
+      }
+    },
+    "/api/v1/assistant/chat": {
+      "post": {
+        "operationId": "AssistantController_chat",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "assistant"
+        ]
+      }
+    },
     "/api/v1/reports/census": {
       "get": {
         "operationId": "ReportsController_census",
@@ -11070,6 +11108,43 @@
         },
         "required": [
           "decision"
+        ]
+      },
+      "AssistantTurnDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ]
+      },
+      "AssistantChatDto": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "description": "Oldest first, ending with the new question.",
+            "minItems": 1,
+            "maxItems": 30,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantTurnDto"
+            }
+          }
+        },
+        "required": [
+          "messages"
         ]
       },
       "CreateVisitNoteDto": {

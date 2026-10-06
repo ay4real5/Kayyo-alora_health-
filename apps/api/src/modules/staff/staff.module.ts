@@ -8,6 +8,6 @@ import { TimeOffService } from './time-off.service.js';
 @Module({
   controllers: [StaffController, TimeOffController],
   providers: [StaffService, CredentialsService, TimeOffService],
-  exports: [StaffService],
+  exports: [StaffService, TimeOffService],
 })
 export class StaffModule {}

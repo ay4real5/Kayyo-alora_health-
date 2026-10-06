@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { humanize } from '@/lib/labels';
+import { AssistantPanel } from './assistant-panel';
 import { MessagesBadge } from './messages-badge';
 import { NAV_GROUPS, NAVIGATION } from './navigation';
 import { NotificationBell } from './notification-bell';
@@ -170,6 +171,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
+      <AssistantPanel />
     </div>
   );
 }

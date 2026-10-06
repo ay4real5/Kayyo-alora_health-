@@ -175,6 +175,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-06 | Claude Code | P4-24 | AI assistant Phase 1: read-only tools as the caller, Haiku 4.5, dashboard panel; off in production until BAA (D-092). |
 | 2026-10-05 | Claude Code | P4-15 | First EAS Android preview build green (shared-package build hook, PR #12); deploy health check now waits for the new container (PR #11). |
 | 2026-10-04 | Claude Code | ops | Redeployed production with P4-17/P4-21/P4-22; logged the first passed backup drill; STATUS refreshed. |
 | 2026-09-30 | Claude Code | P4-21 | Backup restore drill workflow + runbook (D-088); first drill to run after merge. |
