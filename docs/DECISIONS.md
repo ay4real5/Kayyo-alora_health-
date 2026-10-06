@@ -1896,3 +1896,27 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - An Onboarding card on each active staff member's page.
 - **App**: Profile shows "Getting started — N% ready" with what's left and who does it (the caregiver or the office),
   until they are ready.
+
+### D-102 — Primordial Academy: training courses with a quiz (Phase G, P5-10)
+2026-10-06 · owner's idea list (Primordial Academy: training → credential) + Claude Code
+- **Model**: new tables `training_courses`, `training_questions` and `training_completions` (one row per attempt).
+  - A course has a plain-text lesson and is for chosen disciplines (none chosen = everyone).
+  - It has a pass mark (default 80%).
+  - It can optionally grant a credential type, valid for N months.
+- **Permissions**: new `training:manage` (supervisors, office staff, agency admins) to write courses and see
+  results. Taking a course needs only an active staff profile.
+- **Quiz integrity**: questions go to the app **without** `correctIndex`; answers are scored on the server.
+  - The result says which question numbers were wrong (to learn from) but never the right answers.
+  - Submissions are throttled to 10 a minute.
+- **Pass → credential**: when the course grants one, a normal `StaffCredential` is created, with:
+  - the course title;
+  - issuer "Primordial Academy";
+  - issue date today and an expiry of today + N months (`addMonths`, clamped to month end).
+
+  So it counts for onboarding (D-101) and gets the usual expiry alerts. Each pass adds a new credential; old ones
+  simply expire.
+- **Status per caregiver**: not started, failed (try again), passed (with valid-until), or expired (retake).
+- **Web**: Academy (sidebar, Care) has a course list, an editor (lesson, disciplines, pass mark, credential and
+  validity, plus a question builder that marks the right option), per-course results, and archive/restore.
+- **App**: Profile → Training lists the caregiver's courses. A course screen shows the lesson, the quiz (one choice
+  per question) and the result (retry if failed).

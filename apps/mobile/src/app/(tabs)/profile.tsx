@@ -133,7 +133,8 @@ export default function ProfileScreen() {
           <ListRow icon="wallet-outline" label="My pay" onPress={() => router.push('/pay')} />
           <ListRow icon="briefcase-outline" label="Open shifts" onPress={() => router.push('/open-shifts')} />
           <ListRow icon="navigate-outline" label="Mileage" onPress={() => router.push('/mileage')} />
-          <ListRow icon="airplane-outline" label="Time off" onPress={() => router.push('/time-off')} last />
+          <ListRow icon="airplane-outline" label="Time off" onPress={() => router.push('/time-off')} />
+          <ListRow icon="school-outline" label="Training" onPress={() => router.push('/training')} last />
         </Card>
 
         {onboarding && !onboarding.ready && (
