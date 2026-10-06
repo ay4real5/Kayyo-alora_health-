@@ -7,6 +7,7 @@ import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { ClaimsService } from '../billing/claims.service.js';
 import { ComplianceService } from '../compliance/compliance.service.js';
+import { InsightsService } from '../insights/insights.service.js';
 import { PatientsService } from '../patients/patients.service.js';
 import { PayrollService } from '../payroll/payroll.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
@@ -60,8 +61,9 @@ export class AssistantService {
     claims: ClaimsService,
     payroll: PayrollService,
     compliance: ComplianceService,
+    insights: InsightsService,
   ) {
-    this.tools = buildAssistantTools({ patients, staff, visits, openShifts, timeOff, claims, payroll, compliance });
+    this.tools = buildAssistantTools({ patients, staff, visits, openShifts, timeOff, claims, payroll, compliance, insights });
   }
 
   status(): AssistantStatus {

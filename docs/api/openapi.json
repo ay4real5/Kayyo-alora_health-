@@ -7301,6 +7301,20 @@
         ]
       }
     },
+    "/api/v1/insights/command-center": {
+      "get": {
+        "operationId": "InsightsController_commandCenter",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "insights"
+        ]
+      }
+    },
     "/api/v1/reports/census": {
       "get": {
         "operationId": "ReportsController_census",

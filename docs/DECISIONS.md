@@ -1619,3 +1619,40 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - Phase 2: actions (payroll export, approvals, open shifts) behind an explicit **Confirm** card that calls the
     normal endpoints.
   - Phase 3 (optional): a caregiver version in the app, limited to their own visits.
+
+### D-093 — "Primordial Intelligence" roadmap; Phase A: the Command Center
+2026-10-06 · owner (25-idea list: "don't replicate Alora, run the agency intelligently"; "do all, split into phases") + Claude Code
+- **Roadmap** (ROADMAP Phase 5, P5-01 … P5-07):
+  - A: Command Center;
+  - B: smart caregiver matching;
+  - C: assistant actions behind Confirm;
+  - D: AI documentation (dictation, incident detection, family care updates);
+  - E: workforce intelligence (EVV anomalies, explainable Care Score, recognition);
+  - F: growth (referral CRM, intake form);
+  - G: platform (portal invoices and payments, custom roles UI, onboarding, Academy, public API, client-risk decision
+    support).
+- **Principles**:
+  - Build on existing data and services.
+  - Every insight is filtered by the viewer's permissions.
+  - AI suggests and people confirm.
+  - PHI reaches the model only under the Anthropic BAA (D-092).
+- **Phase A, built**: `GET /insights/command-center` (`modules/insights`) is for any signed-in staff member, and each
+  section is computed only with its permission:
+  - coverage (`visits:read_all`): unassigned visits today and tomorrow, open shifts;
+  - documentation (`visits:read_all`): completed visits from the last 7 days with no submitted or signed note, and
+    draft notes;
+  - EVV (`evv:read`): pending corrections, flagged records in the last 7 days;
+  - credentials (`staff:read`): expired, and expiring within 7 or 30 days;
+  - authorizations (`authorizations:read`): `AuthorizationsService.atRisk` with the pure `forecastAuthorization`.
+    The projection is the higher of booked (used plus scheduled) and pace (used ÷ days elapsed × days in the period,
+    from day 7). It is "over" if the projection exceeds the authorized amount and "near" at 90% or more, and it
+    reports the day it runs out at the current pace;
+  - money (`billing:read`): expected revenue from today's visits (readiness prices; unpriced visits counted
+    separately), and **money that can't be billed yet**. That is completed visits from the last 60 days that are
+    blocked (not already billed), summed in dollars from readiness `amount` and grouped by the first blocking check.
+- The "Needs attention" list is derived from these sections, worst first, and each item links to the page that fixes
+  it.
+- Viewing it is audited as `VIEW_COMMAND_CENTER`, because patient names appear in it.
+- The dashboard home renders it under the existing stat cards.
+- **Assistant**: the tool `todays_priorities` (same service, same permission filtering) answers "What should I worry
+  about today?". A dashboard button opens the panel with that question.

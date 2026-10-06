@@ -132,6 +132,18 @@ export class BillingReadinessService {
     };
   }
 
+  /** Every completed visit in a date range with its readiness — for totals (Command Center, D-093). Read-only. */
+  async evaluateRange(agencyId: string, from: string, to: string): Promise<BillableVisit[]> {
+    const today = await this.clock.todayString(agencyId);
+    const visits = await this.prisma.visit.findMany({
+      where: { agencyId, status: 'completed', scheduledDate: { gte: toDate(from), lte: toDate(to) } },
+      include: VISIT_INCLUDE,
+      orderBy: [{ scheduledDate: 'asc' }, { scheduledStart: 'asc' }],
+      take: 5000,
+    });
+    return this.evaluateAll(agencyId, visits, today);
+  }
+
   /**
    * Readiness for specific completed visits (claims use this). `ignoreClaimId`: don't count the visit's line on this
    * claim as "already billed" — when re-checking a claim's own visits.
