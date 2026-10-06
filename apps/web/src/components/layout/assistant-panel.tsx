@@ -23,6 +23,7 @@ const LOOKUP_LABELS: Record<string, string> = {
   list_claims: 'claims',
   list_pay_periods: 'payroll',
   compliance_overview: 'compliance',
+  todays_priorities: 'today’s priorities',
 };
 
 const EXAMPLES = ['Which visits have no caregiver this week?', 'Find the patient named …', 'How do I add a new caregiver?'];
@@ -62,6 +63,18 @@ export function AssistantPanel() {
     end.current?.scrollIntoView({ block: 'end' });
   }, [turns, ask.isPending]);
 
+  // "Ask Primordial about today" on the Command Center opens the panel with that question.
+  const sendRef = useRef<(text: string) => void>(() => undefined);
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const question = (e as CustomEvent<string>).detail;
+      setOpen(true);
+      if (question) sendRef.current(question);
+    };
+    window.addEventListener('primordial:ask', onAsk);
+    return () => window.removeEventListener('primordial:ask', onAsk);
+  }, []);
+
   if (!allowed || !status.data?.enabled) return null;
 
   const send = (text: string) => {
@@ -74,6 +87,7 @@ export function AssistantPanel() {
     setDraft('');
     ask.mutate(history);
   };
+  sendRef.current = send;
   const submit = (e: FormEvent) => {
     e.preventDefault();
     send(draft);

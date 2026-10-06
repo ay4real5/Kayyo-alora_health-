@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Bell, CalendarDays, HeartPulse, ShieldAlert, type LucideIcon } from 'lucide-react';
+import { CommandCenter } from '@/components/dashboard/command-center';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useAgencyToday } from '@/lib/use-agency-today';
@@ -84,7 +85,7 @@ export default function DashboardPage() {
           {new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}
         </p>
         <h1 className="relative mt-1 text-2xl font-semibold tracking-tight md:text-3xl">Welcome, {user?.firstName}</h1>
-        <p className="relative mt-1 text-sm text-indigo-100">Here is today at a glance.</p>
+        <p className="relative mt-1 text-sm text-indigo-100">Here is today at a glance — and what needs your attention.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {can('visits:read') && (
@@ -105,6 +106,7 @@ export default function DashboardPage() {
         )}
         <StatCard label="Unread notifications" value={unread.data} loading={unread.isLoading} icon={Bell} tone="indigo" />
       </div>
+      <CommandCenter />
     </div>
   );
 }

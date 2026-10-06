@@ -59,6 +59,8 @@ export interface CommandCenter {
   money?: {
     expectedToday: number;
     visitsToday: number;
+    /** Today's visits with no service code or rate, so no price. */
+    unpricedToday: number;
     atRisk: { total: number; visits: number; days: number; byReason: { reason: CheckCode; label: string; amount: number; visits: number }[] };
   };
 }
@@ -202,6 +204,7 @@ export class InsightsService {
     return {
       expectedToday: round2(priced.reduce((sum, v) => sum + (v.amount ?? 0), 0)),
       visitsToday: todays.length,
+      unpricedToday: priced.filter((v) => v.amount === null).length,
       atRisk: {
         total: round2(total),
         visits,

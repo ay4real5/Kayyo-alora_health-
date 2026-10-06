@@ -111,3 +111,16 @@ Owner: `agent` = any coding agent · `human` = the owner · `base44` = built in 
 - [ ] **P4-19** `agent` Move email off Azure Communication Services before it retires on 2028-09-30 (D-085): SES (already built) or Microsoft 365 via Graph. Target 2027-12.
 - [x] **P4-22** `agent` Caregiver extras: mileage and time off in the app, photos in messages; supervisor time-off queue on the dashboard (D-089, D-090).
 - [x] **P4-17** `agent` "Create agency" workflow that emails the new admin a set-password link (D-084). deps: P4-16
+
+## Phase 5 — Primordial Intelligence (D-093)
+
+Owner's 25-idea list, phased. Each phase is its own branch and PR; AI features are behind the Anthropic BAA (D-092).
+
+- [x] **P5-01** `agent` Command Center: needs-attention, money at risk, authorization forecast, coverage, credentials, EVV, documentation; assistant `todays_priorities` (D-093).
+- [ ] **P5-02** `agent` Smart caregiver matching: patient preferences (language, gender, preferred/declined caregivers), staff home location; ranked suggestions with reasons on the visit page + assistant `suggest_caregivers`.
+- [ ] **P5-03** `agent` Assistant actions behind a Confirm card: assign caregiver, offer open shift + notify, decide time off, calculate/export payroll (audited `ASSISTANT_ACTION`). deps: P5-02
+- [ ] **P5-04** `agent` AI documentation: dictate the visit note in the app (on-device speech → Claude → structured fields, caregiver reviews); incident detection on submitted notes → prefilled incident report; opt-in family care updates in the portal.
+- [ ] **P5-05** `agent` Workforce intelligence: EVV anomaly detection (overlaps, impossible travel, repeated corrections/geofence misses); explainable Care Score (admin-only decision support); optional recognition badges.
+- [ ] **P5-06** `agent` Growth: referral CRM pipeline + sources report; public "I need care" intake form → referral.
+- [ ] **P5-07** `agent` Platform: portal invoices + online payments (processor account), care timeline, custom roles UI, caregiver onboarding checklist, Primordial Academy, public API, predictive client risk (clinical review first).
+
