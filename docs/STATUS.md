@@ -132,6 +132,7 @@
 - To switch it on, the owner adds `ANTHROPIC_API_KEY` to the API app settings, and later sets
   `ASSISTANT_BAA_CONFIRMED=true` only once a BAA with Anthropic is signed (P4-25).
 - The current key is a temporary owner key, to be replaced at go-live.
+- 2026-10-06: the owner chose to switch it on in production for a test drive with **test data only** (no real patients until December 2026). The owner sets `ASSISTANT_BAA_CONFIRMED=true` themselves. **Before the first real patient: BAA signed, or set it back to false** (GO_LIVE.md).
 
 **PR #13 (Android push, D-091)** is waiting on the owner's phone test.
 
