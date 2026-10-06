@@ -64,7 +64,7 @@ export default function OnboardingPage() {
         <ul className="divide-y divide-slate-100">
           {rows.map((r) => (
             <li key={r.staffId} className="flex flex-wrap items-center gap-3 py-2 text-sm">
-              <Link href={`/staff/${r.staffId}`} className="w-56 font-medium text-violet-800 hover:underline">
+              <Link href={`/staff/${r.staffId}`} className="w-56 font-medium text-brand-800 hover:underline">
                 {r.name} <span className="font-normal text-slate-500">({r.discipline})</span>
               </Link>
               <ReadinessBar percent={r.percent} />

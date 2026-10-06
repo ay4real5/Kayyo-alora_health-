@@ -82,7 +82,7 @@ export default function VisitPage() {
             [
               'Patient',
               can('patients:read') ? (
-                <Link href={`/patients/${v.patient.id}`} className="text-violet-800 hover:underline">
+                <Link href={`/patients/${v.patient.id}`} className="text-brand-800 hover:underline">
                   {v.patient.lastName}, {v.patient.firstName}
                 </Link>
               ) : (

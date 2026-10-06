@@ -31,8 +31,8 @@ function VisitList({ label, visits, empty }: { label: string; visits: PortalVisi
                 {v.caregiver && ` · ${v.caregiver}`}
               </span>
               {v.careUpdate && (
-                <span className="mt-1 block rounded-lg bg-violet-50 px-2 py-1 text-sm text-violet-950">
-                  “{v.careUpdate.summary}”{v.careUpdate.mood && <span className="text-violet-800"> · Mood: {v.careUpdate.mood}</span>}
+                <span className="mt-1 block rounded-lg bg-brand-50 px-2 py-1 text-sm text-brand-950">
+                  “{v.careUpdate.summary}”{v.careUpdate.mood && <span className="text-brand-800"> · Mood: {v.careUpdate.mood}</span>}
                 </span>
               )}
             </span>

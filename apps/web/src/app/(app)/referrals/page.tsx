@@ -18,7 +18,7 @@ const daysSince = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date
 function ReferralCard({ r }: { r: Referral }) {
   const days = daysSince(r.statusChangedAt);
   return (
-    <Link href={`/referrals/${r.id}`} className="block rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm hover:border-violet-300">
+    <Link href={`/referrals/${r.id}`} className="block rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm hover:border-brand-300">
       <p className="font-medium text-slate-900">
         {r.clientFirstName} {r.clientLastName}
       </p>
@@ -89,7 +89,7 @@ export default function ReferralsPage() {
             role="tab"
             aria-selected={view === key}
             onClick={() => setView(key)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${view === key ? 'bg-violet-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300'}`}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium ${view === key ? 'bg-brand-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300'}`}
           >
             {label}
           </button>
@@ -142,7 +142,7 @@ export default function ReferralsPage() {
               {list.data?.data.map((r) => (
                 <tr key={r.id}>
                   <td className="py-2 pr-4">
-                    <Link href={`/referrals/${r.id}`} className="font-medium text-violet-800 hover:underline">
+                    <Link href={`/referrals/${r.id}`} className="font-medium text-brand-800 hover:underline">
                       {r.clientLastName}, {r.clientFirstName}
                     </Link>
                   </td>

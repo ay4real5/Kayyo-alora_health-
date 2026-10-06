@@ -71,7 +71,7 @@ export default function PayrollPage() {
             {periods.data?.data.map((p) => (
               <tr key={p.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/payroll/${p.id}`} className="text-violet-800 hover:underline">
+                  <Link href={`/payroll/${p.id}`} className="text-brand-800 hover:underline">
                     {formatDate(p.periodStart)} – {formatDate(p.periodEnd)}
                   </Link>
                 </td>

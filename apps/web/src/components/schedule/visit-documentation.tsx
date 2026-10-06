@@ -40,7 +40,7 @@ export function VisitEvv({ visitId }: { visitId: string }) {
           {r.flags.length > 0 && (
             <p className="text-amber-900">{r.flags.map(flagLabel).join('; ')}</p>
           )}
-          <Link href={`/evv/${r.id}`} className="text-violet-800 underline">
+          <Link href={`/evv/${r.id}`} className="text-brand-800 underline">
             Open the EVV record
           </Link>
         </div>
@@ -280,9 +280,9 @@ function CareUpdateLine({ visitId }: { visitId: string }) {
   });
   if (!update.data) return null;
   return (
-    <p className="mb-3 rounded-xl bg-violet-50 px-3 py-2 text-sm text-violet-950">
+    <p className="mb-3 rounded-xl bg-brand-50 px-3 py-2 text-sm text-brand-950">
       <span className="font-medium">Update sent to the family:</span> {update.data.summary}
-      {update.data.mood && <span className="text-violet-800"> (mood: {update.data.mood})</span>}
+      {update.data.mood && <span className="text-brand-800"> (mood: {update.data.mood})</span>}
     </p>
   );
 }

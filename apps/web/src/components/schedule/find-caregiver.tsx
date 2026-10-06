@@ -15,7 +15,7 @@ interface Suggestions {
   excluded: { staff: { id: string; firstName: string; lastName: string }; reason: string }[];
 }
 
-const scoreTone = (score: number) => (score >= 75 ? 'bg-emerald-50 text-emerald-800' : score >= 50 ? 'bg-violet-50 text-violet-800' : 'bg-amber-50 text-amber-900');
+const scoreTone = (score: number) => (score >= 75 ? 'bg-emerald-50 text-emerald-800' : score >= 50 ? 'bg-brand-50 text-brand-800' : 'bg-amber-50 text-amber-900');
 
 /**
  * Who should take this visit (D-094): ranked caregivers with the reasons, one-click assign (the normal visit update,
@@ -69,8 +69,8 @@ export function FindCaregiver({ visitId, currentStaffId }: { visitId: string; cu
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-slate-900">
-                        {i === 0 && <span className="mr-2 rounded-full bg-violet-700 px-2 py-0.5 text-xs font-medium text-white">Best match</span>}
-                        <Link href={`/staff/${s.staff.id}`} className="underline decoration-slate-300 hover:decoration-violet-700">
+                        {i === 0 && <span className="mr-2 rounded-full bg-brand-700 px-2 py-0.5 text-xs font-medium text-white">Best match</span>}
+                        <Link href={`/staff/${s.staff.id}`} className="underline decoration-slate-300 hover:decoration-brand-700">
                           {s.staff.firstName} {s.staff.lastName}
                         </Link>{' '}
                         <span className="text-sm font-normal text-slate-600">{s.staff.discipline}</span>
@@ -103,7 +103,7 @@ export function FindCaregiver({ visitId, currentStaffId }: { visitId: string; cu
           </ol>
           {data.data && data.data.excluded.length > 0 && (
             <div>
-              <button type="button" className="text-sm font-medium text-violet-800 underline" onClick={() => setShowExcluded((x) => !x)}>
+              <button type="button" className="text-sm font-medium text-brand-800 underline" onClick={() => setShowExcluded((x) => !x)}>
                 {showExcluded ? 'Hide' : 'Show'} {data.data.excluded.length} who can’t take it
               </button>
               {showExcluded && (

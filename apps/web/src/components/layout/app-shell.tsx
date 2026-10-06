@@ -16,7 +16,7 @@ export function BrandMark({ className = 'h-9 w-9 text-base' }: { className?: str
   return (
     <span
       aria-hidden
-      className={`inline-flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 font-bold text-white shadow-lg shadow-violet-900/30 ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 font-bold text-white shadow-lg shadow-brand-900/30 ${className}`}
     >
       P
     </span>
@@ -68,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         if (!groupItems.length) return null;
         return (
           <div key={group} className="flex flex-col gap-0.5">
-            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-indigo-300">{group}</p>
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-300">{group}</p>
             {groupItems.map((item) => {
               const active = item.href === activeHref;
               const Icon = item.icon;
@@ -79,11 +79,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                   onClick={onNavigate}
                   aria-current={active ? 'page' : undefined}
                   className={`group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors ${
-                    active ? 'bg-white/10 font-medium text-white' : 'text-indigo-100 hover:bg-white/5 hover:text-white'
+                    active ? 'bg-white/10 font-medium text-white' : 'text-brand-100 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  {active && <span aria-hidden className="absolute inset-y-2 left-0 w-1 rounded-full bg-violet-400" />}
-                  <Icon aria-hidden className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-violet-300' : 'text-indigo-300 group-hover:text-indigo-100'}`} />
+                  {active && <span aria-hidden className="absolute inset-y-2 left-0 w-1 rounded-full bg-brand-400" />}
+                  <Icon aria-hidden className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-brand-300' : 'text-brand-300 group-hover:text-brand-100'}`} />
                   <span className="truncate">{item.label}</span>
                   {item.href === '/messages' && <MessagesBadge />}
                 </Link>
@@ -101,7 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <BrandMark />
         <div className="leading-tight">
           <p className="text-base font-semibold text-white">Primordial Health</p>
-          <p className="text-xs text-indigo-300">Home health, simplified</p>
+          <p className="text-xs text-brand-300">Home health, simplified</p>
         </div>
       </div>
       <div className="scroll-quiet flex-1 overflow-y-auto pb-4">{nav(label, onNavigate)}</div>
@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-3 rounded-xl px-2 py-2">
           <span
             aria-hidden
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-500 text-sm font-semibold text-white"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-accent-500 text-sm font-semibold text-white"
           >
             {initials}
           </span>
@@ -117,14 +117,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="truncate text-sm font-medium text-white">
               {user.firstName} {user.lastName}
             </p>
-            <p className="truncate text-xs text-indigo-300">{role}</p>
+            <p className="truncate text-xs text-brand-300">{role}</p>
           </div>
           <button
             type="button"
             onClick={() => void logout()}
             aria-label="Sign out"
             title="Sign out"
-            className="rounded-lg p-2 text-indigo-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-violet-400"
+            className="rounded-lg p-2 text-brand-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-brand-400"
           >
             <LogOut aria-hidden className="h-4 w-4" />
           </button>

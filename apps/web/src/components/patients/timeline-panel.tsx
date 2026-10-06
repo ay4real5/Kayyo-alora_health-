@@ -71,7 +71,7 @@ export function TimelinePanel({ patientId }: { patientId: string }) {
             type="button"
             aria-pressed={filter === i}
             onClick={() => setFilter(i)}
-            className={`rounded-full px-3 py-1 text-xs font-medium ${filter === i ? 'bg-violet-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300'}`}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${filter === i ? 'bg-brand-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300'}`}
           >
             {label}
           </button>

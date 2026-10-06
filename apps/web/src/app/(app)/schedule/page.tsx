@@ -112,7 +112,7 @@ export default function SchedulePage() {
             <section
               key={day.date}
               aria-label={WEEKDAY.format(new Date(`${day.date}T00:00:00Z`))}
-              className={`flex min-h-32 flex-col gap-2 rounded-lg border p-2 ${day.date === today ? 'border-violet-600 bg-violet-50/40' : 'border-slate-200 bg-white'}`}
+              className={`flex min-h-32 flex-col gap-2 rounded-lg border p-2 ${day.date === today ? 'border-brand-600 bg-brand-50/40' : 'border-slate-200 bg-white'}`}
             >
               <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                 {WEEKDAY.format(new Date(`${day.date}T00:00:00Z`))}
@@ -121,7 +121,7 @@ export default function SchedulePage() {
                 <Link
                   key={v.id}
                   href={`/schedule/visits/${v.id}`}
-                  className={`rounded-md border px-2 py-1.5 text-xs hover:border-violet-400 ${v.staff ? 'border-slate-200 bg-slate-50' : 'border-dashed border-amber-400 bg-amber-50'}`}
+                  className={`rounded-md border px-2 py-1.5 text-xs hover:border-brand-400 ${v.staff ? 'border-slate-200 bg-slate-50' : 'border-dashed border-amber-400 bg-amber-50'}`}
                 >
                   <span className="block font-medium text-slate-900">
                     {formatTime(v.scheduledStart)}–{formatTime(v.scheduledEnd)}

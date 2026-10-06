@@ -95,20 +95,20 @@ export function PortalShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-800 text-white">
+      <header className="bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 text-white">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div className="flex items-center gap-3">
             <BrandMark className="h-10 w-10 text-base" />
             <div className="leading-tight">
               <p className="text-lg font-semibold">{me.data.agency.name}</p>
-              <p className="text-xs text-indigo-200">Patient &amp; family portal · Primordial Health</p>
+              <p className="text-xs text-brand-200">Patient &amp; family portal · Primordial Health</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-indigo-100 sm:inline">
+            <span className="hidden text-sm text-brand-100 sm:inline">
               {me.data.firstName} {me.data.lastName}
             </span>
-            <Link href="/change-password" className="text-sm text-indigo-100 underline hover:text-white">
+            <Link href="/change-password" className="text-sm text-brand-100 underline hover:text-white">
               Password
             </Link>
             <button
@@ -129,7 +129,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`rounded-xl px-3.5 py-2 text-sm transition-colors ${active ? 'bg-white font-medium text-indigo-950 shadow-sm' : 'text-indigo-100 hover:bg-white/10 hover:text-white'}`}
+                  className={`rounded-xl px-3.5 py-2 text-sm transition-colors ${active ? 'bg-white font-medium text-brand-950 shadow-sm' : 'text-brand-100 hover:bg-white/10 hover:text-white'}`}
                 >
                   {item.label}
                 </Link>

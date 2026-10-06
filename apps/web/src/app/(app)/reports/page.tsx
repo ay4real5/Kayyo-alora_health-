@@ -133,7 +133,7 @@ export default function ReportsPage() {
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-slate-900">Visits per day</h2>
-          <button type="button" className="text-xs text-violet-800 underline" onClick={() => download.mutate('visit-utilization')}>
+          <button type="button" className="text-xs text-brand-800 underline" onClick={() => download.mutate('visit-utilization')}>
             Download CSV
           </button>
         </div>
@@ -148,7 +148,7 @@ export default function ReportsPage() {
               <li key={p.payer} className="grid grid-cols-[9rem_1fr] items-center gap-3">
                 <span className="truncate text-slate-700">{p.payer}</span>
                 <span className="flex items-center gap-2">
-                  <span className="h-4 rounded-r bg-[#2a78d6]" style={{ width: `${Math.max(2, (p.patients / maxPayer) * 85)}%` }} aria-hidden />
+                  <span className="h-4 rounded-r bg-brand-600" style={{ width: `${Math.max(2, (p.patients / maxPayer) * 85)}%` }} aria-hidden />
                   <span className="tabular-nums text-slate-900">{p.patients}</span>
                 </span>
               </li>
@@ -174,7 +174,7 @@ export default function ReportsPage() {
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-slate-900">Staff productivity</h2>
-          <button type="button" className="text-xs text-violet-800 underline" onClick={() => download.mutate('staff-productivity')}>
+          <button type="button" className="text-xs text-brand-800 underline" onClick={() => download.mutate('staff-productivity')}>
             Download CSV
           </button>
         </div>
@@ -189,7 +189,7 @@ export default function ReportsPage() {
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-slate-900">Missed and cancelled visits</h2>
-          <button type="button" className="text-xs text-violet-800 underline" onClick={() => download.mutate('missed-visits')}>
+          <button type="button" className="text-xs text-brand-800 underline" onClick={() => download.mutate('missed-visits')}>
             Download CSV
           </button>
         </div>

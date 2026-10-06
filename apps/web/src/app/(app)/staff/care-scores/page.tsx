@@ -78,7 +78,7 @@ export default function CareScoresPage() {
               <Fragment key={r.staffId}>
                 <tr>
                   <td className="py-2 pr-4">
-                    <Link href={r.link} className="font-medium text-violet-800 hover:underline">
+                    <Link href={r.link} className="font-medium text-brand-800 hover:underline">
                       {r.name}
                     </Link>{' '}
                     <span className="text-slate-500">({r.discipline})</span>
@@ -93,7 +93,7 @@ export default function CareScoresPage() {
                     </td>
                   ))}
                   <td className="py-2 text-right">
-                    <button type="button" className="text-violet-800 hover:underline" aria-expanded={open === r.staffId} onClick={() => setOpen(open === r.staffId ? null : r.staffId)}>
+                    <button type="button" className="text-brand-800 hover:underline" aria-expanded={open === r.staffId} onClick={() => setOpen(open === r.staffId ? null : r.staffId)}>
                       {open === r.staffId ? 'Hide' : 'Why?'}
                     </button>
                   </td>

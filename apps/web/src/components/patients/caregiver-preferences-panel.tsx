@@ -69,7 +69,7 @@ export function CaregiverPreferencesPanel({ patientId }: { patientId: string }) 
         {prefs.data?.map((p) => (
           <li key={p.staff.id} className="flex items-start gap-2 text-sm">
             {p.kind === 'preferred' ? (
-              <Heart aria-hidden className="mt-0.5 h-4 w-4 text-violet-700" />
+              <Heart aria-hidden className="mt-0.5 h-4 w-4 text-brand-700" />
             ) : (
               <UserX aria-hidden className="mt-0.5 h-4 w-4 text-rose-700" />
             )}
@@ -83,7 +83,7 @@ export function CaregiverPreferencesPanel({ patientId }: { patientId: string }) 
               {p.note && <span className="block text-slate-600">{p.note}</span>}
             </span>
             {canEdit && (
-              <button type="button" className="text-sm text-violet-800 underline" onClick={() => remove.mutate(p.staff.id)}>
+              <button type="button" className="text-sm text-brand-800 underline" onClick={() => remove.mutate(p.staff.id)}>
                 Remove
               </button>
             )}

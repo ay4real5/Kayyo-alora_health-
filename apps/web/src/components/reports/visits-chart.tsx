@@ -17,10 +17,10 @@ export interface DailyVisits {
  * Aqua and yellow are under 3:1 against the surface, so the chart always has a legend and a table view.
  */
 const SERIES = [
-  { key: 'completed', label: 'Completed', color: '#2a78d6' },
-  { key: 'missed', label: 'Missed', color: '#eb6834' },
-  { key: 'cancelled', label: 'Cancelled', color: '#1baf7a' },
-  { key: 'open', label: 'Not yet done', color: '#eda100' },
+  { key: 'completed', label: 'Completed', color: '#0f766e' },
+  { key: 'missed', label: 'Missed', color: '#ef5a46' },
+  { key: 'cancelled', label: 'Cancelled', color: '#94a3b8' },
+  { key: 'open', label: 'Not yet done', color: '#5fdcc8' },
 ] as const;
 const INK = { secondary: '#52514e', muted: '#898781', grid: '#e1e0d9', baseline: '#c3c2b7', surface: '#ffffff' };
 
@@ -59,7 +59,7 @@ export function VisitsChart({ daily }: { daily: DailyVisits[] }) {
             </li>
           ))}
         </ul>
-        <button type="button" className="text-xs text-violet-800 underline" onClick={() => setAsTable((v) => !v)}>
+        <button type="button" className="text-xs text-brand-800 underline" onClick={() => setAsTable((v) => !v)}>
           {asTable ? 'Show chart' : 'Show as table'}
         </button>
       </div>

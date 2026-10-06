@@ -106,7 +106,7 @@ export default function ReferralPage() {
         subtitle={`Received ${formatDate(r.createdAt.slice(0, 10))} · ${r.channel === 'web_form' ? 'website form' : 'added by staff'}${r.source ? ` · ${r.source.name}` : ''}`}
         actions={
           <>
-            {r.patientId && <Link href={`/patients/${r.patientId}`} className="text-sm font-medium text-violet-800 hover:underline">Open patient</Link>}
+            {r.patientId && <Link href={`/patients/${r.patientId}`} className="text-sm font-medium text-brand-800 hover:underline">Open patient</Link>}
             {manage && !closed && (
               <Button variant="secondary" onClick={() => setEditing(!editing)}>
                 {editing ? 'Cancel' : 'Edit'}
@@ -222,7 +222,7 @@ export default function ReferralPage() {
         )}
         <ol className="flex flex-col gap-3 text-sm">
           {r.events.map((e) => (
-            <li key={e.id} className="border-l-2 border-violet-200 pl-3">
+            <li key={e.id} className="border-l-2 border-brand-200 pl-3">
               <p className="font-medium text-slate-900">{eventText(e)}</p>
               {e.note && <p className="whitespace-pre-line text-slate-700">{e.note}</p>}
               <p className="text-xs text-slate-500">

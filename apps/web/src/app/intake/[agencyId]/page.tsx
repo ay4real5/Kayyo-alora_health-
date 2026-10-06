@@ -69,7 +69,7 @@ export default function IntakePage() {
   return (
     <main className="mx-auto max-w-2xl p-4 sm:p-8">
       <div className="mb-6 flex items-center gap-3">
-        <HeartHandshake aria-hidden className="h-9 w-9 text-violet-700" />
+        <HeartHandshake aria-hidden className="h-9 w-9 text-brand-700" />
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Ask about home care</h1>
           <p className="text-sm text-slate-600">Tell us a little about who needs care and we&apos;ll call you back. No cost, no obligation.</p>

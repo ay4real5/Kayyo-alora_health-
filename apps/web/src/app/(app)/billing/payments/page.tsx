@@ -78,7 +78,7 @@ export default function PaymentsPage() {
         subtitle="Load a payer's remittance (835), check it, then post it to the claims."
         actions={
           can('billing:create') && (
-            <label className="inline-flex cursor-pointer items-center rounded-md bg-violet-700 px-4 py-2 text-sm font-medium text-white hover:bg-violet-800">
+            <label className="inline-flex cursor-pointer items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800">
               Load 835 file
               <input type="file" accept=".835,.edi,.txt,.x12" className="sr-only" onChange={onFile} aria-label="835 file" />
             </label>
@@ -93,7 +93,7 @@ export default function PaymentsPage() {
           {payments.data?.data.map((p) => (
             <li key={p.id} className="py-3 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <button type="button" className="text-left font-medium text-violet-800 hover:underline" onClick={() => setOpen(open === p.id ? null : p.id)}>
+                <button type="button" className="text-left font-medium text-brand-800 hover:underline" onClick={() => setOpen(open === p.id ? null : p.id)}>
                   {p.payer?.name ?? 'Unknown payer'} · {money(p.paymentAmount)} {p.paymentMethod ? `(${p.paymentMethod})` : ''} ·{' '}
                   {p.paymentDate ? formatDate(p.paymentDate) : 'no date'} · trace {p.checkNumber ?? '—'}
                 </button>
@@ -130,7 +130,7 @@ export default function PaymentsPage() {
                       <tr key={d.id}>
                         <td className="py-1 pr-3 font-mono">
                           {d.claim ? (
-                            <Link href={`/billing/claims/${d.claim.id}`} className="text-violet-800 hover:underline">
+                            <Link href={`/billing/claims/${d.claim.id}`} className="text-brand-800 hover:underline">
                               {d.claimNumber}
                             </Link>
                           ) : (
