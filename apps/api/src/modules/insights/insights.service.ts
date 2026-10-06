@@ -8,6 +8,7 @@ import { AuthorizationsService, type AuthorizationRisk } from '../billing/author
 import type { CheckCode } from '../billing/billing-readiness.js';
 import { BillingReadinessService } from '../billing/billing-readiness.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
+import { WorkforceService } from './workforce.service.js';
 
 /** How far back "money at risk" looks: unbilled, blocked completed visits from the last 60 days. */
 export const AT_RISK_DAYS = 60;
@@ -53,7 +54,8 @@ export interface CommandCenter {
     unassigned: { id: string; date: string; start: string; end: string; visitType: string; patient: string; link: string }[];
   };
   documentation?: { missingNotes: number; draftNotes: number };
-  evv?: { pendingCorrections: number; flaggedLast7Days: number };
+  /** `anomalies` / `criticalAnomalies` (last 14 days, D-097) only for people who can approve EVV. */
+  evv?: { pendingCorrections: number; flaggedLast7Days: number; anomalies?: number; criticalAnomalies?: number };
   credentials?: { expired: number; expiringIn7Days: number; expiringIn30Days: number };
   authorizations?: { atRisk: (AuthorizationRisk & { link: string })[] };
   money?: {
@@ -83,6 +85,7 @@ export class InsightsService {
     private readonly audit: AuditService,
     private readonly authorizations: AuthorizationsService,
     private readonly readiness: BillingReadinessService,
+    private readonly workforce: WorkforceService,
   ) {}
 
   async commandCenter(caller: AuthUser): Promise<CommandCenter> {
@@ -101,7 +104,14 @@ export class InsightsService {
     ]);
     if (coverage) result.coverage = coverage;
     if (documentation) result.documentation = documentation;
-    if (evv) result.evv = evv;
+    if (evv) {
+      result.evv = evv;
+      if (can('evv:approve')) {
+        const { items } = await this.workforce.anomalies(caller);
+        result.evv.anomalies = items.length;
+        result.evv.criticalAnomalies = items.filter((a) => a.severity === 'critical').length;
+      }
+    }
     if (credentials) result.credentials = credentials;
     if (authorizations) result.authorizations = { atRisk: authorizations.map((a) => ({ ...a, link: `/patients/${a.patient.id}` })) };
     if (money) result.money = money;
@@ -305,6 +315,16 @@ export function attentionItems(c: CommandCenter): AttentionItem[] {
       count: c.evv.flaggedLast7Days,
       link: '/evv',
     });
+    if (c.evv.anomalies !== undefined) {
+      add({
+        key: 'evv_anomalies',
+        severity: c.evv.criticalAnomalies ? 'critical' : 'warning',
+        title: `${plural(c.evv.anomalies, 'EVV pattern')} to look at`,
+        detail: 'Overlapping visits, travel faster than driving, or repeated corrections and location misses (last 14 days).',
+        count: c.evv.anomalies,
+        link: '/evv?tab=anomalies',
+      });
+    }
   }
   if (c.documentation) {
     add({
