@@ -16,15 +16,22 @@ import { CurrentUser, type AuthUser } from '../../common/decorators/current-user
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import {
   AddTasksDto,
+  CareUpdateDto,
   CreateVisitNoteDto,
   CreateVitalsDto,
   EnteredInErrorDto,
+  OrganizeNoteDto,
+  ReportFlagDto,
   UpdateTaskDto,
   UpdateVisitNoteDto,
 } from './dto/visit-docs.dto.js';
+import { Throttle } from '@nestjs/throttler';
+import { NoteAiService } from './note-ai.service.js';
 import { VisitDocsService } from './visit-docs.service.js';
 
 const visitId = () => new ParseUUIDPipe();
+/** AI calls cost money and time: a few a minute per person. */
+const AI_LIMIT = { default: { limit: 15, ttl: 60_000 } };
 
 /**
  * Visit documentation (DESIGN.md §6.5, DECISIONS D-039). Reads follow visit access; writes are the visit's own
@@ -33,7 +40,66 @@ const visitId = () => new ParseUUIDPipe();
 @ApiTags('visit documentation')
 @Controller('schedule/visits/:visitId')
 export class VisitDocsController {
-  constructor(private readonly docs: VisitDocsService) {}
+  constructor(
+    private readonly docs: VisitDocsService,
+    private readonly noteAi: NoteAiService,
+  ) {}
+
+  // ── AI help (D-096) ──────────────────────────────────────────────────────────────────────────────────
+
+  /** Dictated text → a note draft for the caregiver to review. Nothing is saved. */
+  @Permissions('visit_notes:create')
+  @Throttle(AI_LIMIT)
+  @Post('notes/organize')
+  @HttpCode(HttpStatus.OK)
+  organizeNote(@CurrentUser() caller: AuthUser, @Param('visitId', visitId()) id: string, @Body() dto: OrganizeNoteDto) {
+    return this.noteAi.organize(caller, id, dto.text);
+  }
+
+  @Permissions('compliance:create')
+  @Audit({ action: 'REPORT_NOTE_INCIDENT_FLAG', idParam: 'noteId' })
+  @Post('notes/:noteId/incident-flag/report')
+  @HttpCode(HttpStatus.OK)
+  reportFlag(
+    @CurrentUser() caller: AuthUser,
+    @Param('visitId', visitId()) id: string,
+    @Param('noteId', new ParseUUIDPipe()) noteId: string,
+    @Body() dto: ReportFlagDto,
+  ) {
+    return this.noteAi.decideFlag(caller, id, noteId, { action: 'report', ...dto });
+  }
+
+  @Permissions('compliance:update')
+  @Audit({ action: 'DISMISS_NOTE_INCIDENT_FLAG', idParam: 'noteId' })
+  @Post('notes/:noteId/incident-flag/dismiss')
+  @HttpCode(HttpStatus.OK)
+  dismissFlag(@CurrentUser() caller: AuthUser, @Param('visitId', visitId()) id: string, @Param('noteId', new ParseUUIDPipe()) noteId: string) {
+    return this.noteAi.decideFlag(caller, id, noteId, { action: 'dismiss' });
+  }
+
+  @Permissions('visits:read')
+  @Get('care-update')
+  careUpdate(@CurrentUser() caller: AuthUser, @Param('visitId', visitId()) id: string) {
+    return this.noteAi.getCareUpdate(caller, id);
+  }
+
+  /** Send (or correct) the family update for this visit; it appears in the family portal. */
+  @Permissions('visit_notes:create')
+  @Audit({ action: 'SEND_CARE_UPDATE' })
+  @Post('care-update')
+  @HttpCode(HttpStatus.OK)
+  saveCareUpdate(@CurrentUser() caller: AuthUser, @Param('visitId', visitId()) id: string, @Body() dto: CareUpdateDto) {
+    return this.noteAi.saveCareUpdate(caller, id, dto);
+  }
+
+  /** A family-friendly draft from the visit note (AI); the caregiver edits it before sending. */
+  @Permissions('visit_notes:create')
+  @Throttle(AI_LIMIT)
+  @Post('care-update/suggest')
+  @HttpCode(HttpStatus.OK)
+  suggestCareUpdate(@CurrentUser() caller: AuthUser, @Param('visitId', visitId()) id: string) {
+    return this.noteAi.suggestCareUpdate(caller, id);
+  }
 
   @Permissions('visits:read')
   @Audit({ action: 'VIEW_VISIT_NOTES', resourceType: 'visits', idParam: 'visitId' })
@@ -84,12 +150,14 @@ export class VisitDocsController {
   @Audit({ action: 'SIGN_VISIT_NOTE', idParam: 'noteId' })
   @Post('notes/:noteId/sign')
   @HttpCode(HttpStatus.OK)
-  signNote(
+  async signNote(
     @CurrentUser() caller: AuthUser,
     @Param('visitId', visitId()) id: string,
     @Param('noteId', new ParseUUIDPipe()) noteId: string,
   ) {
-    return this.docs.signNote(caller, id, noteId);
+    const note = await this.docs.signNote(caller, id, noteId);
+    this.noteAi.scanInBackground(note.id); // D-096
+    return note;
   }
 
   /** Finalises a note without a clinical signature (aides); locked afterwards. */
@@ -97,12 +165,14 @@ export class VisitDocsController {
   @Audit({ action: 'SUBMIT_VISIT_NOTE', idParam: 'noteId' })
   @Post('notes/:noteId/submit')
   @HttpCode(HttpStatus.OK)
-  submitNote(
+  async submitNote(
     @CurrentUser() caller: AuthUser,
     @Param('visitId', visitId()) id: string,
     @Param('noteId', new ParseUUIDPipe()) noteId: string,
   ) {
-    return this.docs.submitNote(caller, id, noteId);
+    const note = await this.docs.submitNote(caller, id, noteId);
+    this.noteAi.scanInBackground(note.id); // D-096
+    return note;
   }
 
   @Permissions('visits:read')

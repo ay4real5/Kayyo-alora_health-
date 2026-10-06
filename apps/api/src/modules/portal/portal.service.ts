@@ -85,6 +85,7 @@ export class PortalService {
         scheduledStart: true,
         scheduledEnd: true,
         staff: { select: { user: { select: { firstName: true, lastName: true } } } },
+        careUpdates: { select: { summary: true, mood: true, createdAt: true } },
       },
       orderBy: [{ scheduledDate: 'asc' }, { scheduledStart: 'asc' }],
     });
@@ -96,6 +97,8 @@ export class PortalService {
       start: fromTime(v.scheduledStart),
       end: fromTime(v.scheduledEnd),
       caregiver: v.staff ? `${v.staff.user.firstName} ${v.staff.user.lastName.charAt(0)}.` : null,
+      /** The caregiver's update for the family (D-096), if they sent one. */
+      careUpdate: v.careUpdates[0] ? { summary: v.careUpdates[0].summary, mood: v.careUpdates[0].mood, at: v.careUpdates[0].createdAt } : null,
     }));
     return {
       upcoming: views.filter((v) => v.date >= today && (v.status === 'scheduled' || v.status === 'in_progress')),

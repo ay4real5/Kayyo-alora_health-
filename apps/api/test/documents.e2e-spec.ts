@@ -8,6 +8,7 @@ import { toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
+import { NoteAiService } from '../src/modules/visit-docs/note-ai.service.js';
 import { setupApp } from '../src/setup-app.js';
 import { loginForTests } from './login-helper.js';
 
@@ -95,6 +96,8 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
   });
 
   afterAll(async () => {
+    await app.get(NoteAiService).idle(); // incident scans of submitted notes (D-096)
+    await prisma.notification.deleteMany({ where: { agencyId } });
     await prisma.document.updateMany({ where: { agencyId }, data: { previousVersionId: null } });
     await prisma.document.deleteMany({ where: { agencyId } }); // blobs cascade
     await prisma.visit.deleteMany({ where: { agencyId } });

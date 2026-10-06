@@ -8,6 +8,7 @@ import { toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
+import { NoteAiService } from '../src/modules/visit-docs/note-ai.service.js';
 import { setupApp } from '../src/setup-app.js';
 import { loginForTests } from './login-helper.js';
 
@@ -61,7 +62,9 @@ describe.skipIf(!hasDb)('Visit documentation (e2e)', () => {
   });
 
   afterAll(async () => {
+    await app.get(NoteAiService).idle(); // incident scans of submitted notes (D-096) may still be running
     for (const id of [agencyId, otherAgencyId]) {
+      await prisma.notification.deleteMany({ where: { agencyId: id } });
       await prisma.visit.deleteMany({ where: { agencyId: id } }); // notes, vitals, tasks cascade
       await prisma.patient.deleteMany({ where: { agencyId: id } });
       await purgeAuditLogs(prisma, id);
