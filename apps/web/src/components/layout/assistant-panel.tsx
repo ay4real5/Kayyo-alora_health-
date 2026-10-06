@@ -56,7 +56,11 @@ export function AssistantPanel() {
     onSuccess: (data) => setTurns((t) => [...t, { role: 'assistant', content: data.reply, lookups: data.lookups }]),
   });
 
-  useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [turns, ask.isPending]);
+  // Braces matter: newer browsers return a Promise from scrollIntoView, and an effect must return nothing or a
+  // clean-up function — returning the Promise crashed the page ("destroy is not a function").
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: 'end' });
+  }, [turns, ask.isPending]);
 
   if (!allowed || !status.data?.enabled) return null;
 
