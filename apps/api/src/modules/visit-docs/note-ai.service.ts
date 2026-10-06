@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, type OnApplicationShutdown } from '@nestjs/common';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { fromDate } from '../../common/utils/dates.js';
 import { PrismaService } from '../../database/prisma.service.js';
@@ -49,8 +49,10 @@ Decide only from the note. Negated mentions ("no falls", "denies pain") are not 
  * - care updates: a short family-friendly update for the portal, optionally suggested from the note.
  */
 @Injectable()
-export class NoteAiService {
+export class NoteAiService implements OnApplicationShutdown {
   private readonly logger = new Logger(NoteAiService.name);
+  /** Scans started by scanInBackground and not finished yet. */
+  private readonly inFlight = new Set<Promise<void>>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -115,6 +117,21 @@ export class NoteAiService {
       concerns: (out.concerns ?? []).map(s).filter(Boolean),
       possibleIncidents: [...incidents.entries()].map(([type, reason]) => ({ type, label: FLAG_LABEL[type], reason })),
     };
+  }
+
+  /** Start scanSubmitted without waiting for it (submit/sign answer straight away). */
+  scanInBackground(noteId: string): void {
+    const scan = this.scanSubmitted(noteId).finally(() => this.inFlight.delete(scan));
+    this.inFlight.add(scan);
+  }
+
+  /** Resolves once every background scan has finished (shutdown, and tests before cleanup). */
+  async idle(): Promise<void> {
+    while (this.inFlight.size) await Promise.all([...this.inFlight]);
+  }
+
+  async onApplicationShutdown(): Promise<void> {
+    await this.idle();
   }
 
   /** Runs after submit/sign; never throws (the note is already saved). */

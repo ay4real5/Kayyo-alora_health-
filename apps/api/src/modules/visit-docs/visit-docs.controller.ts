@@ -156,7 +156,7 @@ export class VisitDocsController {
     @Param('noteId', new ParseUUIDPipe()) noteId: string,
   ) {
     const note = await this.docs.signNote(caller, id, noteId);
-    void this.noteAi.scanSubmitted(note.id); // in the background (D-096)
+    this.noteAi.scanInBackground(note.id); // D-096
     return note;
   }
 
@@ -171,7 +171,7 @@ export class VisitDocsController {
     @Param('noteId', new ParseUUIDPipe()) noteId: string,
   ) {
     const note = await this.docs.submitNote(caller, id, noteId);
-    void this.noteAi.scanSubmitted(note.id); // in the background (D-096)
+    this.noteAi.scanInBackground(note.id); // D-096
     return note;
   }
 

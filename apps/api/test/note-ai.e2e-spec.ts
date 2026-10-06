@@ -55,6 +55,7 @@ describe.skipIf(!hasDb)('AI documentation (e2e)', () => {
   });
 
   afterAll(async () => {
+    await app.get(NoteAiService).idle();
     delete process.env.ANTHROPIC_API_KEY;
     await prisma.incidentReport.deleteMany({ where: { agencyId } });
     await prisma.visit.deleteMany({ where: { agencyId } });
