@@ -127,7 +127,7 @@ export class NoteAiService implements OnApplicationShutdown {
 
   /** Resolves once every background scan has finished (shutdown, and tests before cleanup). */
   async idle(): Promise<void> {
-    while (this.inFlight.size) await Promise.all([...this.inFlight]);
+    while (this.inFlight.size) await Promise.all(this.inFlight);
   }
 
   async onApplicationShutdown(): Promise<void> {
