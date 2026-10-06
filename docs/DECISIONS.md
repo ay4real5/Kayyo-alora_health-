@@ -1793,3 +1793,40 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - Off by default. Turned on by the agency setting `settings.recognitionBadges`, through `PATCH /agency`
     `{recognitionBadges}` (merged into the settings JSON) and Settings → Agency.
   - Shown under "My badges" on the app's Profile tab.
+
+### D-098 — Referral pipeline, sources report and public intake form (Phase F)
+2026-10-06 · owner's idea list (referral CRM, "I need care" intake) + Claude Code
+- **Model**: new tables `referral_sources`, `referrals` and `referral_events` (history: created, status change, note,
+  admitted).
+- **Stages**: new → contacted → assessment → authorization_pending → ready → admitted, plus lost (needs a reason).
+  - Stages can move in any direction except into `admitted`: that only happens through **Admit**.
+  - Admit builds a `CreatePatientDto` from the referral plus what it lacks (date of birth required; gender, street,
+    state, admission date optional).
+  - It calls `PatientsService.admit`, so every patient rule applies, then links the patient and marks the referral
+    admitted. A guarded update stops a double admission.
+  - It needs `referrals:manage` **and** `patients:create`.
+- **Permissions**: new `referrals:read` and `referrals:manage`, for supervisors, office staff and agency admins.
+  Billing, aides and nurses don't get them. All routes are agency-scoped and audited (`@Permissions`, plus `@Audit`
+  on changes).
+- **Sources report**: `GET /referrals/sources/report`, default the last 90 days by date received. It shows each
+  source's referrals, admitted, lost and open counts, plus:
+  - conversion: admitted ÷ (admitted + lost);
+  - average days to admit.
+
+  Referrals without a source are grouped by channel (website form or manual).
+- **Public intake form**: `POST /api/v1/intake/:agencyId`, `@Public`, at most 5 per hour per address. The web page
+  `/intake/<agencyId>` is outside sign-in.
+  - It asks only what the office needs to call back (who needs care, city/ZIP, payer type, care needs, contact). It
+    says not to send medical records.
+  - The submitter must consent to be contacted and must give a phone number or email.
+  - A hidden `website` honeypot field: if it is filled in, the form says "accepted" but nothing is stored.
+  - Each submission creates a `web_form` referral and sends the `referral_received` alert (push and email, no PHI)
+    to `referrals:manage` holders.
+  - **Embedding**: every page sends `X-Frame-Options: DENY` and `frame-ancestors 'none'`, except `/intake/*`. There,
+    the CSP's `frame-ancestors` is `'self'` plus the web app setting `INTAKE_FRAME_ANCESTORS` (space-separated
+    origins, e.g. `https://primordialhealthservices.health https://www.primordialhealthservices.health`). The Sources
+    page shows the link and an `<iframe>` snippet.
+- **Command Center**: "new referrals waiting for a first call" and "referral follow-ups due" (`referrals:read`).
+- **Assistant**: read-only `list_referrals` tool (`referrals:read`).
+- **Not done yet**: the AI intake chat from the plan. It would need the BAA (people describe health needs), so it
+  waits until after December.

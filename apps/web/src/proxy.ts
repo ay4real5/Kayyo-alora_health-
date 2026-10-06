@@ -8,9 +8,12 @@ import { buildCsp } from './lib/csp';
  */
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const intake = request.nextUrl.pathname.startsWith('/intake/');
   const csp = buildCsp(nonce, {
     apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1',
     dev: process.env.NODE_ENV === 'development',
+    // The public "I need care" form can be embedded on the agency's own website (D-098).
+    ...(intake ? { frameAncestors: ["'self'", ...(process.env.INTAKE_FRAME_ANCESTORS ?? '').split(/\s+/).filter(Boolean)] } : {}),
   });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);

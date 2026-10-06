@@ -3,7 +3,7 @@
  * nonce (Next.js adds it to its own inline scripts), so injected markup can't run code. Styles allow inline because
  * Leaflet and Recharts set style attributes. Network calls go only to this origin and the API (HTTP + WebSocket).
  */
-export function buildCsp(nonce: string, opts: { apiUrl: string; dev: boolean }): string {
+export function buildCsp(nonce: string, opts: { apiUrl: string; dev: boolean; frameAncestors?: string[] }): string {
   const api = new URL(opts.apiUrl);
   const ws = `${api.protocol === 'https:' ? 'wss:' : 'ws:'}//${api.host}`;
   const directives: [string, string[]][] = [
@@ -18,7 +18,8 @@ export function buildCsp(nonce: string, opts: { apiUrl: string; dev: boolean }):
     ['object-src', ["'none'"]],
     ['base-uri', ["'self'"]],
     ['form-action', ["'self'"]],
-    ['frame-ancestors', ["'none'"]],
+    // Only the public intake form (D-098) may be embedded, and only by the sites listed in INTAKE_FRAME_ANCESTORS.
+    ['frame-ancestors', opts.frameAncestors?.length ? opts.frameAncestors : ["'none'"]],
   ];
   const policy = directives.map(([name, values]) => `${name} ${values.join(' ')}`);
   // Only when the API itself is HTTPS; upgrading a plain-http local setup would break it.

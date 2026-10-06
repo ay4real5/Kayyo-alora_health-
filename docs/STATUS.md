@@ -128,14 +128,16 @@
 ## In progress
 
 **Primordial Intelligence (Phase 5, owner's 25-idea list; plan in ROADMAP P5-01…P5-07).**
-- Done:
-  - Phases A to D (P5-01 to P5-04, D-093 to D-096) are merged and deployed.
-  - Phase E (P5-05, D-097) is on `task/P5-05-workforce-intelligence`, with a PR open.
-- **Next:** Phase F (P5-06): a referral CRM pipeline (new, contacted, assessment, authorization pending, ready,
-  admitted; admitted converts to a patient), a referral sources report, and a public "I need care" intake form that
-  creates a referral.
-- Then Phase G (P5-07). It needs owner accounts for payments.
-- Production is deployed after each phase merges.
+- Done: Phases A to E (P5-01 to P5-05, D-093 to D-097) are merged and deployed.
+- Phase F (P5-06, D-098, referrals and the intake form) is on `task/P5-06-referrals`, with a PR open.
+- After Phase F deploys, set the web app setting `INTAKE_FRAME_ANCESTORS` to the agency website's origins so the
+  intake form can be embedded there.
+- **Next:** Phase G (P5-07, platform). Most of it needs the owner first: a payments processor account, and a clinical
+  review before predictive risk. Parts that need no account:
+  - custom roles UI;
+  - a client timeline;
+  - a caregiver onboarding checklist;
+  - Primordial Academy (training → credential).
 
 **AI assistant (P4-24, D-092) is deployed to production (2026-10-06) but off there.**
 - It was tested end-to-end locally with Claude Haiku 4.5 against the dev database (demo agency).
@@ -194,6 +196,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-06 | Claude Code | P5-06 | Referral pipeline (D-098): board, detail/notes/admit→patient, sources + conversion report, public intake form (embeddable), alerts, Command Center items. |
 | 2026-10-06 | Claude Code | P5-05 | Workforce intelligence (D-097): EVV patterns tab and Command Center item, explainable Care Scores (admins and supervisors), opt-in recognition badges in the app. |
 | 2026-10-06 | Claude Code | P5-04 | AI documentation (D-096): tidy-up of dictated notes, incident detection + report/dismiss, family care updates in the portal. Merged and deployed. |
 | 2026-10-06 | Claude Code | P5-03 | Assistant actions behind Confirm cards (D-095): assign, offer open shift, decide time off, calculate/export payroll. |
