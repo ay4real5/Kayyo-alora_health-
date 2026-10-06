@@ -1695,3 +1695,37 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - preferred language and caregiver gender on the patient form;
   - gender and home coordinates on the staff form.
 - **Assistant**: `suggest_caregivers` (`visits:assign`) takes a visit id or a slot.
+
+### D-096 — AI documentation: dictation tidy-up, incident detection, family care updates (Phase D)
+2026-10-06 · owner's idea list (voice-to-documentation, AI incident detection, family care updates) + Claude Code
+- **Shared `ClaudeService`** (`modules/ai`, global) uses the same gate as the assistant: off without
+  `ANTHROPIC_API_KEY`, and in production off until `ASSISTANT_BAA_CONFIRMED`. Model is `ASSISTANT_MODEL`
+  (Haiku 4.5).
+  - Structured answers come back via a tool call. The tool is forced on Claude 4.x / Haiku 4.5; newer models get an
+    instruction plus `auto`, because they reject forced tool choice.
+  - `GET /ai/status` tells the apps whether to show AI buttons. Prompt and response text is never logged.
+- **Dictation**: the caregiver speaks with the phone keyboard's microphone. No audio is recorded or stored by us, and
+  no microphone permission is needed. Keyboard dictation is done by the phone's OS (Apple or Google).
+- **Tidy up**: `POST /schedule/visits/:id/notes/organize` (`visit_notes:create`; the visit's own caregiver, clocked in)
+  returns a draft and saves nothing. The draft contains:
+  - a narrative, or SOAP sections for clinicians;
+  - tasks done, matched only to the visit's real task ids;
+  - concerns for the office;
+  - possible incidents (the AI's list plus the keyword rules).
+
+  The caregiver reviews it and submits it the normal way.
+- **Incident detection**: after `submit` or `sign` (controller, in the background, never failing the request),
+  `NoteAiService.scanSubmitted`:
+  - With AI on, Claude decides and writes a one-sentence reason. Keyword mentions of fall, abuse/neglect or a medical
+    emergency are flagged anyway, so they are never silently dropped.
+  - With AI off, the pure `keywordIncidents` (unit-tested, negation-aware) decides.
+  - Flags are stored on `visit_notes` (`incident_flag_type`, `incident_flag_reason`, `incident_flagged_at`, and
+    `incident_flag_status` open / reported / dismissed).
+  - A new notification type, `incident_flagged` (push and email by default), goes to `compliance:update` holders. Its
+    text contains no PHI.
+  - On the visit page, a banner lets staff **file the prefilled incident report** (`…/incident-flag/report`,
+    `compliance:create`) or **dismiss** it (`…/incident-flag/dismiss`, `compliance:update`).
+- **Family care updates**: the `care_updates` table holds one per visit.
+  - `POST …/care-update/suggest` (AI): a warm 2–4 sentence update with no diagnoses, medications or vital numbers.
+  - `POST …/care-update`: the caregiver edits and sends it.
+  - The family portal's visit list shows it; staff see it on the visit page.

@@ -107,6 +107,8 @@ export interface VisitNote {
   plan: string | null;
   narrative: string | null;
   amendsNoteId: string | null;
+  /** Possible incident found in the note (D-096). */
+  incidentFlag: { type: string; label: string; reason: string | null; status: string } | null;
   submittedAt: string | null;
   signedAt: string | null;
   createdAt: string;
