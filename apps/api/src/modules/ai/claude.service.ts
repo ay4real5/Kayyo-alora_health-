@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { Global, Injectable, Logger, Module, ServiceUnavailableException } from '@nestjs/common';
+import { Controller, Get, Global, Injectable, Logger, Module, ServiceUnavailableException } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppEnv, type EnvironmentVariables } from '../../config/env.validation.js';
 
@@ -61,6 +62,18 @@ export class ClaudeService {
   }
 }
 
+/** Whether AI help is switched on (the apps show the AI buttons only then). Any signed-in user. */
+@ApiTags('ai')
+@Controller('ai')
+export class AiController {
+  constructor(private readonly claude: ClaudeService) {}
+
+  @Get('status')
+  status() {
+    return { enabled: this.claude.enabled };
+  }
+}
+
 @Global()
-@Module({ providers: [ClaudeService], exports: [ClaudeService] })
+@Module({ controllers: [AiController], providers: [ClaudeService], exports: [ClaudeService] })
 export class AiModule {}
