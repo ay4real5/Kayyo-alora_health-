@@ -50,6 +50,11 @@ export default function StaffPage() {
         subtitle="Caregivers and clinicians: disciplines, credentials, availability and time off."
         actions={
           <>
+            {can('staff:update') && can('reports:read') && (
+              <ButtonLink href="/staff/care-scores" variant="secondary">
+                Care Scores
+              </ButtonLink>
+            )}
             <ButtonLink href="/staff/credentials" variant="secondary">
               Credentials needing attention
             </ButtonLink>
