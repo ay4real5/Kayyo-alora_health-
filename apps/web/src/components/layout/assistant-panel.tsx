@@ -6,12 +6,15 @@ import Link from 'next/link';
 import { Fragment, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { AssistantActionCard, type ActionPreview } from './assistant-action-card';
 import { NAVIGATION } from './navigation';
 
 interface Turn {
   role: 'user' | 'assistant';
   content: string;
   lookups?: string[];
+  /** Changes prepared for the person to confirm (D-095). */
+  actions?: ActionPreview[];
 }
 
 const LOOKUP_LABELS: Record<string, string> = {
@@ -25,6 +28,11 @@ const LOOKUP_LABELS: Record<string, string> = {
   compliance_overview: 'compliance',
   todays_priorities: 'today’s priorities',
   suggest_caregivers: 'caregiver matches',
+  prepare_export_payroll: 'payroll export',
+  prepare_calculate_payroll: 'payroll',
+  prepare_decide_time_off: 'time off',
+  prepare_offer_open_shift: 'open shift',
+  prepare_assign_caregiver: 'assign',
 };
 
 const EXAMPLES = ['Which visits have no caregiver this week?', 'Find the patient named …', 'How do I add a new caregiver?'];
@@ -50,12 +58,12 @@ export function AssistantPanel() {
   const ask = useMutation({
     mutationFn: async (history: Turn[]) =>
       (
-        await request<{ reply: string; lookups: string[] }>('/assistant/chat', {
+        await request<{ reply: string; lookups: string[]; actions?: ActionPreview[] }>('/assistant/chat', {
           method: 'POST',
           body: { messages: history.map(({ role, content }) => ({ role, content })) },
         })
       ).data,
-    onSuccess: (data) => setTurns((t) => [...t, { role: 'assistant', content: data.reply, lookups: data.lookups }]),
+    onSuccess: (data) => setTurns((t) => [...t, { role: 'assistant', content: data.reply, lookups: data.lookups, actions: data.actions }]),
   });
 
   // Braces matter: newer browsers return a Promise from scrollIntoView, and an effect must return nothing or a
@@ -125,7 +133,7 @@ export function AssistantPanel() {
         <Sparkles aria-hidden className="h-5 w-5 text-violet-300" />
         <div className="flex-1 leading-tight">
           <p className="font-semibold">Primordial assistant</p>
-          <p className="text-xs text-indigo-200">Finds things and explains the system. It can’t change anything.</p>
+          <p className="text-xs text-indigo-200">Finds things, explains the system, and prepares changes for you to confirm.</p>
         </div>
         {turns.length > 0 && (
           <button type="button" onClick={() => setTurns([])} className="rounded-lg px-2 py-1 text-xs text-indigo-100 hover:bg-white/10">
@@ -166,6 +174,9 @@ export function AssistantPanel() {
               <div className="rounded-2xl rounded-bl-md bg-slate-100 px-3 py-2 text-sm text-slate-900">
                 <RichText text={t.content} canOpen={(path) => canOpen(path, can)} onNavigate={() => setOpen(false)} />
               </div>
+              {t.actions?.map((a) => (
+                <AssistantActionCard key={`${a.kind}-${JSON.stringify(a.params)}`} action={a} onNavigate={() => setOpen(false)} />
+              ))}
               {t.lookups && t.lookups.length > 0 && (
                 <p className="px-1 text-xs text-slate-500">Looked up: {[...new Set(t.lookups.map((l) => LOOKUP_LABELS[l] ?? l))].join(', ')}</p>
               )}
@@ -274,7 +285,8 @@ function inline(text: string, allowed: (path: string) => boolean, onNavigate?: (
         ),
       );
     } else {
-      out.push(<strong key={m.index}>{m[3]}</strong>);
+      // Bold text can itself contain links.
+      out.push(<strong key={m.index}>{inline(m[3]!, allowed, onNavigate)}</strong>);
     }
     last = m.index! + m[0].length;
   }
