@@ -35,6 +35,9 @@ export default function LiveMap({ active }: { active: Active[] }) {
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          // The site sends no Referer anywhere (URLs can contain record ids), but OpenStreetMap's tile policy blocks
+          // requests without one ("Access blocked"). Send just our origin for map tiles — never the page path.
+          referrerPolicy="origin"
         />
         {active.map((a) => {
           const home = point(a.home);
