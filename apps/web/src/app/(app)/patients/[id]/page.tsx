@@ -10,6 +10,7 @@ import { ClinicalPanels } from '@/components/patients/clinical-panels';
 import { DocumentsPanel } from '@/components/patients/documents-panel';
 import { EligibilityPanel } from '@/components/patients/eligibility-panel';
 import { PortalAccessPanel } from '@/components/patients/portal-access-panel';
+import { TimelinePanel } from '@/components/patients/timeline-panel';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -106,6 +107,8 @@ export default function PatientDetailPage() {
         <DiagnosesPanel patient={p} canEdit={canEdit} onAct={run} />
         <AllergiesPanel patient={p} canEdit={canEdit} onAct={run} />
       </div>
+
+      <TimelinePanel patientId={p.id} />
 
       {can('visits:assign') && <CaregiverPreferencesPanel patientId={p.id} />}
 

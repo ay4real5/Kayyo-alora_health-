@@ -854,6 +854,30 @@
         ]
       }
     },
+    "/api/v1/patients/{id}/timeline": {
+      "get": {
+        "operationId": "PatientsController_timeline",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "One chronological view of the client (D-100), default the last 90 days; each kind needs its own permission.",
+        "tags": [
+          "patients"
+        ]
+      }
+    },
     "/api/v1/patients/{id}": {
       "get": {
         "operationId": "PatientsController_get",

@@ -13,6 +13,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
+import { IsDateOnly } from '../../common/validators/is-date-only.js';
 import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
@@ -27,6 +29,18 @@ import {
   UpdatePatientDto,
 } from './dto/patients.dto.js';
 import { PatientsService } from './patients.service.js';
+import { TimelineService } from './timeline.service.js';
+
+/** Optional agency-date window for the timeline. */
+export class TimelineQueryDto {
+  @IsOptional()
+  @IsDateOnly()
+  from?: string;
+
+  @IsOptional()
+  @IsDateOnly()
+  to?: string;
+}
 
 const uuid = () => new ParseUUIDPipe();
 
@@ -37,7 +51,10 @@ const uuid = () => new ParseUUIDPipe();
 @ApiTags('patients')
 @Controller('patients')
 export class PatientsController {
-  constructor(private readonly patients: PatientsService) {}
+  constructor(
+    private readonly patients: PatientsService,
+    private readonly timelines: TimelineService,
+  ) {}
 
   @Permissions('patients:read')
   @Get()
@@ -50,6 +67,13 @@ export class PatientsController {
   @Post()
   admit(@CurrentUser() caller: AuthUser, @Body() dto: CreatePatientDto) {
     return this.patients.admit(caller, dto);
+  }
+
+  /** One chronological view of the client (D-100), default the last 90 days; each kind needs its own permission. */
+  @Permissions('patients:read')
+  @Get(':id/timeline')
+  timeline(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string, @Query() q: TimelineQueryDto) {
+    return this.timelines.forPatient(caller, id, q.from, q.to);
   }
 
   @Permissions('patients:read')

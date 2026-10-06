@@ -1846,3 +1846,24 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Web**: Settings → Roles (sidebar "Roles"). Custom roles are edited with a checkbox grid by area; boxes for
   permissions the editor doesn't hold are disabled. Built-in roles are listed for reference. They are assigned in
   Users, as before.
+
+### D-100 — Client timeline (Phase G, P5-08)
+2026-10-06 · owner's idea list (client timeline) + Claude Code
+- **Route**: `GET /patients/:id/timeline?from&to` (agency dates; default the last 90 days), with `patients:read`. The
+  patient must be visible to the caller (`PatientsService.get`, so the assigned-patient rules apply).
+- **Built on demand** from existing tables, newest first, at most 300 events. Each kind is included only when the
+  viewer holds its permission:
+
+  | Kind | Permission |
+  |---|---|
+  | Referral received | `referrals:read` |
+  | Admission and discharge dates | — |
+  | Completed, missed and cancelled visits; submitted and signed notes; family care updates | `visits:read` (the caller's own only, unless they have `visits:read_all`) |
+  | Flagged or rejected EVV records | `evv:read` |
+  | Incidents | `compliance:read` |
+  | Documents | `documents:read` |
+
+- **Headlines only**: event type, who, flags and status. Note text and incident descriptions stay on their own pages,
+  where reads are audited. Each event links there when it can.
+- **Web**: a Timeline card on the patient page, with filters (everything, visits & notes, problems) and the window
+  (30 days, 90 days or 1 year). The window is computed from the agency's today.
