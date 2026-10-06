@@ -127,6 +127,14 @@
 
 ## In progress
 
+**AI assistant (P4-24, D-092) is deployed to production (2026-10-06) but off there.**
+- It was tested end-to-end locally with Claude Haiku 4.5 against the dev database (demo agency).
+- To switch it on, the owner adds `ANTHROPIC_API_KEY` to the API app settings, and later sets
+  `ASSISTANT_BAA_CONFIRMED=true` only once a BAA with Anthropic is signed (P4-25).
+- The current key is a temporary owner key, to be replaced at go-live.
+
+**PR #13 (Android push, D-091)** is waiting on the owner's phone test.
+
 Nothing half-done. PRs #7 (backup drill), #8 (Create agency workflow) and #10 (P4-22 caregiver extras: mileage, time
 off, photos in messages; D-089, D-090) are merged. Production was redeployed with all of them on 2026-10-04.
 
