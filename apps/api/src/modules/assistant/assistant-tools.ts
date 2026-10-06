@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { DISCIPLINES, PATIENT_STATUSES, VISIT_STATUSES, type Permission } from '@alora/shared';
+import { DISCIPLINES, PATIENT_STATUSES, REFERRAL_STATUSES, VISIT_STATUSES, type Permission } from '@alora/shared';
 import { BadRequestException } from '@nestjs/common';
 import { plainToInstance, type ClassConstructor } from 'class-transformer';
 import { validateSync } from 'class-validator';
@@ -10,6 +10,8 @@ import { CLAIM_STATUSES, ListClaimsQueryDto } from '../billing/dto/claims.dto.js
 import type { ComplianceService } from '../compliance/compliance.service.js';
 import type { InsightsService } from '../insights/insights.service.js';
 import type { WorkforceService } from '../insights/workforce.service.js';
+import { ListReferralsQueryDto } from '../referrals/dto/referrals.dto.js';
+import type { ReferralsService } from '../referrals/referrals.service.js';
 import { ListPatientsQueryDto } from '../patients/dto/patients.dto.js';
 import type { PatientsService } from '../patients/patients.service.js';
 import type { PayrollService } from '../payroll/payroll.service.js';
@@ -52,6 +54,7 @@ export interface AssistantToolServices {
   insights: InsightsService;
   match: CaregiverMatchService;
   workforce: WorkforceService;
+  referrals: ReferralsService;
 }
 
 /** The model's arguments → the same validated query object the HTTP route would build. */
@@ -301,6 +304,23 @@ export function buildAssistantTools(s: AssistantToolServices): AssistantTool[] {
           allPatternsLink: '/evv?tab=anomalies',
         };
       },
+    },
+    {
+      name: 'list_referrals',
+      description:
+        "Referrals — people asking about care before they become patients (newest first): stage (new, contacted, assessment, authorization_pending, ready, admitted, lost), source, payer, follow-up date. status 'open' means not admitted or lost. search matches name, phone or email.",
+      permission: 'referrals:read',
+      inputSchema: schema({ status: str('Stage, or open', { enum: ['open', ...REFERRAL_STATUSES] }), search: str('Name, phone or email') }),
+      run: async (caller, input) =>
+        page(await s.referrals.list(caller, query(ListReferralsQueryDto, input)), (r) => ({
+          client: `${r.clientFirstName} ${r.clientLastName}`,
+          stage: r.status,
+          source: r.source?.name ?? (r.channel === 'web_form' ? 'website form' : null),
+          payer: r.payerType,
+          received: r.createdAt.toISOString().slice(0, 10),
+          nextFollowUp: r.nextFollowUp,
+          link: `/referrals/${r.id}`,
+        })),
     },
     {
       name: 'compliance_overview',

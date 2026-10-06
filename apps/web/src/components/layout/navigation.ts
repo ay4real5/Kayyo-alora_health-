@@ -21,6 +21,7 @@ import {
   Users,
   Wallet,
   HeartPulse,
+  Inbox,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -33,6 +34,7 @@ export const NAVIGATION: readonly { href: string; label: string; permission: str
   { href: '/schedule', label: 'Schedule', permission: 'visits:read', icon: CalendarDays, group: 'Care' },
   { href: '/monitor', label: 'Live monitor', permission: 'evv:read', icon: MapPinned, group: 'Care' },
   { href: '/evv', label: 'EVV review', permission: 'evv:read', icon: ShieldCheck, group: 'Care' },
+  { href: '/referrals', label: 'Referrals', permission: 'referrals:read', icon: Inbox, group: 'Care' },
   { href: '/patients', label: 'Patients', permission: 'patients:read', icon: HeartPulse, group: 'Care' },
   { href: '/staff', label: 'Staff', permission: 'staff:read', icon: Users, group: 'Care' },
   { href: '/physicians', label: 'Physicians', permission: 'physicians:read', icon: Stethoscope, group: 'Care' },

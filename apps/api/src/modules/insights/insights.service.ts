@@ -8,6 +8,7 @@ import { AuthorizationsService, type AuthorizationRisk } from '../billing/author
 import type { CheckCode } from '../billing/billing-readiness.js';
 import { BillingReadinessService } from '../billing/billing-readiness.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
+import { ReferralsService } from '../referrals/referrals.service.js';
 import { WorkforceService } from './workforce.service.js';
 
 /** How far back "money at risk" looks: unbilled, blocked completed visits from the last 60 days. */
@@ -57,6 +58,8 @@ export interface CommandCenter {
   /** `anomalies` / `criticalAnomalies` (last 14 days, D-097) only for people who can approve EVV. */
   evv?: { pendingCorrections: number; flaggedLast7Days: number; anomalies?: number; criticalAnomalies?: number };
   credentials?: { expired: number; expiringIn7Days: number; expiringIn30Days: number };
+  /** New referrals not yet contacted, and follow-ups due by today (D-098). */
+  referrals?: { newWaiting: number; followUpsDue: number };
   authorizations?: { atRisk: (AuthorizationRisk & { link: string })[] };
   money?: {
     expectedToday: number;
@@ -86,6 +89,7 @@ export class InsightsService {
     private readonly authorizations: AuthorizationsService,
     private readonly readiness: BillingReadinessService,
     private readonly workforce: WorkforceService,
+    private readonly referrals: ReferralsService,
   ) {}
 
   async commandCenter(caller: AuthUser): Promise<CommandCenter> {
@@ -115,6 +119,7 @@ export class InsightsService {
     if (credentials) result.credentials = credentials;
     if (authorizations) result.authorizations = { atRisk: authorizations.map((a) => ({ ...a, link: `/patients/${a.patient.id}` })) };
     if (money) result.money = money;
+    if (can('referrals:read')) result.referrals = await this.referrals.attention(caller.agencyId);
     result.attention = attentionItems(result);
 
     // Patient names appear here (unassigned visits, authorizations): record the view, as for any PHI read.
@@ -325,6 +330,24 @@ export function attentionItems(c: CommandCenter): AttentionItem[] {
         link: '/evv?tab=anomalies',
       });
     }
+  }
+  if (c.referrals) {
+    add({
+      key: 'referrals_new',
+      severity: 'warning',
+      title: `${plural(c.referrals.newWaiting, 'new referral')} waiting for a first call`,
+      detail: 'People asking about care — calling back quickly wins clients.',
+      count: c.referrals.newWaiting,
+      link: '/referrals',
+    });
+    add({
+      key: 'referrals_follow_up',
+      severity: 'info',
+      title: `${plural(c.referrals.followUpsDue, 'referral follow-up')} due`,
+      detail: 'Follow-up date is today or earlier.',
+      count: c.referrals.followUpsDue,
+      link: '/referrals',
+    });
   }
   if (c.documentation) {
     add({

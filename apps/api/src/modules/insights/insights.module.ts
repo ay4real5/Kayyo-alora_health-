@@ -4,6 +4,7 @@ import { IsDateString, IsOptional } from 'class-validator';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { BillingModule } from '../billing/billing.module.js';
+import { ReferralsModule } from '../referrals/referrals.module.js';
 import { InsightsService } from './insights.service.js';
 import { WorkforceService } from './workforce.service.js';
 
@@ -60,7 +61,7 @@ export class InsightsController {
 }
 
 @Module({
-  imports: [BillingModule],
+  imports: [BillingModule, ReferralsModule],
   controllers: [InsightsController],
   providers: [InsightsService, WorkforceService],
   exports: [InsightsService, WorkforceService],

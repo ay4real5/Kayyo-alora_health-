@@ -121,6 +121,6 @@ Owner's 25-idea list, phased. Each phase is its own branch and PR; AI features a
 - [x] **P5-03** `agent` Assistant actions behind a Confirm card (D-095): assign caregiver, offer open shift + notify, decide time off, calculate/export payroll (audited `ASSISTANT_ACTION`). deps: P5-02
 - [x] **P5-04** `agent` AI documentation (D-096): dictate the visit note in the app (on-device speech → Claude → structured fields, caregiver reviews); incident detection on submitted notes → prefilled incident report; opt-in family care updates in the portal.
 - [x] **P5-05** `agent` Workforce intelligence (D-097): EVV anomaly detection (overlaps, impossible travel, repeated corrections/geofence misses); explainable Care Score (admin-only decision support); optional recognition badges.
-- [ ] **P5-06** `agent` Growth: referral CRM pipeline + sources report; public "I need care" intake form → referral.
+- [x] **P5-06** `agent` Growth (D-098): referral CRM pipeline + sources report; public "I need care" intake form → referral.
 - [ ] **P5-07** `agent` Platform: portal invoices + online payments (processor account), care timeline, custom roles UI, caregiver onboarding checklist, Primordial Academy, public API, predictive client risk (clinical review first).
 

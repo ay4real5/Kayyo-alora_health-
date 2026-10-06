@@ -7,6 +7,7 @@ import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { BillingModule } from '../billing/billing.module.js';
 import { ComplianceModule } from '../compliance/compliance.module.js';
 import { InsightsModule } from '../insights/insights.module.js';
+import { ReferralsModule } from '../referrals/referrals.module.js';
 import { PatientsModule } from '../patients/patients.module.js';
 import { PayrollModule } from '../payroll/payroll.module.js';
 import { SchedulingModule } from '../scheduling/scheduling.module.js';
@@ -48,7 +49,7 @@ export class AssistantController {
 }
 
 @Module({
-  imports: [PatientsModule, StaffModule, SchedulingModule, BillingModule, PayrollModule, ComplianceModule, InsightsModule],
+  imports: [PatientsModule, StaffModule, SchedulingModule, BillingModule, PayrollModule, ComplianceModule, InsightsModule, ReferralsModule],
   controllers: [AssistantController],
   providers: [AssistantService],
 })

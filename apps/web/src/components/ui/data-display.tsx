@@ -83,6 +83,14 @@ export function StatusBadge({ status }: { status: string }) {
     partially_paid: 'bg-amber-50 text-amber-800 ring-amber-600/20',
     void: 'bg-slate-100 text-slate-600 ring-slate-500/20',
     overdue: 'bg-red-50 text-red-800 ring-red-600/20',
+    // Referral stages (D-098)
+    new: 'bg-sky-50 text-sky-800 ring-sky-600/20',
+    contacted: 'bg-violet-50 text-violet-800 ring-violet-600/20',
+    assessment: 'bg-violet-50 text-violet-800 ring-violet-600/20',
+    authorization_pending: 'bg-amber-50 text-amber-800 ring-amber-600/20',
+    ready: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
+    admitted: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
+    lost: 'bg-slate-100 text-slate-600 ring-slate-500/20',
   };
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ring-1 ring-inset ${tones[status] ?? tones.discharged}`}>

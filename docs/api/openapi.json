@@ -7561,6 +7561,402 @@
         ]
       }
     },
+    "/api/v1/referrals": {
+      "get": {
+        "operationId": "ReferralsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "new",
+                "contacted",
+                "assessment",
+                "authorization_pending",
+                "ready",
+                "admitted",
+                "lost",
+                "open"
+              ]
+            }
+          },
+          {
+            "name": "sourceId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Name, phone or email contains.",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      },
+      "post": {
+        "operationId": "ReferralsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReferralDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/board": {
+      "get": {
+        "operationId": "ReferralsController_board",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/sources": {
+      "get": {
+        "operationId": "ReferralsController_sources",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      },
+      "post": {
+        "operationId": "ReferralsController_createSource",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferralSourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/sources/{id}": {
+      "patch": {
+        "operationId": "ReferralsController_updateSource",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReferralSourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/sources/report": {
+      "get": {
+        "operationId": "ReferralsController_sourcesReport",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/{id}": {
+      "get": {
+        "operationId": "ReferralsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      },
+      "patch": {
+        "operationId": "ReferralsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReferralDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/{id}/status": {
+      "post": {
+        "operationId": "ReferralsController_setStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferralStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/{id}/notes": {
+      "post": {
+        "operationId": "ReferralsController_addNote",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferralNoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/{id}/admit": {
+      "post": {
+        "operationId": "ReferralsController_admit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdmitReferralDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/intake/{agencyId}": {
+      "post": {
+        "operationId": "IntakeController_submit",
+        "parameters": [
+          {
+            "name": "agencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntakeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "referrals"
+        ],
+        "security": []
+      }
+    },
     "/api/v1/ai/status": {
       "get": {
         "operationId": "AiController_status",
@@ -11765,6 +12161,385 @@
         "required": [
           "kind",
           "params"
+        ]
+      },
+      "ReferralSourceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "hospital",
+              "physician",
+              "social_worker",
+              "family",
+              "website",
+              "community",
+              "insurance",
+              "other"
+            ]
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          }
+        },
+        "required": [
+          "name",
+          "sourceType"
+        ]
+      },
+      "UpdateReferralSourceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "hospital",
+              "physician",
+              "social_worker",
+              "family",
+              "website",
+              "community",
+              "insurance",
+              "other"
+            ]
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateReferralDto": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignedToId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nextFollowUp": {
+            "type": "string"
+          },
+          "clientFirstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "clientLastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "dateOfBirth": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "zip": {
+            "type": "string"
+          },
+          "payerType": {
+            "type": "string",
+            "enum": [
+              "medicaid",
+              "medicare",
+              "private_pay",
+              "insurance",
+              "va",
+              "unknown"
+            ]
+          },
+          "careNeeds": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "contactRelationship": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "contactEmail": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          }
+        },
+        "required": [
+          "clientFirstName",
+          "clientLastName"
+        ]
+      },
+      "UpdateReferralDto": {
+        "type": "object",
+        "properties": {
+          "clientFirstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "clientLastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "dateOfBirth": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "zip": {
+            "type": "string"
+          },
+          "payerType": {
+            "type": "string",
+            "enum": [
+              "medicaid",
+              "medicare",
+              "private_pay",
+              "insurance",
+              "va",
+              "unknown"
+            ]
+          },
+          "careNeeds": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "contactRelationship": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "contactEmail": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "assignedToId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "nextFollowUp": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ReferralStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "new",
+              "contacted",
+              "assessment",
+              "authorization_pending",
+              "ready",
+              "lost"
+            ]
+          },
+          "lostReason": {
+            "type": "string",
+            "description": "Required when the status is `lost`.",
+            "maxLength": 500
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ReferralNoteDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "note"
+        ]
+      },
+      "AdmitReferralDto": {
+        "type": "object",
+        "properties": {
+          "dateOfBirth": {
+            "type": "string",
+            "description": "Required unless the referral already has one."
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "female",
+              "male",
+              "other",
+              "unknown"
+            ]
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "state": {
+            "type": "string"
+          },
+          "admissionDate": {
+            "type": "string"
+          }
+        }
+      },
+      "IntakeDto": {
+        "type": "object",
+        "properties": {
+          "submittedBy": {
+            "type": "string",
+            "description": "Who is filling in the form: the person needing care, or someone on their behalf.",
+            "enum": [
+              "self",
+              "someone_else"
+            ]
+          },
+          "consent": {
+            "type": "boolean"
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "clientFirstName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "clientLastName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "dateOfBirth": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "zip": {
+            "type": "string"
+          },
+          "payerType": {
+            "type": "string",
+            "enum": [
+              "medicaid",
+              "medicare",
+              "private_pay",
+              "insurance",
+              "va",
+              "unknown"
+            ]
+          },
+          "careNeeds": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "contactRelationship": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "contactEmail": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          }
+        },
+        "required": [
+          "submittedBy",
+          "consent",
+          "clientFirstName",
+          "clientLastName"
         ]
       },
       "OrganizeNoteDto": {
