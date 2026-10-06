@@ -11,6 +11,7 @@ import { InsightsService } from '../insights/insights.service.js';
 import { PatientsService } from '../patients/patients.service.js';
 import { PayrollService } from '../payroll/payroll.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
+import { CaregiverMatchService } from '../scheduling/caregiver-match.service.js';
 import { OpenShiftsService } from '../scheduling/open-shifts.service.js';
 import { VisitsService } from '../scheduling/visits.service.js';
 import { StaffService } from '../staff/staff.service.js';
@@ -62,8 +63,9 @@ export class AssistantService {
     payroll: PayrollService,
     compliance: ComplianceService,
     insights: InsightsService,
+    match: CaregiverMatchService,
   ) {
-    this.tools = buildAssistantTools({ patients, staff, visits, openShifts, timeOff, claims, payroll, compliance, insights });
+    this.tools = buildAssistantTools({ patients, staff, visits, openShifts, timeOff, claims, payroll, compliance, insights, match });
   }
 
   status(): AssistantStatus {

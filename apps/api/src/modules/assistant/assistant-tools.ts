@@ -14,6 +14,8 @@ import type { PatientsService } from '../patients/patients.service.js';
 import type { PayrollService } from '../payroll/payroll.service.js';
 import { ListOpenShiftsQueryDto } from '../scheduling/dto/open-shifts.dto.js';
 import { ListVisitsQueryDto } from '../scheduling/dto/scheduling.dto.js';
+import type { CaregiverMatchService } from '../scheduling/caregiver-match.service.js';
+import { SuggestCaregiversDto } from '../scheduling/dto/scheduling.dto.js';
 import type { OpenShiftsService } from '../scheduling/open-shifts.service.js';
 import type { VisitsService } from '../scheduling/visits.service.js';
 import { ListStaffQueryDto } from '../staff/dto/staff.dto.js';
@@ -47,6 +49,7 @@ export interface AssistantToolServices {
   payroll: PayrollService;
   compliance: ComplianceService;
   insights: InsightsService;
+  match: CaregiverMatchService;
 }
 
 /** The model's arguments → the same validated query object the HTTP route would build. */
@@ -104,6 +107,43 @@ export function buildAssistantTools(s: AssistantToolServices): AssistantTool[] {
               }
             : {}),
           ...(c.money ? { money: { expectedToday: c.money.expectedToday, visitsToday: c.money.visitsToday, atRisk: c.money.atRisk } } : {}),
+        };
+      },
+    },
+    {
+      name: 'suggest_caregivers',
+      description:
+        "Who should take a visit: eligible caregivers ranked best first, each with a score and plain-language reasons (past visits with the patient, preferences, language, distance, overtime, reliability), plus who can't take it and why. Give either visitId (from a list_visits link /schedule/visits/<id>) for a booked visit, or patientId + visitType + scheduledDate + scheduledStart + scheduledEnd for one not booked yet. Assigning is done on the visit page — link to it.",
+      permission: 'visits:assign',
+      inputSchema: schema({
+        visitId: str('A booked visit (from list_visits).'),
+        patientId: str('Patient id (from find_patients), for a visit not booked yet.'),
+        visitType: str('Visit type, e.g. home_health_aide, personal_care, skilled_nursing.'),
+        scheduledDate: str('YYYY-MM-DD'),
+        scheduledStart: str('HH:MM, 24-hour'),
+        scheduledEnd: str('HH:MM, 24-hour'),
+      }),
+      run: async (caller, input) => {
+        const result = input.visitId
+          ? await s.match.forVisit(caller, String(input.visitId))
+          : await (async () => {
+              const { visitId: _ignored, ...slot } = input;
+              const dto = plainToInstance(SuggestCaregiversDto, slot);
+              const errors = validateSync(dto, { whitelist: true, forbidNonWhitelisted: true });
+              if (errors.length) throw new BadRequestException('Give a visitId, or patientId, visitType, scheduledDate, scheduledStart and scheduledEnd');
+              return s.match.suggest(caller, { ...dto, agencyId: caller.agencyId });
+            })();
+        return {
+          visit: result.visit,
+          considered: result.considered,
+          suggestions: result.suggestions.map((x) => ({
+            caregiver: `${x.staff.firstName} ${x.staff.lastName} (${x.staff.discipline})`,
+            score: x.score,
+            reasons: x.reasons.map((r) => `${r.good ? '+' : '−'} ${r.text}`),
+            link: `/staff/${x.staff.id}`,
+          })),
+          cannotTake: result.excluded.map((x) => ({ caregiver: `${x.staff.firstName} ${x.staff.lastName}`, reason: x.reason })),
+          ...(input.visitId ? { visitLink: `/schedule/visits/${String(input.visitId)}` } : {}),
         };
       },
     },
