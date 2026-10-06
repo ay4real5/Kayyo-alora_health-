@@ -35,6 +35,7 @@ const LABELS: Partial<Record<NotificationType, string>> = {
   payroll_ready: 'My pay stub is ready',
   time_off_decided: 'My time-off request is decided',
   evv_correction_decided: 'My EVV correction is decided',
+  incident_flagged: 'A visit note may describe an incident',
   system: 'Security and serious-incident alerts',
 };
 

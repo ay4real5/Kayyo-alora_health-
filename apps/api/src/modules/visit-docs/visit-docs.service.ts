@@ -8,6 +8,7 @@ import {
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import { FLAG_LABEL, type IncidentFlagType } from './incident-detect.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import type {
   AddTasksDto,
@@ -29,7 +30,7 @@ type NoteRow = Prisma.VisitNoteGetPayload<{ include: typeof NOTE_INCLUDE }>;
 type VitalRow = Prisma.VisitVitalGetPayload<object>;
 type TaskRow = Prisma.VisitTaskGetPayload<object>;
 
-interface VisitRef {
+export interface VisitRef {
   id: string;
   status: string;
   staffId: string | null;
@@ -52,6 +53,8 @@ export interface VisitNoteView {
   submittedAt: Date | null;
   signedAt: Date | null;
   signedById: string | null;
+  /** Possible incident found in this note (D-096), for review. */
+  incidentFlag: { type: string; label: string; reason: string | null; status: string; flaggedAt: Date | null } | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -415,6 +418,15 @@ export class VisitDocsService {
     };
   }
 
+  /** For the note AI service (D-096): the same access rules as the note endpoints. */
+  async visitForReading(caller: AuthUser, visitId: string): Promise<VisitRef> {
+    return this.readableVisit(caller, visitId);
+  }
+
+  async visitForDocumenting(caller: AuthUser, visitId: string): Promise<VisitRef> {
+    return this.ownDocumentableVisit(caller, visitId);
+  }
+
   /** The caller's own visit, in progress or done — where documentation is written. */
   private async ownDocumentableVisit(caller: AuthUser, visitId: string): Promise<VisitRef> {
     const visit = await this.readableVisit(caller, visitId);
@@ -461,6 +473,15 @@ function toNoteView(note: NoteRow): VisitNoteView {
     signedAt: note.signedAt,
     signedById: note.signedById,
     createdAt: note.createdAt,
+    incidentFlag: note.incidentFlagType
+      ? {
+          type: note.incidentFlagType,
+          label: FLAG_LABEL[note.incidentFlagType as IncidentFlagType] ?? 'Possible incident',
+          reason: note.incidentFlagReason,
+          status: note.incidentFlagStatus ?? 'open',
+          flaggedAt: note.incidentFlaggedAt,
+        }
+      : null,
     updatedAt: note.updatedAt,
   };
 }

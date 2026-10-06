@@ -29,6 +29,7 @@ const ICONS: Record<string, IconName> = {
   payroll_ready: 'cash',
   time_off_decided: 'airplane',
   evv_correction_decided: 'time',
+  incident_flagged: 'warning',
   system: 'shield-checkmark',
 };
 

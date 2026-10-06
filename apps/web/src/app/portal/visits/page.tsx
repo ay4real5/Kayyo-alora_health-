@@ -30,6 +30,11 @@ function VisitList({ label, visits, empty }: { label: string; visits: PortalVisi
                 {humanize(v.visitType)}
                 {v.caregiver && ` · ${v.caregiver}`}
               </span>
+              {v.careUpdate && (
+                <span className="mt-1 block rounded-lg bg-violet-50 px-2 py-1 text-sm text-violet-950">
+                  “{v.careUpdate.summary}”{v.careUpdate.mood && <span className="text-violet-800"> · Mood: {v.careUpdate.mood}</span>}
+                </span>
+              )}
             </span>
             <span className="text-xs font-medium text-slate-700">{STATUS[v.status] ?? humanize(v.status)}</span>
           </li>

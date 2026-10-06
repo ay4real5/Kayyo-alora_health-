@@ -11,6 +11,7 @@ import { Field } from '@/components/ui/field';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { clockTime, flagLabel, humanize } from '@/lib/labels';
 import type { EvvRecord, OpenShift, VisitNote, VisitTask, Vital } from '@/lib/types/evv';
+import { IncidentFlagBanner } from './incident-flag-banner';
 
 /** EVV summary for a visit (supervisors). */
 export function VisitEvv({ visitId }: { visitId: string }) {
@@ -176,12 +177,14 @@ export function VisitRecords({ visitId }: { visitId: string }) {
         </ul>
       </div>
       <div>
+        <CareUpdateLine visitId={visitId} />
         <h2 className="mb-2 text-base font-semibold text-slate-900">Notes</h2>
         <ErrorAlert error={notes.error} />
         {notes.data?.length === 0 && <p className="text-sm text-slate-500">None written.</p>}
         <ul className="flex flex-col gap-3 text-sm">
           {notes.data?.map((n) => (
             <li key={n.id} className="rounded-md border border-slate-200 p-3">
+              {n.incidentFlag && <IncidentFlagBanner visitId={visitId} noteId={n.id} flag={n.incidentFlag} />}
               <p className="mb-1 flex items-center gap-2 text-slate-600">
                 {humanize(n.noteType)} by {n.author.firstName} {n.author.lastName}{' '}
                 <StatusBadge status={n.status} />
@@ -267,3 +270,20 @@ export function OfferOpenShift({ visitId, assigned }: { visitId: string; assigne
     </Card>
   );
 }
+
+/** The caregiver's update for the family (D-096), if they sent one — what the family sees in the portal. */
+function CareUpdateLine({ visitId }: { visitId: string }) {
+  const { request } = useAuth();
+  const update = useQuery({
+    queryKey: ['schedule', 'visit', visitId, 'care-update'],
+    queryFn: async () => (await request<{ summary: string; mood: string | null } | null>(`/schedule/visits/${visitId}/care-update`)).data,
+  });
+  if (!update.data) return null;
+  return (
+    <p className="mb-3 rounded-xl bg-violet-50 px-3 py-2 text-sm text-violet-950">
+      <span className="font-medium">Update sent to the family:</span> {update.data.summary}
+      {update.data.mood && <span className="text-violet-800"> (mood: {update.data.mood})</span>}
+    </p>
+  );
+}
+

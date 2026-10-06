@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Button, ErrorText, Input, colors, styles } from '@/components/ui';
 import { OfflineBanner } from '@/components/offline-banner';
 import { errorMessage, useAuth } from '@/lib/auth-context';
@@ -29,13 +29,35 @@ const SOAP: [keyof Fields, string][] = [
   ['plan', 'Plan'],
 ];
 
+interface Organized {
+  narrative: string;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  tasksDone: { id: string; taskName: string }[];
+  concerns: string[];
+  possibleIncidents: { type: string; label: string; reason: string }[];
+}
+
+interface CareUpdate {
+  summary: string;
+  mood: string | null;
+}
+
+const MOODS: [string, string][] = [
+  ['good', 'Good'],
+  ['okay', 'Okay'],
+  ['low', 'Low'],
+];
+
 /**
  * The caregiver's note for this visit (DECISIONS D-039): aides write what they did and submit; clinicians write SOAP
  * and sign. A finalised note is locked — corrections are addenda.
  */
 export default function NoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, request } = useAuth();
   const { read, submit, ops } = useOffline();
   const [stale, setStale] = useState(false);
   const canSign = Boolean(user?.permissions.includes('visit_notes:sign'));
@@ -46,6 +68,14 @@ export default function NoteScreen() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // AI help (D-096): only when the agency has it switched on, and only online.
+  const [aiOn, setAiOn] = useState(false);
+  const [tidying, setTidying] = useState(false);
+  const [organized, setOrganized] = useState<Organized | null>(null);
+  const [careUpdate, setCareUpdate] = useState<CareUpdate | null>(null);
+  const [careDraft, setCareDraft] = useState('');
+  const [careMood, setCareMood] = useState<string | null>(null);
+  const [careBusy, setCareBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -72,6 +102,77 @@ export default function NoteScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    request<{ enabled: boolean }>('/ai/status')
+      .then(({ data }) => setAiOn(data.enabled))
+      .catch(() => setAiOn(false));
+    request<CareUpdate | null>(`/schedule/visits/${id}/care-update`)
+      .then(({ data }) => setCareUpdate(data))
+      .catch(() => undefined);
+  }, [id, request]);
+
+  const tidy = async () => {
+    const text = [fields.narrative, fields.subjective, fields.objective, fields.assessment, fields.plan].filter((t) => t.trim()).join('\n');
+    if (!text.trim()) {
+      setError('Type or dictate what you did first, then tidy it up.');
+      return;
+    }
+    setTidying(true);
+    setError(null);
+    try {
+      const { data } = await request<Organized>(`/schedule/visits/${id}/notes/organize`, { method: 'POST', body: { text } });
+      setOrganized(data);
+      setFields((f) =>
+        canSign
+          ? {
+              subjective: data.subjective || f.subjective,
+              objective: data.objective || f.objective,
+              assessment: data.assessment || f.assessment,
+              plan: data.plan || f.plan,
+              narrative: data.narrative || f.narrative,
+            }
+          : { ...f, narrative: data.narrative || f.narrative },
+      );
+      setMessage('Tidied up — please read it and fix anything that isn’t right before submitting.');
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setTidying(false);
+    }
+  };
+
+  const suggestCareUpdate = async () => {
+    setCareBusy(true);
+    setError(null);
+    try {
+      const { data } = await request<CareUpdate>(`/schedule/visits/${id}/care-update/suggest`, { method: 'POST' });
+      setCareDraft(data.summary);
+      setCareMood(data.mood);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setCareBusy(false);
+    }
+  };
+
+  const sendCareUpdate = async () => {
+    if (!careDraft.trim()) return;
+    setCareBusy(true);
+    setError(null);
+    try {
+      const { data } = await request<CareUpdate>(`/schedule/visits/${id}/care-update`, {
+        method: 'POST',
+        body: { summary: careDraft.trim(), ...(careMood ? { mood: careMood } : {}) },
+      });
+      setCareUpdate(data);
+      setMessage('Care update sent to the family.');
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setCareBusy(false);
+    }
+  };
 
   const locked = notes.filter((n) => n.status !== 'draft');
   const mineLocked = locked.filter((n) => n.author.id === user?.id);
@@ -139,6 +240,26 @@ export default function NoteScreen() {
             multiline
             style={[styles.input, { minHeight: 120, textAlignVertical: 'top' }]}
           />
+          <Text style={{ color: colors.muted, fontSize: 13 }}>Tip: tap the microphone on your keyboard to speak instead of typing.</Text>
+          {aiOn && (
+            <Button title="Tidy up with AI" icon="sparkles-outline" variant="secondary" onPress={() => void tidy()} busy={tidying} />
+          )}
+          {organized && (organized.possibleIncidents.length > 0 || organized.concerns.length > 0 || organized.tasksDone.length > 0) && (
+            <View style={[styles.card, { gap: 6 }]}>
+              {organized.possibleIncidents.map((i) => (
+                <View key={i.type} style={{ backgroundColor: colors.warningBg, borderRadius: 12, padding: 10 }}>
+                  <Text style={{ color: colors.warning, fontWeight: '700' }}>{i.label}</Text>
+                  <Text style={{ color: colors.warning }}>{i.reason} Your supervisor will be asked to review this note. Call the office if anyone is hurt.</Text>
+                </View>
+              ))}
+              {organized.tasksDone.length > 0 && (
+                <Text style={{ color: colors.text }}>Tasks you mentioned: {organized.tasksDone.map((t) => t.taskName).join(', ')} — tick them on the Tasks screen.</Text>
+              )}
+              {organized.concerns.map((c) => (
+                <Text key={c} style={{ color: colors.text }}>• For the office: {c}</Text>
+              ))}
+            </View>
+          )}
           <Button title="Save draft" variant="secondary" onPress={() => void act(false)} busy={busy} />
           <Button title={canSign ? 'Sign note' : 'Submit note'} onPress={() => void act(true)} busy={busy} />
           <Text style={{ color: colors.muted, fontSize: 13 }}>
@@ -151,6 +272,38 @@ export default function NoteScreen() {
           variant="secondary"
           onPress={() => setAmends(mineLocked[mineLocked.length - 1]!.id)}
         />
+      )}
+
+      {mineLocked.length > 0 && !pending && (
+        <View style={[styles.card, { gap: 8 }]}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>Care update for the family</Text>
+          {careUpdate ? (
+            <>
+              <Text style={{ color: colors.text }}>{careUpdate.summary}</Text>
+              <Text style={{ color: colors.muted, fontSize: 13 }}>Sent — the family can see it in their portal.</Text>
+            </>
+          ) : (
+            <>
+              <Text style={{ color: colors.muted, fontSize: 13 }}>Optional: a short, friendly update the family sees in their portal. No medical details.</Text>
+              {aiOn && <Button title="Suggest from my note" icon="sparkles-outline" variant="secondary" onPress={() => void suggestCareUpdate()} busy={careBusy} />}
+              <Input label="Update" value={careDraft} onChangeText={setCareDraft} multiline maxLength={1000} placeholder="e.g. Had a shower, ate most of breakfast and enjoyed a short walk." />
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {MOODS.map(([value, label]) => (
+                  <Pressable
+                    key={value}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: careMood === value }}
+                    onPress={() => setCareMood(careMood === value ? null : value)}
+                    style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: careMood === value ? colors.brand : colors.border, backgroundColor: careMood === value ? colors.brandSoft : colors.white }}
+                  >
+                    <Text style={{ color: careMood === value ? colors.brandDark : colors.text, fontWeight: '600' }}>Mood: {label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Button title="Send to family" icon="heart-outline" onPress={() => void sendCareUpdate()} busy={careBusy} />
+            </>
+          )}
+        </View>
       )}
 
       {locked.map((n) => (

@@ -7496,6 +7496,20 @@
         ]
       }
     },
+    "/api/v1/ai/status": {
+      "get": {
+        "operationId": "AiController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/reports/census": {
       "get": {
         "operationId": "ReportsController_census",
@@ -7591,6 +7605,204 @@
         },
         "tags": [
           "reports"
+        ]
+      }
+    },
+    "/api/v1/schedule/visits/{visitId}/notes/organize": {
+      "post": {
+        "operationId": "VisitDocsController_organizeNote",
+        "parameters": [
+          {
+            "name": "visitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizeNoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "visit documentation"
+        ]
+      }
+    },
+    "/api/v1/schedule/visits/{visitId}/notes/{noteId}/incident-flag/report": {
+      "post": {
+        "operationId": "VisitDocsController_reportFlag",
+        "parameters": [
+          {
+            "name": "visitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "noteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportFlagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "visit documentation"
+        ]
+      }
+    },
+    "/api/v1/schedule/visits/{visitId}/notes/{noteId}/incident-flag/dismiss": {
+      "post": {
+        "operationId": "VisitDocsController_dismissFlag",
+        "parameters": [
+          {
+            "name": "visitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "noteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "visit documentation"
+        ]
+      }
+    },
+    "/api/v1/schedule/visits/{visitId}/care-update": {
+      "get": {
+        "operationId": "VisitDocsController_careUpdate",
+        "parameters": [
+          {
+            "name": "visitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "visit documentation"
+        ]
+      },
+      "post": {
+        "operationId": "VisitDocsController_saveCareUpdate",
+        "parameters": [
+          {
+            "name": "visitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Send (or correct) the family update for this visit; it appears in the family portal.",
+        "tags": [
+          "visit documentation"
+        ]
+      }
+    },
+    "/api/v1/schedule/visits/{visitId}/care-update/suggest": {
+      "post": {
+        "operationId": "VisitDocsController_suggestCareUpdate",
+        "parameters": [
+          {
+            "name": "visitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "A family-friendly draft from the visit note (AI); the caregiver edits it before sending.",
+        "tags": [
+          "visit documentation"
         ]
       }
     },
@@ -11488,6 +11700,57 @@
         "required": [
           "kind",
           "params"
+        ]
+      },
+      "OrganizeNoteDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 8000
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "ReportFlagDto": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "moderate",
+              "high",
+              "critical"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Defaults to the flag's reason.",
+            "maxLength": 2000
+          }
+        }
+      },
+      "CareUpdateDto": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "mood": {
+            "type": "string",
+            "enum": [
+              "good",
+              "okay",
+              "low"
+            ]
+          }
+        },
+        "required": [
+          "summary"
         ]
       },
       "CreateVisitNoteDto": {
