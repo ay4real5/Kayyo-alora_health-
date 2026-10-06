@@ -75,8 +75,6 @@ export function AssistantPanel() {
     return () => window.removeEventListener('primordial:ask', onAsk);
   }, []);
 
-  if (!allowed || !status.data?.enabled) return null;
-
   const send = (text: string) => {
     const question = text.trim();
     if (!question || ask.isPending) return;
@@ -87,7 +85,6 @@ export function AssistantPanel() {
     setDraft('');
     ask.mutate(history);
   };
-  sendRef.current = send;
   const submit = (e: FormEvent) => {
     e.preventDefault();
     send(draft);
@@ -98,6 +95,13 @@ export function AssistantPanel() {
       send(draft);
     }
   };
+
+  // Keep the ask-about-today listener pointed at the latest send (refs are updated after render, not during).
+  useEffect(() => {
+    sendRef.current = send;
+  });
+
+  if (!allowed || !status.data?.enabled) return null;
 
   if (!open) {
     return (
