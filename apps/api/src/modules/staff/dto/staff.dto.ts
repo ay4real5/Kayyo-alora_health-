@@ -11,6 +11,7 @@ import {
   IsLongitude,
   IsNotEmpty,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -302,4 +303,10 @@ export class DecideTimeOffDto {
   /** approved/denied by an approver; cancelled by the requester (pending requests only). */
   @IsIn(['approved', 'denied', 'cancelled'])
   status!: 'approved' | 'denied' | 'cancelled';
+}
+
+/** Credential types each discipline needs before working (D-101), e.g. `{ "HHA": ["hha_certificate", "cpr"] }`. */
+export class OnboardingRequirementsDto {
+  @IsObject()
+  requirements!: Record<string, string[]>;
 }

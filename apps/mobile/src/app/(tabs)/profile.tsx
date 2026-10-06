@@ -39,6 +39,12 @@ interface Recognition {
   badges: { key: string; title: string; description: string }[];
 }
 
+interface Onboarding {
+  percent: number;
+  ready: boolean;
+  items: { key: string; label: string; done: boolean; required: boolean; owner: 'caregiver' | 'office' }[];
+}
+
 const BADGE_ICONS: Record<string, 'trophy-outline' | 'time-outline' | 'document-text-outline' | 'location-outline'> = {
   perfect_attendance: 'trophy-outline',
   always_on_time: 'time-outline',
@@ -59,6 +65,7 @@ export default function ProfileScreen() {
   const [error, setError] = useState<string | null>(null);
   const [reminders, setReminders] = useState(true);
   const [recognition, setRecognition] = useState<Recognition | null>(null);
+  const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -70,6 +77,9 @@ export default function ProfileScreen() {
       request<Recognition>('/insights/my-recognition')
         .then(({ data }) => setRecognition(data))
         .catch(() => setRecognition(null));
+      request<Onboarding | null>('/staff/me/onboarding')
+        .then(({ data }) => setOnboarding(data))
+        .catch(() => setOnboarding(null));
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -125,6 +135,19 @@ export default function ProfileScreen() {
           <ListRow icon="navigate-outline" label="Mileage" onPress={() => router.push('/mileage')} />
           <ListRow icon="airplane-outline" label="Time off" onPress={() => router.push('/time-off')} last />
         </Card>
+
+        {onboarding && !onboarding.ready && (
+          <>
+            <SectionTitle>Getting started — {onboarding.percent}% ready</SectionTitle>
+            <Card style={{ paddingVertical: 4 }}>
+              {onboarding.items
+                .filter((i) => i.required && !i.done)
+                .map((i, n, list) => (
+                  <ListRow key={i.key} icon="ellipse-outline" label={i.label} value={i.owner === 'office' ? 'Your office adds this' : 'For you to do'} last={n === list.length - 1} />
+                ))}
+            </Card>
+          </>
+        )}
 
         {recognition?.enabled && recognition.badges.length > 0 && (
           <>

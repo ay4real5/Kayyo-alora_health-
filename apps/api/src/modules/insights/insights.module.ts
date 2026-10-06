@@ -5,6 +5,7 @@ import { CurrentUser, type AuthUser } from '../../common/decorators/current-user
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { BillingModule } from '../billing/billing.module.js';
 import { ReferralsModule } from '../referrals/referrals.module.js';
+import { StaffModule } from '../staff/staff.module.js';
 import { InsightsService } from './insights.service.js';
 import { WorkforceService } from './workforce.service.js';
 
@@ -61,7 +62,7 @@ export class InsightsController {
 }
 
 @Module({
-  imports: [BillingModule, ReferralsModule],
+  imports: [BillingModule, ReferralsModule, StaffModule],
   controllers: [InsightsController],
   providers: [InsightsService, WorkforceService],
   exports: [InsightsService, WorkforceService],
