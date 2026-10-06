@@ -1721,3 +1721,41 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - After a confirmed action, the panel refreshes the page behind it. Cancel changes nothing.
 - Tested end-to-end with a real Haiku call on dev data: "Assign Emery Bramble to the Redfern visit on Friday" led to
   lookups, then a card, then Confirm, then assigned.
+
+### D-097 — Workforce intelligence: EVV patterns, explainable Care Score, recognition badges (Phase E)
+2026-10-06 · owner's idea list (EVV anomaly detection, Care Score, recognition) + Claude Code
+- **Computed on demand; nothing is stored.**
+  - Pure functions live in `modules/insights/workforce.ts` and are unit-tested.
+  - `WorkforceService` loads visits, notes and EVV for a window.
+  - There is no nightly job or table to keep in sync. The Command Center counts the patterns on every load.
+- **EVV patterns** (`GET /insights/evv-anomalies`, `evv:approve`; default the last 14 days). The UI is the EVV page's
+  "Patterns to look at" tab, plus the Command Center item `evv_anomalies`. The patterns are:
+  - **overlap** (critical): the next clock-in comes more than 5 minutes before the previous clock-out.
+  - **impossible travel**: from one visit's clock-out point to the next clock-in point is more than 2 km, at over
+    35.8 m/s (~80 mph).
+  - **repeated corrections**: 3 or more time-correction requests.
+  - **repeated geofence misses**: 3 or more records flagged outside the geofence.
+
+  The wording describes what was seen, not wrongdoing (forgotten clock-outs and bad GPS fixes are common).
+- **Care Score** (`GET /insights/care-scores[/:staffId]`, needs both `staff:update` and `reports:read`, so agency
+  admins and supervisors; office staff have no `reports:read`; default the last 30 days). It is a weighted 0–100 over
+  the parts that can be measured. Each part shows its counts.
+
+  | Part | Weight | How it is counted |
+  |---|---|---|
+  | Attendance | 35 | Completed visits ÷ (completed + missed) |
+  | Punctuality | 25 | Visits started within 10 minutes of the agency-local scheduled time |
+  | Documentation | 20 | Notes submitted or signed within 24 hours of the visit ending |
+  | EVV accuracy | 20 | Records with no flags and no correction requests |
+
+  - Fewer than 5 visits gives no score.
+  - **Incidents are shown for context but never scored**: an incident is often nobody's fault, and scoring it would
+    discourage reporting.
+  - The score is decision support only: nothing automatic uses it (no scheduling, pay or discipline).
+  - It is **not offered to the AI assistant** (HR-sensitive); the assistant gets only `evv_patterns`.
+- **Recognition badges** (`GET /insights/my-recognition`, the caller's own; last 90 days, at least 10 visits).
+  - The badges are perfect attendance, always on time (≥95%), note pro (≥95%) and EVV star (≥95%).
+  - They are positive only, and nothing is shown for falling short.
+  - Off by default. Turned on by the agency setting `settings.recognitionBadges`, through `PATCH /agency`
+    `{recognitionBadges}` (merged into the settings JSON) and Settings → Agency.
+  - Shown under "My badges" on the app's Profile tab.

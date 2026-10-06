@@ -184,6 +184,7 @@ The full owner list is **[GO_LIVE.md](GO_LIVE.md)** (accounts + BAAs, security c
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-10-06 | Claude Code | P5-05 | Workforce intelligence (D-097): EVV patterns tab and Command Center item, explainable Care Scores (admins and supervisors), opt-in recognition badges in the app. |
 | 2026-10-06 | Claude Code | P5-03 | Assistant actions behind Confirm cards (D-095): assign, offer open shift, decide time off, calculate/export payroll. |
 | 2026-10-06 | Claude Code | P5-02 | Smart caregiver matching (D-094): ranked suggestions with reasons, patient preferences, staff location; assistant suggest_caregivers. |
 | 2026-10-06 | Claude Code | P5-01 | Command Center (D-093): permission-filtered needs-attention, money at risk, authorization forecast; assistant todays_priorities. Roadmap Phase 5 added. |
