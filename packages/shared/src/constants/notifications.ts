@@ -18,6 +18,8 @@ export const NOTIFICATION_TYPES = [
   'payroll_ready',
   'time_off_decided',
   'evv_correction_decided',
+  /** A submitted visit note may describe a reportable incident (D-096) — for people who handle incidents. */
+  'incident_flagged',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -55,5 +57,6 @@ export const DEFAULT_DELIVERY_CHANNELS: Record<NotificationType, readonly Delive
   payroll_ready: ['email'],
   time_off_decided: ['push'],
   evv_correction_decided: ['push'],
+  incident_flagged: ['push', 'email'],
   system: ['email'],
 };

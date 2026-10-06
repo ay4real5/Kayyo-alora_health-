@@ -333,6 +333,7 @@ model Patient {
   invoices             Invoice[]
   eligibilityChecks    EligibilityCheck[]
   incidentReports      IncidentReport[]
+  careUpdates          CareUpdate[]
   caregiverPreferences PatientCaregiverPreference[]
 
   @@unique([agencyId, mrn])
@@ -503,6 +504,7 @@ model StaffProfile {
   swapsRequested     ShiftSwapRequest[]           @relation("SwapRequesting")
   swapsTargeted      ShiftSwapRequest[]           @relation("SwapTarget")
   visitNotes         VisitNote[]
+  careUpdates        CareUpdate[]
   patientPreferences PatientCaregiverPreference[]
 
   @@unique([agencyId, employeeId])
@@ -971,6 +973,7 @@ model Visit {
   openShifts     OpenShift[]
   swapRequests   ShiftSwapRequest[]
   visitNotes     VisitNote[]
+  careUpdates    CareUpdate[]
   vitals         VisitVital[]
   tasks          VisitTask[]
   claimLines     ClaimLine[]
@@ -1149,28 +1152,34 @@ model Notification {
 /// A clinical or activity note for a visit, written by the visit's caregiver. Locked once signed or submitted;
 /// later changes are addenda (a new note pointing at the one it amends).
 model VisitNote {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  visitId        String    @map("visit_id") @db.Uuid
-  staffId        String    @map("staff_id") @db.Uuid
-  authorId       String    @map("author_id") @db.Uuid
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId            String    @map("visit_id") @db.Uuid
+  staffId            String    @map("staff_id") @db.Uuid
+  authorId           String    @map("author_id") @db.Uuid
   /// progress | skilled_nursing | therapy | aide_activity | addendum
-  noteType       String    @map("note_type") @db.VarChar(50)
-  subjective     String?
-  objective      String?
-  assessment     String?
-  plan           String?
-  narrative      String?
-  formData       Json?     @map("form_data")
+  noteType           String    @map("note_type") @db.VarChar(50)
+  subjective         String?
+  objective          String?
+  assessment         String?
+  plan               String?
+  narrative          String?
+  formData           Json?     @map("form_data")
   /// draft | submitted | signed
-  status         String    @default("draft") @db.VarChar(20)
-  amendsNoteId   String?   @map("amends_note_id") @db.Uuid
-  submittedAt    DateTime? @map("submitted_at") @db.Timestamptz(6)
-  signedAt       DateTime? @map("signed_at") @db.Timestamptz(6)
-  signedById     String?   @map("signed_by") @db.Uuid
-  qaReviewedById String?   @map("qa_reviewed_by") @db.Uuid
-  qaReviewedAt   DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  status             String    @default("draft") @db.VarChar(20)
+  amendsNoteId       String?   @map("amends_note_id") @db.Uuid
+  submittedAt        DateTime? @map("submitted_at") @db.Timestamptz(6)
+  signedAt           DateTime? @map("signed_at") @db.Timestamptz(6)
+  signedById         String?   @map("signed_by") @db.Uuid
+  qaReviewedById     String?   @map("qa_reviewed_by") @db.Uuid
+  qaReviewedAt       DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
+  /// Incident detection (D-096): set when a submitted note may describe a reportable incident.
+  incidentFlagType   String?   @map("incident_flag_type") @db.VarChar(30)
+  incidentFlagReason String?   @map("incident_flag_reason") @db.VarChar(500)
+  incidentFlaggedAt  DateTime? @map("incident_flagged_at") @db.Timestamptz(6)
+  /// open | reported | dismissed
+  incidentFlagStatus String?   @map("incident_flag_status") @db.VarChar(15)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   visit        Visit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
   staff        StaffProfile @relation(fields: [staffId], references: [id])
@@ -1810,4 +1819,25 @@ model PatientCaregiverPreference {
   @@unique([patientId, staffProfileId])
   @@index([staffProfileId])
   @@map("patient_caregiver_preferences")
+}
+
+/// A short update for the family about one visit (D-096), written or approved by the caregiver; shown in the portal.
+model CareUpdate {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String   @map("agency_id") @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  visitId        String   @unique @map("visit_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  summary        String   @db.VarChar(1000)
+  /// good | okay | low — optional
+  mood           String?  @db.VarChar(10)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visit        Visit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, createdAt])
+  @@index([agencyId])
+  @@map("care_updates")
 }
