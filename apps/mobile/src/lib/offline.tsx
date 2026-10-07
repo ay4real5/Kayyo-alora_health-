@@ -111,7 +111,11 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 
   // Push notifications for this phone once signed in (D-071; a no-op until the app has an EAS project id).
   useEffect(() => {
-    if (status === 'signed-in') void registerForPush(requestRef.current);
+    if (status !== 'signed-in') return;
+    void registerForPush(requestRef.current);
+    // Again on return to the app: notifications may have been switched on in the phone's Settings meanwhile.
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && void registerForPush(requestRef.current));
+    return () => sub.remove();
   }, [status]);
 
   const waiting = ops.some((op) => !op.failure);

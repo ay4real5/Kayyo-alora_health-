@@ -9,7 +9,7 @@ type Request = <T>(path: string, options?: Omit<RequestOptions, 'accessToken'>) 
 
 let ready: Promise<boolean> | null = null;
 
-/** Asks once (at the first clock-in) and sets up how reminders show. Returns whether reminders are allowed. */
+/** Asks once (at sign-in, or the first clock-in) and sets up how alerts and reminders show. Returns whether they're allowed. */
 function prepare(): Promise<boolean> {
   ready ??= (async () => {
     Notifications.setNotificationHandler({
@@ -21,6 +21,12 @@ function prepare(): Promise<boolean> {
       }),
     });
     if (Platform.OS === 'android') {
+      // Pushes from the server use the 'default' channel; high importance makes them pop up as banners (open shifts,
+      // messages) instead of arriving silently in the shade.
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Alerts',
+        importance: Notifications.AndroidImportance.HIGH,
+      });
       await Notifications.setNotificationChannelAsync('visit-reminders', {
         name: 'Visit reminders',
         importance: Notifications.AndroidImportance.HIGH,
@@ -71,15 +77,16 @@ export async function cancelAllReminders(): Promise<void> {
 let pushToken: string | null = null;
 
 /**
- * Registers this phone for push notifications (D-071) — only when the app was built with an Expo project id (EAS)
- * and the person already allowed notifications (they're asked at the first clock-in). Push texts carry no PHI; the
- * app loads details after sign-in. Failures are ignored: in-app alerts still work.
+ * Registers this phone for push notifications (D-071) when the app was built with an Expo project id (EAS). Asks for
+ * permission at sign-in — without it a caregiver who isn't in the app would never hear about an open shift. Called
+ * again whenever the app comes back to the foreground, so turning notifications on later in Settings takes effect.
+ * Push texts carry no PHI; the app loads details after sign-in. Failures are ignored: in-app alerts still work.
  */
 export async function registerForPush(request: Request): Promise<void> {
   try {
     const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
     if (!projectId || Platform.OS === 'web') return;
-    if (!(await Notifications.getPermissionsAsync()).granted) return;
+    if (!(await prepare()) && !(await Notifications.getPermissionsAsync()).granted) return;
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
     await request('/notifications/devices', { method: 'POST', body: { token, platform: Platform.OS } });
     pushToken = token;
